@@ -16,5 +16,5 @@
 - Function `hybrid_search_processes(query_text text, query_embedding text, filter_condition jsonb|text)`.
 
 ## Auth
-- 需要 `Authorization: Bearer <TOKEN>`。
-- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 apikey。
+- Requires `Authorization: Bearer <TOKEN>`.
+- `TOKEN` is either an OAuth JWT or a user key generated in the system (derived from email + password).

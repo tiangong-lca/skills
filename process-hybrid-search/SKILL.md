@@ -8,9 +8,9 @@ description: Supabase edge function supabase/functions/process_hybrid_search tha
 ## Quick start (remote only)
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/`
 - Header: `x-region: us-east-1`
-- 需要 `Authorization: Bearer <TOKEN>`。
-- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 apikey。
-- 调用示例：
+- Requires `Authorization: Bearer <TOKEN>`.
+- `TOKEN` is either an OAuth JWT or a user key generated in the system (derived from email + password).
+- Example call:
   ```bash
   curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/process_hybrid_search" \
     --header 'Content-Type: application/json' \
@@ -18,7 +18,7 @@ description: Supabase edge function supabase/functions/process_hybrid_search tha
     --header "Authorization: Bearer $TOKEN" \
     --data @assets/example-request.json
   ```
-- 模型/embedding 配置已在远端函数；调用方无需设置。
+- Model/embedding is configured in the deployed function; callers do not set it.
 
 ## Request & output
 - POST `{ "query": string, "filter"?: object|string }`.
@@ -39,7 +39,7 @@ description: Supabase edge function supabase/functions/process_hybrid_search tha
 ## References
 - `references/env.md`
 - `references/request-response.md`
-- `references/prompts.md`
+- `references/prompts.md` - prompt requirements for query generation.
 - `references/testing.md`
 
 ## Assets

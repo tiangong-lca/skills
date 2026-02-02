@@ -1,16 +1,7 @@
-# Prompt & schema
+# Prompt requirements
 
-System message:
-```
-Field: Life Cycle Assessment (LCA)
-Task: Transform description of flows into three specific queries: SemanticQueryEN, FulltextQueryEN and FulltextQueryZH.
-```
-Human template: `Flow description: {input}`.
-
-Structured output schema (`withStructuredOutput`):
-- `semantic_query_en`: string, semantic retrieval query in English.
-- `fulltext_query_en`: string[] of English full-text terms/synonyms.
-- `fulltext_query_zh`: string[] of Simplified Chinese full-text terms/synonyms.
-
-Combination rule: wrap each full-text term in parentheses, join with `OR` to form `query_text`.
-Embedding input: `semantic_query_en` only.
+- Accept input in any language or mixed languages; interpret it correctly.
+- Preserve all relevant information (materials, flow direction, quantities, units, geography, time, technology, use case, etc.); do not drop constraints.
+- Do not invent facts or infer conditions not provided.
+- Keep output retrieval-oriented: retain core nouns and qualifiers, add common synonyms/abbreviations when useful.
+- Keep language neutral and concise; avoid explanatory text unrelated to retrieval.

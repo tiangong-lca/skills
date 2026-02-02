@@ -1,16 +1,7 @@
-# Prompt & schema
+# Prompt requirements
 
-System message:
-```
-Field: Life Cycle Assessment (LCA)
-Task: Transform description of lifecycle models into three specific queries: SemanticQueryEN, FulltextQueryEN and FulltextQueryZH.
-```
-Human template: `Lifecycle model description: {input}`.
-
-Structured schema:
-- `semantic_query_en` string
-- `fulltext_query_en` string[]
-- `fulltext_query_zh` string[]
-
-Full-text query construction: wrap each term in parentheses, join with `OR`.
-Embedding input: `semantic_query_en` only.
+- Accept input in any language or mixed languages; interpret it correctly.
+- Preserve all relevant information (life-cycle stages, functional unit, system boundary, geography, time, technology route, methodology, etc.); do not drop constraints.
+- Do not invent facts or infer conditions not provided.
+- Keep output retrieval-oriented: retain core nouns and qualifiers, add common synonyms/abbreviations when useful.
+- Keep language neutral and concise; avoid explanatory text unrelated to retrieval.

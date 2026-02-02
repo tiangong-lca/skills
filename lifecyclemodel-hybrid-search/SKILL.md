@@ -8,9 +8,9 @@ description: Supabase edge function supabase/functions/lifecyclemodel_hybrid_sea
 ## Quick start (remote only)
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/`
 - Header: `x-region: us-east-1`
-- 需要 `Authorization: Bearer <TOKEN>`。
-- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 apikey。
-- 调用示例：
+- Requires `Authorization: Bearer <TOKEN>`.
+- `TOKEN` is either an OAuth JWT or a user key generated in the system (derived from email + password).
+- Example call:
   ```bash
   curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/lifecyclemodel_hybrid_search" \
     --header 'Content-Type: application/json' \
@@ -18,7 +18,7 @@ description: Supabase edge function supabase/functions/lifecyclemodel_hybrid_sea
     --header "Authorization: Bearer $TOKEN" \
     --data @assets/example-request.json
   ```
-- 模型/SageMaker 已由远端函数配置，调用方无需额外 env。
+- Model/SageMaker is configured in the deployed function; callers do not set extra env.
 
 ## Request & output
 - POST `{ "query": string, "filter"?: object|string }`.
@@ -37,10 +37,10 @@ description: Supabase edge function supabase/functions/lifecyclemodel_hybrid_sea
 - Filter handling: ensure caller format matches RPC expectations.
 
 ## References
-- `references/env.md` — env 说明.
-- `references/request-response.md` — payload, filter semantics, RPC details.
-- `references/prompts.md` — lifecycle model prompt + schema.
-- `references/testing.md` — curl & checklist.
+- `references/env.md` - env notes.
+- `references/request-response.md` - payload, filter semantics, RPC details.
+- `references/prompts.md` - prompt requirements for query generation.
+- `references/testing.md` - curl & checklist.
 
 ## Assets
 - `assets/example-request.json`

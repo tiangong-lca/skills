@@ -1,15 +1,7 @@
-# Prompt & schema
+# Prompt requirements
 
-System message:
-```
-Field: Life Cycle Assessment (LCA)
-Task: Transform description of processes into three specific queries: SemanticQueryEN, FulltextQueryEN and FulltextQueryZH.
-```
-Human template: `Process description: {input}`.
-
-Structured schema:
-- `semantic_query_en` string
-- `fulltext_query_en` string[]
-- `fulltext_query_zh` string[]
-
-Full-text queries joined with `OR` (each wrapped in parentheses). Embedding is generated from `semantic_query_en`.
+- Accept input in any language or mixed languages; interpret it correctly.
+- Preserve all relevant information (process, equipment, materials, energy use, geography, time, technology route, use case, etc.); do not drop constraints.
+- Do not invent facts or infer conditions not provided.
+- Keep output retrieval-oriented: retain core nouns and qualifiers, add common synonyms/abbreviations when useful.
+- Keep language neutral and concise; avoid explanatory text unrelated to retrieval.

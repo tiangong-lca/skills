@@ -18,7 +18,7 @@
 }
 ```
 - `contentFunction` is invoked as `${contentFunction}(t)` where `t` is the row; it must return string content.
-- If row missing/version mismatch or content not string → job is acked (deleted) and logged.
+- If row missing/version mismatch or content not string -> job is acked (deleted) and logged.
 - Successful update also sets `embedding_ft_at = now()`.
 
 ## Expected DB side effects

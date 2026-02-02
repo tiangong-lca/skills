@@ -7,9 +7,9 @@ description: Process PGMQ embedding jobs in supabase/functions/embedding_ft; fet
 
 ## Quick start (remote only)
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/embedding_ft`
-- 需要 `Authorization: Bearer <TOKEN>`。
-- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 apikey。
-- 调用示例：
+- Requires `Authorization: Bearer <TOKEN>`.
+- `TOKEN` is either an OAuth JWT or a user key generated in the system (derived from email + password).
+- Example call:
   ```bash
   curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/embedding_ft" \
     --header "Authorization: Bearer $TOKEN" \
@@ -43,9 +43,9 @@ Array of jobs, each:
 - Extend payload: update `jobSchema` and downstream SQL bindings.
 
 ## References
-- `references/env.md` — required env vars.
-- `references/job-contract.md` — job shape, queue semantics, and expected DB side effects.
-- `references/testing.md` — curl examples and validation checklist.
+- `references/env.md` - required env vars.
+- `references/job-contract.md` - job shape, queue semantics, and expected DB side effects.
+- `references/testing.md` - curl examples and validation checklist.
 
 ## Assets
-- `assets/example-jobs.json` — minimal valid request body.
+- `assets/example-jobs.json` - minimal valid request body.

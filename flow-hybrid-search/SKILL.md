@@ -8,9 +8,9 @@ description: Supabase edge function supabase/functions/flow_hybrid_search that t
 ## Quick start (remote only)
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/`
 - Header: `x-region: us-east-1`
-- 需要 `Authorization: Bearer <TOKEN>`。
-- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 apikey。
-- 调用示例：
+- Requires `Authorization: Bearer <TOKEN>`.
+- `TOKEN` is either an OAuth JWT or a user key generated in the system (derived from email + password).
+- Example call:
   ```bash
   curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/flow_hybrid_search" \
     --header 'Content-Type: application/json' \
@@ -18,7 +18,7 @@ description: Supabase edge function supabase/functions/flow_hybrid_search that t
     --header "Authorization: Bearer $TOKEN" \
     --data @assets/example-request.json
   ```
-- 模型/SageMaker 已在远端配置，调用方无需设置。
+- Model/SageMaker is configured in the deployed function; callers do not set it.
 
 ## Request & output
 - POST JSON: `{ "query": string, "filter"?: object|string }`.
@@ -27,7 +27,7 @@ description: Supabase edge function supabase/functions/flow_hybrid_search that t
 ## Processing flow
 1) OPTIONS handled for CORS via `_shared/cors`.
 2) Run ChatOpenAI (temperature 0, `OPENAI_CHAT_MODEL`) with structured output schema: `semantic_query_en` (string) + `fulltext_query_en[]` + `fulltext_query_zh[]`; prompt is flow-specific LCA instructions.
-3) Combine full-text queries: `(q1) OR (q2)…`; generate embedding for `semantic_query_en` using SageMaker endpoint (JSON `{inputs: text}`) and extract first number array from response.
+3) Combine full-text queries: `(q1) OR (q2)...`; generate embedding for `semantic_query_en` using SageMaker endpoint (JSON `{inputs: text}`) and extract first number array from response.
 4) Call `supabase.rpc('hybrid_search_flows', { query_text, query_embedding: "[v1,...]", filter_condition })`.
 5) Respond with data or empty array; errors logged and returned as JSON 500.
 
@@ -38,10 +38,10 @@ description: Supabase edge function supabase/functions/flow_hybrid_search that t
 - Filter handling: ensure callers send string vs object; function serializes non-string via `JSON.stringify`.
 
 ## References
-- `references/env.md` — env 说明.
-- `references/request-response.md` — payload, filters, and RPC expectations.
-- `references/prompts.md` — current LCA prompt and structured schema.
-- `references/testing.md` — curl and debugging checklist.
+- `references/env.md` - env notes.
+- `references/request-response.md` - payload, filters, and RPC expectations.
+- `references/prompts.md` - prompt requirements for query generation.
+- `references/testing.md` - curl and debugging checklist.
 
 ## Assets
-- `assets/example-request.json` — sample query/filter body.
+- `assets/example-request.json` - sample query/filter body.
