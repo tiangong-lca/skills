@@ -9,7 +9,7 @@ description: Supabase edge function supabase/functions/flow_hybrid_search that t
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/`
 - Header: `x-region: us-east-1`
 - 需要 `Authorization: Bearer <TOKEN>`。
-- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 key。
+- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 apikey。
 - 调用示例：
   ```bash
   curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/flow_hybrid_search" \
