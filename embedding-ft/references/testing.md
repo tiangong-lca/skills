@@ -2,6 +2,7 @@
 
 ```bash
 curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/embedding_ft" \
+  --header "Authorization: Bearer $TOKEN" \
   --header 'Content-Type: application/json' \
   --data @assets/example-jobs.json
 ```

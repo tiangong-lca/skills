@@ -8,12 +8,14 @@ description: Supabase edge function supabase/functions/flow_hybrid_search that t
 ## Quick start (remote only)
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/`
 - Header: `x-region: us-east-1`
-- 调用无需 `Authorization` / `apikey`。
+- 需要 `Authorization: Bearer <TOKEN>`。
+- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 key。
 - 调用示例：
   ```bash
   curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/flow_hybrid_search" \
     --header 'Content-Type: application/json' \
     --header 'x-region: us-east-1' \
+    --header "Authorization: Bearer $TOKEN" \
     --data @assets/example-request.json
   ```
 - 模型/SageMaker 已在远端配置，调用方无需设置。

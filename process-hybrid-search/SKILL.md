@@ -8,12 +8,14 @@ description: Supabase edge function supabase/functions/process_hybrid_search tha
 ## Quick start (remote only)
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/`
 - Header: `x-region: us-east-1`
-- 调用无需 `Authorization` / `apikey`。
+- 需要 `Authorization: Bearer <TOKEN>`。
+- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 key。
 - 调用示例：
   ```bash
   curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/process_hybrid_search" \
     --header 'Content-Type: application/json' \
     --header 'x-region: us-east-1' \
+    --header "Authorization: Bearer $TOKEN" \
     --data @assets/example-request.json
   ```
 - 模型/embedding 配置已在远端函数；调用方无需设置。

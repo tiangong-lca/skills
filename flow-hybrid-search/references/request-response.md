@@ -15,7 +15,8 @@
 - 500 on RPC or embedding/model errors (`error.message` surfaced).
 
 ## Auth
-- 调用无需 `Authorization` / `apikey`。
+- 需要 `Authorization: Bearer <TOKEN>`。
+- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 apikey。
 
 ## RPC expectation
 - Expects Postgres function `hybrid_search_flows(query_text text, query_embedding text, filter_condition jsonb|text)`.

@@ -17,4 +17,5 @@
 - Function `hybrid_search_lifecyclemodels(query_text text, query_embedding text, filter_condition jsonb|text)`.
 
 ## Auth
-- 调用无需 `Authorization` / `apikey`。
+- 需要 `Authorization: Bearer <TOKEN>`。
+- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 apikey。

@@ -7,14 +7,15 @@ description: Process PGMQ embedding jobs in supabase/functions/embedding_ft; fet
 
 ## Quick start (remote only)
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/embedding_ft`
-- 调用无需 `Authorization` / `apikey`。
+- 需要 `Authorization: Bearer <TOKEN>`。
+- `TOKEN` 可用 OAuth 登录获得的 JWT，或系统内生成的用户 key。
 - 调用示例：
   ```bash
   curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/embedding_ft" \
+    --header "Authorization: Bearer $TOKEN" \
     --header 'Content-Type: application/json' \
     --data @assets/example-jobs.json
   ```
-- AWS/Supabase 连接配置已在远端函数环境中设置，调用方无需提供。
 
 ## Request contract (HTTP POST JSON)
 Array of jobs, each:
