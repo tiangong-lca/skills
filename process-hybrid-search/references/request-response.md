@@ -16,4 +16,4 @@
 - Function `hybrid_search_processes(query_text text, query_embedding text, filter_condition jsonb|text)`.
 
 ## Auth
-- JWT, USER_API_KEY, SERVICE_API_KEY supported via `_shared/auth`.
+- Deployed with `--no-verify-jwt`; request does not require `Authorization` / `apikey`.

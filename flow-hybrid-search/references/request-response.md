@@ -15,7 +15,7 @@
 - 500 on RPC or embedding/model errors (`error.message` surfaced).
 
 ## Auth
-- Accepts JWT, user API key, or service API key; failing auth returns `_shared/auth` response.
+- Deployed with `--no-verify-jwt`; request does not require `Authorization` / `apikey`.
 
 ## RPC expectation
 - Expects Postgres function `hybrid_search_flows(query_text text, query_embedding text, filter_condition jsonb|text)`.

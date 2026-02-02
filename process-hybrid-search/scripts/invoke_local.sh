@@ -6,15 +6,9 @@ URL=${1:-${REMOTE_ENDPOINT:-http://localhost:54321/functions/v1}/process_hybrid_
 REGION=${X_REGION:-us-east-1}
 API_KEY=${API_KEY:-${USER_API_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}}
 
-if [[ -z "$API_KEY" ]]; then
-  echo "Set API_KEY or SUPABASE_SERVICE_ROLE_KEY for auth" >&2
-  exit 1
+HEADERS=(-H "Content-Type: application/json" -H "x-region: $REGION")
+if [[ -n "$API_KEY" ]]; then
+  HEADERS+=(-H "Authorization: Bearer $API_KEY" -H "apikey: $API_KEY")
 fi
 
-curl -sS -X POST \
-  -H "Content-Type: application/json" \
-  -H "x-region: $REGION" \
-  -H "Authorization: Bearer $API_KEY" \
-  -H "apikey: $API_KEY" \
-  -d @"$DATA" \
-  "$URL"
+curl -sS -X POST "${HEADERS[@]}" -d @"$DATA" "$URL"

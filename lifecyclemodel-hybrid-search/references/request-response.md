@@ -17,4 +17,4 @@
 - Function `hybrid_search_lifecyclemodels(query_text text, query_embedding text, filter_condition jsonb|text)`.
 
 ## Auth
-- JWT, USER_API_KEY, SERVICE_API_KEY accepted; returns auth response on failure.
+- Deployed with `--no-verify-jwt`; request does not require `Authorization` / `apikey`.

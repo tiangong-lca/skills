@@ -4,8 +4,6 @@
 curl -i --location --request POST "$REMOTE_ENDPOINT/lifecyclemodel_hybrid_search" \
   --header 'Content-Type: application/json' \
   --header "x-region: $X_REGION" \
-  --header "Authorization: Bearer $USER_API_KEY" \
-  --header "apikey: $USER_API_KEY" \
   --data @assets/example-request.json
 ```
 
