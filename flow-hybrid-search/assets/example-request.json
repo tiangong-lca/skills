@@ -1,4 +1,14 @@
 {
-  "query": "Quantify methane flow from landfill gas to flare",
-  "filter": {"country": "US", "year": 2023}
+  "query": "methylbutane",
+  "filter": {
+    "flowType": "Elementary flow",
+    "asInput": false,
+    "flowDataSet": {
+      "flowInformation": {
+        "dataSetInformation": {
+          "CASNumber": "541-28-6"
+        }
+      }
+    }
+  }
 }
