@@ -1,46 +1,38 @@
 ---
 name: lifecyclemodel-hybrid-search
-description: Supabase edge function supabase/functions/lifecyclemodel_hybrid_search that builds hybrid search queries for lifecycle models and calls `hybrid_search_lifecyclemodels`. Use when tuning prompts, embeddings, or auth/env for lifecycle model retrieval.
+description: Supabase edge function supabase/functions/lifecyclemodel_hybrid_search that converts lifecycle model descriptions into hybrid search queries and calls `hybrid_search_lifecyclemodels`. Use when debugging lifecycle model search, tuning prompts/filters, or adjusting embedding endpoints/auth.
 ---
 
 # Lifecycle Model Hybrid Search
 
-## Quick start (remote only)
+## Required parameters
+- `data`: JSON payload containing the `query` string the user wants to search (optional `filter`).
+- `TIANGONG_LCA_APIKEY`: user key derived from email + password; send as `Authorization: Bearer <TIANGONG_LCA_APIKEY>`.
+
+## Quick start
 - Endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/`
 - Header: `x-region: us-east-1`
-- Requires `Authorization: Bearer <TOKEN>`.
-- `TOKEN` is either an OAuth JWT or a user key generated in the system (derived from email + password).
+- Requires `Authorization: Bearer <TIANGONG_LCA_APIKEY>`.
+- Body: JSON with `query` string (optional `filter`); `assets/example-request.json` shows the format.
+
 - Example call:
   ```bash
-  curl -i --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/lifecyclemodel_hybrid_search" \
+  curl -sS --location --request POST "https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/lifecyclemodel_hybrid_search" \
     --header 'Content-Type: application/json' \
     --header 'x-region: us-east-1' \
-    --header "Authorization: Bearer $TOKEN" \
-    --data @assets/example-request.json
+    --header "Authorization: Bearer $TIANGONG_LCA_APIKEY" \
+    --data '{"query": "Attributional lifecycle model for recycled aluminum billet"}'
   ```
-- Model/SageMaker is configured in the deployed function; callers do not set extra env.
 
 ## Request & output
 - POST `{ "query": string, "filter"?: object|string }`.
-- 200 with `{ data }` from RPC or `[]`; 400 if query missing; 500 on embedding/RPC failures.
-
-## Processing flow
-1) CORS OPTIONS handled.
-2) ChatOpenAI structured output with schema (semantic_query_en + fulltext_query_en/zh arrays) and lifecycle-model specific system prompt.
-3) Embed `semantic_query_en` via SageMaker; build full-text OR string from English+Chinese lists.
-4) Call `supabase.rpc('hybrid_search_lifecyclemodels', { query_text, query_embedding, filter_condition })` (non-string filters JSON.stringify).
-5) Return results with CORS headers; log errors on failure.
-
-## Change points
-- Adjust structured schema or prompt for domain nuance (e.g., LCIA, system boundaries).
-- Swap model/embedding endpoint; update `OPENAI_CHAT_MODEL` or SageMaker constants.
-- Filter handling: ensure caller format matches RPC expectations.
+- Responses: 200 with `{ data }` or `[]`; 400 if `query` missing; 500 on embedding/RPC errors.
 
 ## References
-- `references/env.md` - env notes.
-- `references/request-response.md` - payload, filter semantics, RPC details.
+- `references/env.md`
+- `references/request-response.md`
 - `references/prompts.md` - prompt requirements for query generation.
-- `references/testing.md` - curl & checklist.
+- `references/testing.md`
 
 ## Assets
 - `assets/example-request.json`

@@ -1,4 +1,21 @@
 {
-  "query": "Attributional lifecycle model for recycled aluminum billet",
-  "filter": {"region": "EU", "year": 2022}
+  "query": "烧结砖",
+  "filter": {
+    "lifeCycleModelDataSet": {
+      "lifeCycleModelInformation": {
+        "dataSetInformation": {
+          "classificationInformation": {
+            "common:classification": {
+              "common:class": [
+                {
+                  "@level": "3",
+                  "#text": "Manufacture of refractory products"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
 }
