@@ -1,20 +1,35 @@
 # Request/response
 
+## Endpoint
+- POST `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/process_hybrid_search`
+- Headers: `Authorization: Bearer <TIANGONG_LCA_APIKEY>`, `x-region: us-east-1`
+
 ## Input
 ```json
 {
-  "query": "Mechanical recycling process for PET bottles",
-  "filter": {"region": "CN"}
+  "query": "Open-loop mechanical recycling process for HDPE packaging",
+  "filter": {
+    "processInformation": {
+      "geography": {
+        "locationOfOperationSupplyOrProduction": {
+          "@location": "CN"
+        }
+      },
+      "time": {
+        "common:referenceYear": 2021
+      }
+    }
+  }
 }
 ```
+- `filter` optional; if string, used as-is; if object, passed as JSON.
 
 ## Output
-- 200 `{ "data": [...] }` from `hybrid_search_processes` RPC or `[]` if none.
-- 400 if `query` missing; 500 on model/embedding/RPC errors.
+- 200 `{ "data": [...] }` from `hybrid_search_processes`; returns `[]` when no matches.
+- 400 when `query` is missing; 500 on embedding/model/RPC errors.
 
 ## RPC expectation
-- Function `hybrid_search_processes(query_text text, query_embedding text, filter_condition jsonb|text)`.
+- Expects Postgres function `hybrid_search_processes(query_text text, query_embedding text, filter_condition jsonb|text)`.
 
 ## Auth
-- Requires `Authorization: Bearer <TOKEN>`.
-- `TOKEN` is either an OAuth JWT or a user key generated in the system (derived from email + password).
+- `Authorization: Bearer <TIANGONG_LCA_APIKEY>` required; `TIANGONG_LCA_APIKEY` is a user key derived from email + password.
