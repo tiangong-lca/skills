@@ -39,6 +39,8 @@ except ModuleNotFoundError:  # pragma: no cover
         build_process_from_flow_run_id,
     )
 
+from tiangong_lca_spec.state_lock import hold_state_file_lock
+
 PROCESS_FROM_FLOW_ARTIFACTS_ROOT = Path("artifacts/process_from_flow")
 DEFAULT_SI_SUBDIR = Path("input/si")
 MINERU_SUFFIXES = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
@@ -237,7 +239,8 @@ def _clear_stop_after(run_id: str) -> None:
     if not isinstance(payload, dict) or "stop_after" not in payload:
         return
     payload.pop("stop_after", None)
-    state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    with hold_state_file_lock(state_path, reason="workflow.clear_stop_after"):
+        state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[info] Cleared stop_after in {state_path}", file=sys.stderr)
 
 

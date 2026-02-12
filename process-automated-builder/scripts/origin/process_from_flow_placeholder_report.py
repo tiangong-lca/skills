@@ -76,7 +76,7 @@ def main() -> None:
 
     if not args.no_update_state:
         state["placeholder_report"] = report
-        dump_json(state, state_path)
+        dump_json(state, state_path, lock_reason="placeholder_report.write_state")
 
     print(f"Wrote {len(report)} placeholder entries to {output_path}", file=sys.stderr)
 

@@ -16,21 +16,22 @@ This reference is a self-contained migration of the `process_from_flow` workflow
 - LangGraph core layer: `ProcessFromFlowService` runs the main inference chain (references -> routes -> processes -> exchanges -> matching -> datasets).
 - Origin orchestration layer: `scripts/origin` handles SI download/parse, usability tagging, run/resume, publishing, and cleanup.
 
-### Main Flow Outline
-- Step 0 load_flow: Parse reference flow and build summary.
-- Step 1 references + tech routes: 1a search -> 1b fulltext -> 1c clustering -> technology routes.
-- Step 2 split processes: Split unit processes into an ordered chain.
-- Step 3 generate exchanges: Create per-process input/output exchanges.
-- Step 3b enrich exchange amounts: Extract or estimate amounts/units from text and SI.
-- Step 4 match flows: Search flows and select candidates to fill `uuid` and `shortDescription`.
-- Step 4b align exchange units: Validate unit-group compatibility and convert to reference units.
-- Step 4c density conversion (optional): Estimate density for mass<->volume mismatches on product/waste flows.
-- Step 1f build sources: Generate ILCD source datasets and references.
-- Step 5a intended applications: Write intended applications per process before dataset build.
-- Step 5 build process datasets: Emit final ILCD process datasets.
-- Step 6 resolve placeholders: Post-process unmatched exchanges with a second search pass.
-- Step 7 balance review: Mass/energy balance check (reports only).
-- Step 8 data cut-off and completeness: Summarize missing values/conversions, write data cut-off principles (LLM first, rule fallback), and rewrite process-level `dataTreatment` from final balance review.
+### Main Flow Outline (Execution Sequence)
+- Note: `1f` and `5a` are historical step IDs, not sort keys; the ordered list below is the actual runtime sequence.
+- `01` Step 0 `load_flow`: Parse reference flow and build summary.
+- `02` Step 1 `references + tech routes`: 1a search -> 1b fulltext -> 1c clustering -> technology routes.
+- `03` Step 2 `split_processes`: Split unit processes into an ordered chain.
+- `04` Step 3 `generate_exchanges`: Create per-process input/output exchanges.
+- `05` Step 3b `enrich_exchange_amounts`: Extract or estimate amounts/units from text and SI.
+- `06` Step 4 `match_flows`: Search flows and select candidates to fill `uuid` and `shortDescription`.
+- `07` Step 4b `align_exchange_units`: Validate unit-group compatibility and convert to reference units.
+- `08` Step 4c `density_conversion` (optional): Estimate density for mass<->volume mismatches on product/waste flows.
+- `09` Step 1f `build_sources`: Generate ILCD source datasets and references.
+- `10` Step 5a `intended_applications`: Write intended applications per process before dataset build.
+- `11` Step 5 `build_process_datasets`: Emit final ILCD process datasets.
+- `12` Step 6 `resolve_placeholders`: Post-process unmatched exchanges with a second search pass.
+- `13` Step 7 `balance_review`: Mass/energy balance check (reports only).
+- `14` Step 8 `data_cutoff_and_completeness`: Summarize missing values/conversions, write data cut-off principles (LLM first, rule fallback), and rewrite process-level `dataTreatment` from final balance review.
 
 ## LangGraph Core Workflow (ProcessFromFlowService)
 ### Entry and Dependencies
@@ -146,6 +147,20 @@ This reference is a self-contained migration of the `process_from_flow` workflow
 - `process_from_flow_workflow.py` does not expose `--no-llm` (Step 1b/1e require LLM); use `process_from_flow_langgraph.py --no-llm` for deterministic debugging.
 - `--min-si-hint` controls SI download threshold (`none|possible|likely`), with `--si-max-links/--si-timeout`.
 - Default run-id naming (when `--run-id` is omitted): `pfw_<flow_code>_<flow_uuid8>_<operation>_<UTC_TIMESTAMP>` (example: `pfw_01211_3a8d74d8_produce_20260211T105022Z`).
+
+### Parallel Modes and Barriers
+- `Run-level parallel`:
+  - Multiple flow inputs can run concurrently if each run has an isolated `run_id`.
+- `In-run parallel`:
+  - Apply fan-out only within approved internals.
+  - Barrier sequence remains fixed: `01 -> 02 -> 03` serial, `04` fan-out allowed, `05 -> 06 -> 07` serial convergence.
+- Single-writer rule:
+  - For the same `run_id`, only one process may write `cache/process_from_flow_state.json` at a time.
+  - Do not execute `usability`, `si_download`, `usage_tagging`, and `main_pipeline` writers concurrently on one run.
+  - Code-level lock file: `cache/process_from_flow_state.json.lock` (timeout env: `TIANGONG_PFF_STATE_LOCK_TIMEOUT_SECONDS`).
+- `match_flows` behavior:
+  - Only `flow_search` RPC requests are parallelized.
+  - Candidate selection and state writeback are still applied in original exchange order.
 - `process_from_flow_langgraph.py --stop-after datasets` means run through dataset writeout; other values stop early and save state.
 - `process_from_flow_workflow.py` writes fixed per-run logs to `artifacts/process_from_flow/<run_id>/cache/workflow_logs/*.log` and timing summary to `artifacts/process_from_flow/<run_id>/cache/workflow_timing_report.json`.
 - `process_from_flow_workflow.py` prints stage progress in stderr (`stage x/y`, elapsed, ETA, log path); `match_flows` logs exchange-level progress with completed/total and ETA.

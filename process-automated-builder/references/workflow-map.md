@@ -42,6 +42,24 @@
    - `scripts/origin/process_from_flow_langgraph.py`
    - Invokes `tiangong_lca_spec.process_from_flow.ProcessFromFlowService`.
 
+## Parallel Modes
+- `Run-level parallel`:
+  - Run multiple flows concurrently with different `run_id`s.
+  - Safe default for agent orchestration throughput.
+- `In-run parallel`:
+  - Allow parallel fan-out only inside approved stage internals.
+  - Current implementation parallelizes `flow_search` RPC calls in `match_flows`, but preserves ordered result fill.
+
+## Barriers and Single-Writer
+- Stage barriers:
+  - `01 -> 02 -> 03` serial.
+  - `04` can fan-out by SI file.
+  - `05 -> 06 -> 07` serial convergence.
+- Single-writer rule:
+  - For one `run_id`, exactly one writer may update `cache/process_from_flow_state.json`.
+  - Do not launch usability / SI download / usage tagging / main pipeline as concurrent writers on the same run.
+  - This is now enforced with a file lock at `cache/process_from_flow_state.json.lock`.
+
 ## Output Contract (Skill -> Agent)
 - Run root: `artifacts/process_from_flow/<run_id>/`
 - Core outputs:

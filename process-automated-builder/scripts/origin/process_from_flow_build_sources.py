@@ -125,7 +125,7 @@ def main() -> None:
     if not args.no_update_state:
         state["source_datasets"] = source_datasets
         state["source_references"] = source_references
-        dump_json(state, state_path)
+        dump_json(state, state_path, lock_reason="build_sources.write_state")
 
     print(f"Wrote {len(written)} source dataset(s) to {output_dir}", file=sys.stderr)
 

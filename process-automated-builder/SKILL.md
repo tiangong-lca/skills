@@ -16,6 +16,21 @@ description: Execute and troubleshoot the end-to-end `process_from_flow` automat
 3. Run the wrapper with agent-provided flow input (`--flow-file`, `--flow-json`, or `--flow-stdin`).
 4. Inspect run artifacts and continue with `--resume` or `--publish-only` when needed.
 
+## Parallel Execution Contract
+- `Run-level parallel`: multiple flow inputs can run concurrently, but each run must use a distinct `run_id`.
+- `In-run parallel`: only fan-out inside approved stage internals; stage barriers stay fixed.
+- Barrier policy:
+  - `01 -> 02 -> 03` strict serial.
+  - `04` may fan-out over SI files.
+  - `05 -> 06 -> 07` strict serial convergence.
+- Single-writer rule:
+  - Never let multiple agents write the same `artifacts/process_from_flow/<run_id>/cache/process_from_flow_state.json`.
+  - Within one `run_id`, only one active writer process is allowed at a time.
+  - Enforcement is code-level: writers acquire `process_from_flow_state.json.lock` before state writes.
+- Flow-search parallelism:
+  - `07_main_pipeline` now parallelizes only `flow_search` requests, then applies selector and state updates in original exchange order.
+  - Tune with env `LCA_FLOW_SEARCH_MAX_PARALLEL` (bounded by profile concurrency).
+
 ## Commands
 ```bash
 scripts/setup-process-automated-builder.sh

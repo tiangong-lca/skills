@@ -12,6 +12,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+try:
+    from tiangong_lca_spec.state_lock import hold_state_file_lock, is_process_state_path
+except Exception:  # pragma: no cover
+    hold_state_file_lock = None
+
+    def is_process_state_path(path: Path) -> bool:
+        return False
+
 
 class OpenAIResponsesLLM:
     """Minimal wrapper around the OpenAI Responses API with lightweight disk caching."""
@@ -145,10 +153,16 @@ def load_paper(path: Path) -> str:
     return raw
 
 
-def dump_json(data: Any, path: Path) -> None:
+def dump_json(data: Any, path: Path, *, lock_reason: str | None = None) -> None:
     """Write JSON to disk with UTF-8 encoding, creating parent directories as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    payload = json.dumps(data, ensure_ascii=False, indent=2)
+    if hold_state_file_lock is not None and is_process_state_path(path):
+        reason = lock_reason or "scripts.dump_json_state_write"
+        with hold_state_file_lock(path, reason=reason):
+            path.write_text(payload, encoding="utf-8")
+        return
+    path.write_text(payload, encoding="utf-8")
 
 
 ARTIFACTS_ROOT = Path("artifacts")

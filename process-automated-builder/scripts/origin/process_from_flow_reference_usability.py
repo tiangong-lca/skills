@@ -262,7 +262,7 @@ def main() -> None:
     state["scientific_references"] = scientific_references
 
     for path in state_paths:
-        dump_json(state, path)
+        dump_json(state, path, lock_reason="reference_usability.write_state")
     print(f"Updated {len(state_paths)} state file(s) with usability results.", file=sys.stderr)
 
 

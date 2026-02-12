@@ -1017,7 +1017,7 @@ def main() -> None:
         stop_after=stop_after,
     )
 
-    dump_json(result_state, state_path)
+    dump_json(result_state, state_path, lock_reason="langgraph.final_state_write")
 
     if args.stop_after and args.stop_after != "datasets":
         print(f"Stopped after stage '{args.stop_after}'. Edit state and resume with: --resume --run-id {run_id}", file=sys.stderr)

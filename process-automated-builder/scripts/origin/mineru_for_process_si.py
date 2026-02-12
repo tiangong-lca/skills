@@ -14,6 +14,7 @@ from typing import Any
 
 import httpx
 
+from tiangong_lca_spec.state_lock import hold_state_file_lock
 from tiangong_lca_spec.utils.mineru_with_images import (
     MineruWithImagesClient,
     load_mineru_with_images_config,
@@ -217,7 +218,8 @@ def _update_state_with_mineru_output(*, run_id: str, input_path: Path, output_pa
     )
     scientific_references["si_mineru_outputs"] = entries
     payload["scientific_references"] = scientific_references
-    state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    with hold_state_file_lock(state_path, reason="mineru.write_state"):
+        state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _lookup_original_doi(scientific_references: dict[str, Any], input_path: Path) -> str | None:

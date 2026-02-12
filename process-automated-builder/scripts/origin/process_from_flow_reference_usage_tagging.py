@@ -241,7 +241,7 @@ def main() -> None:
 
     state["scientific_references"] = scientific_references
     for path in state_paths:
-        dump_json(state, path)
+        dump_json(state, path, lock_reason="reference_usage_tagging.write_state")
 
 
 if __name__ == "__main__":  # pragma: no cover

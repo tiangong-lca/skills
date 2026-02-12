@@ -9,6 +9,7 @@ import os
 import re
 import time
 import xml.etree.ElementTree as ET
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -99,6 +100,7 @@ from tiangong_lca_spec.process_extraction.tidas_mapping import (
     ILCD_ENTRY_LEVEL_REFERENCE_VERSION,
 )
 from tiangong_lca_spec.publishing.crud import DatabaseCrudClient
+from tiangong_lca_spec.state_lock import StateFileLockTimeout, hold_state_file_lock
 from tiangong_lca_spec.utils.translate import Translator
 
 from .prompts import (
@@ -4323,8 +4325,17 @@ def _persist_runtime_state(state: ProcessFromFlowState, *, reason: str) -> None:
     try:
         state_path.parent.mkdir(parents=True, exist_ok=True)
         payload = json.dumps(state, ensure_ascii=False, indent=2, default=str)
-        state_path.write_text(payload, encoding="utf-8")
+        with hold_state_file_lock(state_path, reason=f"service.persist:{reason}", logger=LOGGER):
+            state_path.write_text(payload, encoding="utf-8")
         LOGGER.info("process_from_flow.runtime_state_persisted", reason=reason, path=str(state_path))
+    except StateFileLockTimeout as exc:
+        LOGGER.error(
+            "process_from_flow.runtime_state_lock_timeout",
+            reason=reason,
+            path=str(state_path),
+            error=str(exc),
+        )
+        raise
     except Exception as exc:  # pylint: disable=broad-except
         LOGGER.warning(
             "process_from_flow.runtime_state_persist_failed",
@@ -6670,120 +6681,168 @@ def _build_langgraph(
         total_exchanges = sum(len(exchanges) for _, exchanges in process_entries)
         progress_start = time.perf_counter()
         completed_exchanges = 0
+        match_parallel_limit = max(1, int(getattr(settings, "flow_search_max_parallel", 1) or 1))
+        profile_concurrency = max(1, int(getattr(settings.profile, "concurrency", 1) or 1))
+        match_workers = max(1, min(match_parallel_limit, profile_concurrency))
 
         LOGGER.info(
             "process_from_flow.match_flows_started",
             process_total=total_processes,
             exchange_total=total_exchanges,
         )
+        LOGGER.info(
+            "process_from_flow.match_flows_parallel_config",
+            requested_parallel=match_parallel_limit,
+            profile_concurrency=profile_concurrency,
+            active_workers=match_workers,
+        )
 
-        for process_index, (process_id, exchanges) in enumerate(process_entries, start=1):
-            reference_flow_name = None
-            for exchange in exchanges:
-                if exchange.get("is_reference_flow"):
-                    reference_flow_name = str(exchange.get("exchangeName") or "").strip() or None
-                    if reference_flow_name:
-                        break
-            matched_exchanges: list[dict[str, Any]] = []
-            process_exchange_total = len(exchanges)
-            for exchange_index, exchange in enumerate(exchanges, start=1):
-                name = str(exchange.get("exchangeName") or "").strip()
-                comment = _strip_exchange_comment_tags(exchange.get("generalComment")) or None
-                flow_type = _normalize_flow_type(exchange.get("flow_type")) or None
-                direction = str(exchange.get("exchangeDirection") or "").strip() or None
-                unit = str(exchange.get("unit") or "").strip() or None
-                search_hints = exchange.get("search_hints") or []
-                expected_compartment = _infer_media_suffix(f"{name} {comment or ''}")
+        executor: ThreadPoolExecutor | None = None
+        if match_workers > 1:
+            executor = ThreadPoolExecutor(max_workers=match_workers)
 
-                constraint_bits: list[str] = []
-                if flow_type:
-                    constraint_bits.append(f"flow_type={flow_type}")
-                if direction:
-                    constraint_bits.append(f"direction={direction}")
-                if unit:
-                    constraint_bits.append(f"unit={unit}")
-                if expected_compartment:
-                    constraint_bits.append(f"compartment={expected_compartment}")
-                if isinstance(search_hints, list) and search_hints:
-                    hint_text = ", ".join([str(item) for item in search_hints if str(item).strip()])
-                    if hint_text:
-                        constraint_bits.append(f"search_hints={hint_text}")
+        try:
+            for process_index, (process_id, exchanges) in enumerate(process_entries, start=1):
+                reference_flow_name = None
+                for exchange in exchanges:
+                    if exchange.get("is_reference_flow"):
+                        reference_flow_name = str(exchange.get("exchangeName") or "").strip() or None
+                        if reference_flow_name:
+                            break
+                matched_exchanges: list[dict[str, Any]] = []
+                process_exchange_total = len(exchanges)
 
-                query_desc = comment
-                if constraint_bits:
-                    constraint_text = "; ".join(constraint_bits)
-                    query_desc = f"{query_desc} | constraints: {constraint_text}" if query_desc else f"constraints: {constraint_text}"
+                prepared_exchanges: list[dict[str, Any]] = []
+                for exchange_index, exchange in enumerate(exchanges, start=1):
+                    name = str(exchange.get("exchangeName") or "").strip()
+                    comment = _strip_exchange_comment_tags(exchange.get("generalComment")) or None
+                    flow_type = _normalize_flow_type(exchange.get("flow_type")) or None
+                    direction = str(exchange.get("exchangeDirection") or "").strip() or None
+                    unit = str(exchange.get("unit") or "").strip() or None
+                    search_hints = exchange.get("search_hints") or []
+                    expected_compartment = _infer_media_suffix(f"{name} {comment or ''}")
 
-                query = FlowQuery(exchange_name=name or reference_name or "unknown_exchange", description=query_desc)
-                candidates, unmatched = flow_search_fn(query)
-                candidates = _dedupe_candidates_by_uuid_version(candidates)
-                candidates = candidates[:10]
-                # Build a minimal exchange dict for selector context.
-                selector_exchange = {
-                    "exchangeName": query.exchange_name,
-                    "generalComment": comment,
-                    "exchangeDirection": exchange.get("exchangeDirection"),
-                    "is_reference_flow": exchange.get("is_reference_flow"),
-                    "reference_flow_name": reference_flow_name,
-                    "flow_type": exchange.get("flow_type"),
-                    "material_role": exchange.get("material_role"),
-                    "search_hints": exchange.get("search_hints") or [],
-                }
-                decision = selector.select(query, selector_exchange, candidates)
-                selected = decision.candidate
-                selected_reason = decision.reasoning
-                if not selected_reason:
-                    if selected is not None:
-                        selected_reason = "Selected by LLM."
-                    else:
-                        selected_reason = "No suitable candidate selected by LLM."
-                matched_exchanges.append(
-                    {
-                        **exchange,
-                        "flow_search": {
-                            "query": {"exchange_name": query.exchange_name, "description": query_desc},
-                            "candidates": [
-                                {
-                                    "uuid": cand.uuid,
-                                    "base_name": cand.base_name,
-                                    "treatment_standards_routes": cand.treatment_standards_routes,
-                                    "mix_and_location_types": cand.mix_and_location_types,
-                                    "flow_properties": cand.flow_properties,
-                                    "flow_type": cand.flow_type,
-                                    "version": cand.version,
-                                    "geography": cand.geography,
-                                    "classification": cand.classification,
-                                    "category_path": cand.category_path,
-                                    "cas": cand.cas,
-                                    "general_comment": cand.general_comment,
-                                }
-                                for cand in candidates
-                            ],
-                            "selected_uuid": selected.uuid if selected else None,
-                            "selected_reason": selected_reason,
-                            "selector": decision.strategy,
-                            "unmatched": [getattr(item, "base_name", None) for item in (unmatched or [])],
-                        },
+                    constraint_bits: list[str] = []
+                    if flow_type:
+                        constraint_bits.append(f"flow_type={flow_type}")
+                    if direction:
+                        constraint_bits.append(f"direction={direction}")
+                    if unit:
+                        constraint_bits.append(f"unit={unit}")
+                    if expected_compartment:
+                        constraint_bits.append(f"compartment={expected_compartment}")
+                    if isinstance(search_hints, list) and search_hints:
+                        hint_text = ", ".join([str(item) for item in search_hints if str(item).strip()])
+                        if hint_text:
+                            constraint_bits.append(f"search_hints={hint_text}")
+
+                    query_desc = comment
+                    if constraint_bits:
+                        constraint_text = "; ".join(constraint_bits)
+                        query_desc = f"{query_desc} | constraints: {constraint_text}" if query_desc else f"constraints: {constraint_text}"
+
+                    query = FlowQuery(exchange_name=name or reference_name or "unknown_exchange", description=query_desc)
+                    prepared_exchanges.append(
+                        {
+                            "exchange_index": exchange_index,
+                            "exchange": exchange,
+                            "comment": comment,
+                            "query_desc": query_desc,
+                            "query": query,
+                        }
+                    )
+
+                futures: list[Future[tuple[list[FlowCandidate], list[Any]]]] = []
+                if executor is not None and len(prepared_exchanges) > 1:
+                    for item in prepared_exchanges:
+                        query = item["query"]
+                        futures.append(executor.submit(flow_search_fn, query))
+                    for item, future in zip(prepared_exchanges, futures, strict=True):
+                        item["search_result"] = future.result()
+                else:
+                    for item in prepared_exchanges:
+                        query = item["query"]
+                        item["search_result"] = flow_search_fn(query)
+
+                for item in prepared_exchanges:
+                    exchange_index = int(item["exchange_index"])
+                    exchange = item["exchange"]
+                    comment = item["comment"]
+                    query_desc = item["query_desc"]
+                    query = item["query"]
+                    candidates, unmatched = item["search_result"]
+
+                    candidates = _dedupe_candidates_by_uuid_version(candidates)
+                    candidates = candidates[:10]
+                    # Build a minimal exchange dict for selector context.
+                    selector_exchange = {
+                        "exchangeName": query.exchange_name,
+                        "generalComment": comment,
+                        "exchangeDirection": exchange.get("exchangeDirection"),
+                        "is_reference_flow": exchange.get("is_reference_flow"),
+                        "reference_flow_name": reference_flow_name,
+                        "flow_type": exchange.get("flow_type"),
+                        "material_role": exchange.get("material_role"),
+                        "search_hints": exchange.get("search_hints") or [],
                     }
-                )
+                    decision = selector.select(query, selector_exchange, candidates)
+                    selected = decision.candidate
+                    selected_reason = decision.reasoning
+                    if not selected_reason:
+                        if selected is not None:
+                            selected_reason = "Selected by LLM."
+                        else:
+                            selected_reason = "No suitable candidate selected by LLM."
+                    matched_exchanges.append(
+                        {
+                            **exchange,
+                            "flow_search": {
+                                "query": {"exchange_name": query.exchange_name, "description": query_desc},
+                                "candidates": [
+                                    {
+                                        "uuid": cand.uuid,
+                                        "base_name": cand.base_name,
+                                        "treatment_standards_routes": cand.treatment_standards_routes,
+                                        "mix_and_location_types": cand.mix_and_location_types,
+                                        "flow_properties": cand.flow_properties,
+                                        "flow_type": cand.flow_type,
+                                        "version": cand.version,
+                                        "geography": cand.geography,
+                                        "classification": cand.classification,
+                                        "category_path": cand.category_path,
+                                        "cas": cand.cas,
+                                        "general_comment": cand.general_comment,
+                                    }
+                                    for cand in candidates
+                                ],
+                                "selected_uuid": selected.uuid if selected else None,
+                                "selected_reason": selected_reason,
+                                "selector": decision.strategy,
+                                "unmatched": [getattr(entry, "base_name", None) for entry in (unmatched or [])],
+                            },
+                        }
+                    )
 
-                completed_exchanges += 1
-                elapsed_seconds = time.perf_counter() - progress_start
-                remaining = max(total_exchanges - completed_exchanges, 0)
-                eta_seconds = (elapsed_seconds / completed_exchanges * remaining) if completed_exchanges > 0 else None
-                LOGGER.info(
-                    "process_from_flow.match_flows_progress",
-                    process_id=process_id,
-                    process_index=process_index,
-                    process_total=total_processes,
-                    exchange_index=exchange_index,
-                    exchange_total=process_exchange_total,
-                    completed=completed_exchanges,
-                    total=total_exchanges,
-                    elapsed_seconds=round(elapsed_seconds, 2),
-                    eta_seconds=round(float(eta_seconds), 2) if eta_seconds is not None else None,
-                )
-            matched.append({"process_id": process_id, "exchanges": matched_exchanges})
+                    completed_exchanges += 1
+                    elapsed_seconds = time.perf_counter() - progress_start
+                    remaining = max(total_exchanges - completed_exchanges, 0)
+                    eta_seconds = (elapsed_seconds / completed_exchanges * remaining) if completed_exchanges > 0 else None
+                    LOGGER.info(
+                        "process_from_flow.match_flows_progress",
+                        process_id=process_id,
+                        process_index=process_index,
+                        process_total=total_processes,
+                        exchange_index=exchange_index,
+                        exchange_total=process_exchange_total,
+                        completed=completed_exchanges,
+                        total=total_exchanges,
+                        elapsed_seconds=round(elapsed_seconds, 2),
+                        eta_seconds=round(float(eta_seconds), 2) if eta_seconds is not None else None,
+                    )
+                matched.append({"process_id": process_id, "exchanges": matched_exchanges})
+        finally:
+            if executor is not None:
+                executor.shutdown(wait=True)
 
         elapsed_total = time.perf_counter() - progress_start
         LOGGER.info(

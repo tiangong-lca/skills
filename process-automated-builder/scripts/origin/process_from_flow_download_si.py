@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from html.parser import HTMLParser
@@ -14,6 +15,18 @@ from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPTS_DIR = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPTS_DIR.parent
+for path in (SCRIPTS_DIR, REPO_ROOT):
+    if str(path) not in sys.path:
+        sys.path.append(str(path))
+
+try:
+    from scripts.md._workflow_common import dump_json  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    from _workflow_common import dump_json  # type: ignore
 
 PROCESS_FROM_FLOW_ARTIFACTS_ROOT = Path("artifacts/process_from_flow")
 DEFAULT_TIMEOUT = 30.0
@@ -385,7 +398,7 @@ def main() -> None:
             report.append(doi_entry)
 
     report_path = output_dir / "si_download_report.json"
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    dump_json(report, report_path)
     print(f"Wrote report to {report_path}")
 
     if state_path and not args.no_update_state and not args.dry_run:
@@ -420,7 +433,7 @@ def main() -> None:
             "entries": flat_entries,
         }
         state["scientific_references"] = scientific_references
-        state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+        dump_json(state, state_path, lock_reason="download_si.write_state")
         print(f"Updated state with SI metadata at {state_path}")
 
 

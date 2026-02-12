@@ -60,6 +60,21 @@ process-automated-builder/scripts/run-process-automated-builder.sh \
 - MinerU OCR client can be configured by `TIANGONG_MINERU_WITH_IMAGE_*` env vars.
 - `--publish` and `--commit` may invoke remote CRUD services; use dry-run first.
 
+## Parallel Orchestration Rules
+- Run-level parallel (recommended):
+  - Start multiple runs in parallel with different `run_id`s (or let each run auto-generate one).
+- In-run parallel (restricted):
+  - Respect barrier order: `01 -> 02 -> 03` serial, `04` fan-out allowed, `05 -> 06 -> 07` serial.
+  - Main pipeline only parallelizes `flow_search` requests; writeback remains ordered.
+- Single-writer rule:
+  - Never run multiple state-writing scripts concurrently for the same `run_id`.
+  - This includes `process_from_flow_reference_usability.py`, `process_from_flow_download_si.py`, `process_from_flow_reference_usage_tagging.py`, and `process_from_flow_langgraph.py`.
+  - State writes are guarded by `process_from_flow_state.json.lock`; lock timeout can be tuned by `TIANGONG_PFF_STATE_LOCK_TIMEOUT_SECONDS`.
+
+## Flow Search Concurrency
+- Tune with `LCA_FLOW_SEARCH_MAX_PARALLEL` (default `1`).
+- Effective workers are capped by workflow profile concurrency (`LCA_MAX_CONCURRENCY` / profile).
+
 ## Failure Triage
 - Missing deps/import errors:
   - Re-run setup script and ensure the venv is active.
