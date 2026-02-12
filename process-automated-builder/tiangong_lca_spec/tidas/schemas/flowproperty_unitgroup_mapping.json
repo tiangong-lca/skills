@@ -1,0 +1,51 @@
+[
+  {
+    "flow_property_uuid": "93a60a56-a3c8-11da-a746-0800200b9a66",
+    "flow_property_name": "Mass",
+    "flow_property_classification": ["Quantity"],
+    "flow_property_reference_unit_description": "kg",
+    "reference_unit_group_uuid": "93a60a57-a3c8-11da-a746-0800200b9a66",
+    "unit_group": {
+      "uuid": "93a60a57-a3c8-11da-a746-0800200b9a66",
+      "name": "Mass",
+      "reference_internal_id": "0",
+      "units": [
+        {
+          "name": "kg",
+          "mean_value": "1.0",
+          "internal_id": "0",
+          "general_comment": "Kilogram",
+          "is_reference": true
+        },
+        {
+          "name": "g",
+          "mean_value": "0.001",
+          "internal_id": "1",
+          "general_comment": "Gram",
+          "is_reference": false
+        }
+      ]
+    }
+  },
+  {
+    "flow_property_uuid": "118f2a40-50ec-457c-aa60-9bc6b6af9931",
+    "flow_property_name": "mass*distance",
+    "flow_property_classification": ["Quantity"],
+    "flow_property_reference_unit_description": "kg*km",
+    "reference_unit_group_uuid": "118f2a41-50ec-457c-aa60-9bc6b6af9931",
+    "unit_group": {
+      "uuid": "118f2a41-50ec-457c-aa60-9bc6b6af9931",
+      "name": "mass*distance",
+      "reference_internal_id": "0",
+      "units": [
+        {
+          "name": "kg*km",
+          "mean_value": "1.0",
+          "internal_id": "0",
+          "general_comment": "Kilogram-kilometre",
+          "is_reference": true
+        }
+      ]
+    }
+  }
+]

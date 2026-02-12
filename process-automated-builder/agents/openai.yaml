@@ -1,0 +1,4 @@
+interface:
+  display_name: "Process Automated Builder"
+  short_description: "Build ILCD process datasets from flow inputs"
+  default_prompt: "Use $process-automated-builder to run the standalone process-from-flow pipeline with an agent-provided reference flow JSON and produce ILCD process/source datasets."
