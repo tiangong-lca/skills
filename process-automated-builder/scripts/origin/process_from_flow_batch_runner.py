@@ -12,8 +12,10 @@ This script intentionally focuses on orchestration reliability first.
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -29,6 +31,7 @@ RUN_WRAPPER = SKILL_ROOT / "scripts" / "run-process-automated-builder.sh"
 
 
 TaskStatus = Literal["pending", "running", "success", "failed"]
+RUN_ID_RE = re.compile(r"run_id=([A-Za-z0-9_\-]+)")
 
 
 def now_iso() -> str:
@@ -64,6 +67,7 @@ class BatchRunner:
         self.operation = args.operation
         self.heartbeat_seconds = args.heartbeat_seconds
         self.stall_timeout_seconds = args.stall_timeout_seconds
+        self.max_runtime_seconds = args.max_runtime_seconds
 
         self._last_heartbeat_monotonic = 0.0
 
@@ -100,10 +104,49 @@ class BatchRunner:
             "workers": self.max_workers,
             "max_attempts": self.max_attempts,
             "operation": self.operation,
+            "summary": self.summary(),
+            "failed_reason_counts": self.failure_reason_counts(),
             "tasks": [asdict(t) for t in self.tasks.values()],
         }
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         self.state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _extract_run_id_from_log(self, log_path: Path) -> str | None:
+        try:
+            text = log_path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            return None
+        match = RUN_ID_RE.search(text)
+        if not match:
+            return None
+        value = str(match.group(1) or "").strip()
+        return value or None
+
+    def _latest_snapshot_idle_seconds(self, run_id: str | None) -> float | None:
+        rid = str(run_id or "").strip()
+        if not rid:
+            return None
+        snap_dir = (
+            Path(SCRIPT_DIR).parent.parent
+            / "artifacts"
+            / "process_from_flow"
+            / rid
+            / "cache"
+            / "mcp_snapshots"
+        )
+        if not snap_dir.exists():
+            return None
+        latest_mtime: float | None = None
+        for path in glob.glob(str(snap_dir / "*.jsonl")):
+            try:
+                mtime = Path(path).stat().st_mtime
+            except FileNotFoundError:
+                continue
+            if latest_mtime is None or mtime > latest_mtime:
+                latest_mtime = mtime
+        if latest_mtime is None:
+            return None
+        return time.time() - latest_mtime
 
     def start_task(self, key: str, task: Task) -> None:
         flow_path = Path(task.flow_file)
@@ -164,18 +207,20 @@ class BatchRunner:
         for key, proc in list(self.procs.items()):
             rc = proc.poll()
             if rc is None:
-                # stall detection by log freshness (no log update for too long)
+                # stall/long-tail detection while process is still running
                 task = self.tasks[key]
-                if self.stall_timeout_seconds and task.log_path:
+
+                # hard cap: total runtime per attempt
+                if self.max_runtime_seconds and task.started_at:
                     try:
-                        log_mtime = Path(task.log_path).stat().st_mtime
-                        idle_for = time.time() - log_mtime
-                        if idle_for > self.stall_timeout_seconds:
+                        started_dt = datetime.fromisoformat(task.started_at)
+                        runtime_for = (datetime.now(timezone.utc) - started_dt).total_seconds()
+                        if runtime_for > self.max_runtime_seconds:
                             proc.terminate()
                             task.status = "failed"
                             task.last_error = (
-                                f"stalled: no log update for {idle_for:.1f}s "
-                                f"(timeout={self.stall_timeout_seconds:.1f}s)"
+                                f"runtime_exceeded: runtime={runtime_for:.1f}s "
+                                f"(timeout={self.max_runtime_seconds:.1f}s)"
                             )
                             task.process_pid = None
                             task.updated_at = now_iso()
@@ -183,7 +228,49 @@ class BatchRunner:
                             task.exit_code = 124
                             done_keys.append(key)
                             continue
+                    except Exception:
+                        pass
+
+                if task.log_path:
+                    try:
+                        log_path = Path(task.log_path)
+                        log_mtime = log_path.stat().st_mtime
+                        idle_for = time.time() - log_mtime
+
+                        # idle timeout: no fresh log output
+                        if self.stall_timeout_seconds and idle_for > self.stall_timeout_seconds:
+                            # If workflow log is quiet but MCP snapshots are still updating,
+                            # treat the task as active and avoid false stall-kill.
+                            if not task.run_id:
+                                inferred_run_id = self._extract_run_id_from_log(log_path)
+                                if inferred_run_id:
+                                    task.run_id = inferred_run_id
+                            snapshot_idle = self._latest_snapshot_idle_seconds(task.run_id)
+                            if snapshot_idle is not None and snapshot_idle <= self.stall_timeout_seconds:
+                                continue
+
+                            proc.terminate()
+                            task.status = "failed"
+                            if snapshot_idle is None:
+                                task.last_error = (
+                                    f"stalled: no log update for {idle_for:.1f}s "
+                                    f"(timeout={self.stall_timeout_seconds:.1f}s; snapshot=missing)"
+                                )
+                            else:
+                                task.last_error = (
+                                    f"stalled: no log update for {idle_for:.1f}s "
+                                    f"(timeout={self.stall_timeout_seconds:.1f}s; snapshot_idle={snapshot_idle:.1f}s)"
+                                )
+                            task.process_pid = None
+                            task.updated_at = now_iso()
+                            task.finished_at = now_iso()
+                            task.exit_code = 124
+                            done_keys.append(key)
+                            continue
+
                     except FileNotFoundError:
+                        pass
+                    except Exception:
                         pass
                 continue
             task = self.tasks[key]
@@ -234,6 +321,17 @@ class BatchRunner:
             out[t.status] += 1
         return out
 
+    def failure_reason_counts(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for task in self.tasks.values():
+            if task.status != "failed":
+                continue
+            reason = str(task.last_error or "unknown").strip()
+            key = reason.split(":", 1)[0] if ":" in reason else reason
+            key = key or "unknown"
+            counts[key] = counts.get(key, 0) + 1
+        return counts
+
     def emit_heartbeat_if_due(self, *, force: bool = False) -> None:
         now_mono = time.monotonic()
         if not force and (now_mono - self._last_heartbeat_monotonic) < self.heartbeat_seconds:
@@ -259,8 +357,10 @@ class BatchRunner:
                 f"{Path(task.flow_file).name} mode={task.mode} attempt={task.attempts} elapsed={elapsed} log_idle={idle}"
             )
 
+        reason_counts = self.failure_reason_counts()
         print(
-            f"[heartbeat] pending={stat['pending']} running={stat['running']} success={stat['success']} failed={stat['failed']}",
+            f"[heartbeat] pending={stat['pending']} running={stat['running']} success={stat['success']} failed={stat['failed']}"
+            f" failed_reasons={reason_counts}",
             file=sys.stderr,
         )
         for line in running_lines:
@@ -302,6 +402,8 @@ class BatchRunner:
         self.emit_heartbeat_if_due(force=True)
         self.save_state()
         final = self.summary()
+        final_failed_reasons = self.failure_reason_counts()
+        print(f"[batch] final_summary={final} failed_reasons={final_failed_reasons}", file=sys.stderr)
         return 0 if final["failed"] == 0 else 1
 
 
@@ -325,6 +427,12 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=600.0,
         help="Mark running task stalled if log not updated for N seconds (0 to disable).",
+    )
+    p.add_argument(
+        "--max-runtime-seconds",
+        type=float,
+        default=0.0,
+        help="Hard cap for one attempt total runtime (0 to disable).",
     )
     p.add_argument("--python-bin", default=os.environ.get("PAB_PYTHON_BIN", "python3"))
     p.add_argument("--reset", action="store_true", help="Ignore existing state and reinitialize tasks")

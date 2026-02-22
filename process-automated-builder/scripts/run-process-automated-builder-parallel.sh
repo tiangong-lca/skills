@@ -12,8 +12,17 @@ FLOW_DIR=""
 OUT_DIR=""
 WORKERS=3
 OPERATION="produce"
-PYTHON_BIN="${PAB_PYTHON_BIN:-python3}"
+DEFAULT_VENV_PYTHON="${SKILL_DIR}/.venv/bin/python"
+if [[ -n "${PAB_PYTHON_BIN:-}" ]]; then
+  PYTHON_BIN="${PAB_PYTHON_BIN}"
+elif [[ -x "${DEFAULT_VENV_PYTHON}" ]]; then
+  PYTHON_BIN="${DEFAULT_VENV_PYTHON}"
+else
+  PYTHON_BIN="python3"
+fi
 MAX_ATTEMPTS=3
+STALL_TIMEOUT_SECONDS=600
+MAX_RUNTIME_SECONDS=0
 
 usage() {
   cat <<'USAGE'
@@ -24,8 +33,12 @@ Options:
   --out-dir <dir>        Output directory for logs/summary/state (required)
   --workers <n>          Concurrent workers (default: 3)
   --operation <mode>     produce|treat (default: produce)
-  --python-bin <path>    Python executable for child scripts
+  --python-bin <path>    Python executable for child scripts (default: $PAB_PYTHON_BIN > .venv/bin/python > python3)
   --max-attempts <n>     Max attempts per flow (default: 3)
+  --stall-timeout-seconds <n>
+                         Kill attempt if log idle exceeds N seconds (default: 600; 0 disables)
+  --max-runtime-seconds <n>
+                         Hard cap per attempt runtime in seconds (default: 0 disabled)
   -h, --help             Show this help
 USAGE
 }
@@ -44,6 +57,10 @@ while [[ $# -gt 0 ]]; do
       PYTHON_BIN="$2"; shift 2 ;;
     --max-attempts)
       MAX_ATTEMPTS="$2"; shift 2 ;;
+    --stall-timeout-seconds)
+      STALL_TIMEOUT_SECONDS="$2"; shift 2 ;;
+    --max-runtime-seconds)
+      MAX_RUNTIME_SECONDS="$2"; shift 2 ;;
     -h|--help)
       usage; exit 0 ;;
     *)
@@ -68,4 +85,6 @@ exec "${PYTHON_BIN}" "${SKILL_DIR}/scripts/origin/process_from_flow_batch_runner
   --workers "${WORKERS}" \
   --operation "${OPERATION}" \
   --max-attempts "${MAX_ATTEMPTS}" \
+  --stall-timeout-seconds "${STALL_TIMEOUT_SECONDS}" \
+  --max-runtime-seconds "${MAX_RUNTIME_SECONDS}" \
   --python-bin "${PYTHON_BIN}"

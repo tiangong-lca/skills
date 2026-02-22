@@ -8,7 +8,14 @@ MODE="workflow"
 FLOW_FILE=""
 FLOW_JSON=""
 FLOW_STDIN=0
-PYTHON_BIN="${PAB_PYTHON_BIN:-python3}"
+DEFAULT_VENV_PYTHON="${SKILL_DIR}/.venv/bin/python"
+if [[ -n "${PAB_PYTHON_BIN:-}" ]]; then
+  PYTHON_BIN="${PAB_PYTHON_BIN}"
+elif [[ -x "${DEFAULT_VENV_PYTHON}" ]]; then
+  PYTHON_BIN="${DEFAULT_VENV_PYTHON}"
+else
+  PYTHON_BIN="python3"
+fi
 FORWARD_ARGS=()
 TEMP_FLOW_FILE=""
 
@@ -21,7 +28,7 @@ Wrapper options:
   --flow-file <path>           Reference flow JSON file path
   --flow-json <json>           Inline reference flow JSON string
   --flow-stdin                 Read reference flow JSON from stdin
-  --python-bin <path>          Python executable (default: python3 or $PAB_PYTHON_BIN)
+  --python-bin <path>          Python executable (default: $PAB_PYTHON_BIN > .venv/bin/python > python3)
   -h, --help                   Show this help message
 
 Notes:
