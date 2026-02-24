@@ -62,7 +62,7 @@ This reference is a self-contained migration of the `process_from_flow` workflow
 - Use `EXCHANGES_PROMPT` to generate exchanges; `is_reference_flow` aligns with `reference_flow_name` (Output for production, Input for treatment).
 - Exchange names must be searchable and not composite; fill unit/amount (placeholders if unknown).
 - Emissions add media suffix (`to air`, `to water`, `to soil`), plus `flow_type` and `search_hints`.
-- Append machine-readable tags to each exchange `generalComment`: `[tg_io_kind_tag=<flow_type>] [tg_io_uom_tag=<unit>]`.
+- Append machine-readable tags to each exchange `generalComment`: `[tg_io_kind_tag=<review_kind>] [tg_io_uom_tag=<unit>]`.
 - Do not use ambiguous tag keys such as `classification`, `category`, or `typeOfDataSet`.
 - Assign `material_role` for each exchange (`raw_material|auxiliary|catalyst|energy|emission|product|waste|service|unknown`); `balance_exclude` is optional explicit metadata, while `balance_review` still excludes auxiliary/catalyst by role even when the flag is absent.
 - Every exchange records `data_source` and `evidence`; inferred items must mark `source_type=expert_judgement`.

@@ -166,10 +166,11 @@ EXCHANGES_PROMPT = (
     "- For emissions, split into elementary flows (e.g., methane, nitrous oxide, ammonia, CO2, NOx, particulates) "
     "or waterborne pollutants (e.g., nitrate, phosphate, pesticides) when relevant.\n"
     "- For labor, split by activity if multiple (e.g., 'Labor, harvesting' and 'Labor, post-harvest handling').\n"
-    "- Add flow_type for each exchange: product | elementary | waste | service.\n"
-    "- In generalComment, append machine-readable tags using EXACT keys: [tg_io_kind_tag=<flow_type>] [tg_io_uom_tag=<unit>].\n"
+    "- Add flow_type for each exchange (for flow search/matching constraints): product | elementary | waste | service.\n"
+    "- Add material_role for review semantics: raw_material | auxiliary | catalyst | energy | emission | product | waste | service | unknown.\n"
+    "- In generalComment, append machine-readable tags using EXACT keys: [tg_io_kind_tag=<review_kind>] [tg_io_uom_tag=<unit>].\n"
+    "- review_kind is for review grouping (not the same concept as flow_type); prefer material_role semantics and use resource/emission for elementary inputs/outputs when applicable.\n"
     "- Do NOT use ambiguous tag keys such as classification/category/typeOfDataSet.\n"
-    "- Add material_role for each exchange: raw_material | auxiliary | catalyst | energy | emission | product | waste | service | unknown.\n"
     "- Use auxiliary/catalyst for inputs that are not embodied in the main product; set balance_exclude=true for those.\n"
     "- Provide role_reason to justify the material_role choice when it is not obvious.\n"
     "- For emissions, include 'to air' / 'to water' / 'to soil' in exchangeName when applicable.\n"
@@ -205,6 +206,37 @@ EXCHANGES_PROMPT = (
     '          "evidence": ["..."]\n'
     "        }\n"
     "      ]\n"
+    "    }\n"
+    "  ]\n"
+    "}\n"
+)
+
+EXCHANGE_IO_KIND_TAG_BATCH_PROMPT = (
+    "You are classifying review `io_kind_tag` for a batch of exchanges belonging to ONE unit process.\n"
+    "\n"
+    "Goal:\n"
+    "- Classify every exchange's io_kind_tag using review semantics.\n"
+    "- Judge all exchanges together (inputs + outputs) to keep process-level consistency.\n"
+    "\n"
+    "Rules:\n"
+    "- Use the whole exchange list jointly; do NOT classify each row in isolation.\n"
+    "- Allowed io_kind_tag values: raw_material | auxiliary | catalyst | energy | resource | emission | product | waste | service | unknown.\n"
+    "- `is_reference_flow=true` must be classified as product.\n"
+    "- Elementary inputs from environment (e.g., water, land, minerals, natural gas as resource extraction context) use resource.\n"
+    "- Elementary outputs to environment use emission.\n"
+    "- Discarded residues/sludge/solid waste outputs are usually waste.\n"
+    "- Labor/transport/operation services are service.\n"
+    "- Purchased utilities/fuels used as technosphere inputs can be energy.\n"
+    "- Materials/intermediates consumed by the process are raw_material or auxiliary/catalyst depending on process function.\n"
+    "- Return one result for every provided exchange id.\n"
+    "\n"
+    "Return strict JSON:\n"
+    "{\n"
+    '  "exchanges": [\n'
+    "    {\n"
+    '      "id": "E1",\n'
+    '      "io_kind_tag": "raw_material|auxiliary|catalyst|energy|resource|emission|product|waste|service|unknown",\n'
+    '      "reason": "short reason"\n'
     "    }\n"
     "  ]\n"
     "}\n"

@@ -106,6 +106,7 @@ from tiangong_lca_spec.utils.translate import Translator
 from .prompts import (
     DATA_CUTOFF_COMPLETENESS_PROMPT,
     DENSITY_ESTIMATE_PROMPT,
+    EXCHANGE_IO_KIND_TAG_BATCH_PROMPT,
     EXCHANGE_VALUE_PROMPT,
     EXCHANGES_PROMPT,
     INDUSTRY_AVERAGE_PROMPT,
@@ -3014,7 +3015,7 @@ def _sanitize_exchange_comment_tag_value(value: Any, *, fallback: str) -> str:
 
 
 def _exchange_comment_tag_block(*, flow_kind: Any, unit: Any) -> str:
-    normalized_kind = _normalize_flow_type(flow_kind) or str(flow_kind or "").strip().lower() or "unknown"
+    normalized_kind = _normalize_io_kind_tag(flow_kind) or str(flow_kind or "").strip().lower() or "unknown"
     kind_tag = _sanitize_exchange_comment_tag_value(normalized_kind, fallback="unknown")
     unit_tag = _sanitize_exchange_comment_tag_value(unit, fallback="unit")
     return f"[{_EXCHANGE_KIND_TAG_NAME}={kind_tag}] [{_EXCHANGE_UNIT_TAG_NAME}={unit_tag}]"
@@ -3085,14 +3086,7 @@ def _resolve_exchange_comment_tag_unit(
 
 def _ensure_exchange_comment_tags(exchange: dict[str, Any], *, preferred_unit: str | None = None) -> None:
     direction = str(exchange.get("exchangeDirection") or "").strip()
-    is_reference = bool(exchange.get("is_reference_flow"))
-    flow_kind = _normalize_flow_type(exchange.get("flow_type") or exchange.get("flowType"))
-    if not flow_kind:
-        flow_kind = _infer_flow_type(
-            str(exchange.get("exchangeName") or ""),
-            direction=direction,
-            is_reference_flow=is_reference,
-        )
+    flow_kind = _exchange_kind_for_comment_tag(exchange, direction=direction)
     unit = str(preferred_unit or "").strip()
     if not unit:
         unit = _resolve_exchange_comment_tag_unit(exchange)
@@ -3101,6 +3095,172 @@ def _ensure_exchange_comment_tags(exchange: dict[str, Any], *, preferred_unit: s
         flow_kind=flow_kind,
         unit=unit,
     )
+
+
+def _exchange_kind_for_comment_tag(exchange: dict[str, Any], *, direction: str) -> str:
+    explicit_tag_kind = _normalize_io_kind_tag(
+        exchange.get("io_kind_tag")
+        or exchange.get(_EXCHANGE_KIND_TAG_NAME)
+    )
+    if explicit_tag_kind:
+        return explicit_tag_kind
+    tags = _parse_exchange_comment_tags(exchange.get("generalComment"))
+    existing_comment_tag_kind = _normalize_io_kind_tag(tags.get(_EXCHANGE_KIND_TAG_NAME))
+    if existing_comment_tag_kind:
+        return existing_comment_tag_kind
+    return _derive_exchange_io_kind_tag(exchange, direction=direction)
+
+
+def _derive_exchange_io_kind_tag(exchange: dict[str, Any], *, direction: str) -> str:
+    material_role = _normalize_material_role(exchange.get("material_role") or exchange.get("materialRole"))
+    if material_role and material_role != "unknown":
+        return material_role
+    if bool(exchange.get("is_reference_flow")):
+        return "product"
+    flow_type = _normalize_flow_type(exchange.get("flow_type") or exchange.get("flowType"))
+    if not flow_type:
+        flow_type = _exchange_flow_type_for_dedupe(exchange, direction=direction)
+    if flow_type == "elementary":
+        return "resource" if direction == "Input" else "emission" if direction == "Output" else "unknown"
+    if flow_type in {"product", "waste", "service"}:
+        return flow_type
+    return "unknown"
+
+
+def _parse_exchange_io_kind_tag_batch_response(data: dict[str, Any]) -> dict[str, str]:
+    items = data.get("exchanges") or data.get("items") or []
+    if not isinstance(items, list):
+        return {}
+    parsed: dict[str, str] = {}
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        exchange_id = str(item.get("id") or item.get("exchange_id") or item.get("exchangeId") or "").strip()
+        if not exchange_id:
+            continue
+        io_kind_tag = _normalize_io_kind_tag(
+            item.get("io_kind_tag")
+            or item.get("ioKindTag")
+            or item.get("flow_type")
+            or item.get("flowType")
+        )
+        if io_kind_tag:
+            parsed[exchange_id] = io_kind_tag
+    return parsed
+
+
+def _batch_classify_exchange_io_kind_tags(
+    *,
+    llm: LanguageModelProtocol | None,
+    flow_summary: dict[str, Any] | None,
+    process_plan: dict[str, Any] | None,
+    process_id: str | None,
+    operation: str | None,
+    exchanges: list[dict[str, Any]],
+) -> None:
+    if llm is None or not isinstance(exchanges, list) or len(exchanges) <= 1:
+        # For a single exchange, joint classification provides no benefit.
+        for exchange in exchanges or []:
+            if isinstance(exchange, dict) and bool(exchange.get("is_reference_flow")):
+                exchange["io_kind_tag"] = "product"
+        return
+
+    process_struct = (process_plan or {}).get("structure") if isinstance((process_plan or {}).get("structure"), dict) else {}
+    labeled_exchanges: list[dict[str, Any]] = []
+    id_to_exchange: dict[str, dict[str, Any]] = {}
+    for idx, exchange in enumerate(exchanges, start=1):
+        if not isinstance(exchange, dict):
+            continue
+        exchange_id = f"E{idx}"
+        id_to_exchange[exchange_id] = exchange
+        labeled_exchanges.append(
+            {
+                "id": exchange_id,
+                "exchangeName": str(exchange.get("exchangeName") or "").strip(),
+                "exchangeDirection": str(exchange.get("exchangeDirection") or "").strip() or None,
+                "generalComment": _strip_exchange_comment_tags(exchange.get("generalComment")) or None,
+                "unit": str(exchange.get("unit") or "").strip() or None,
+                "is_reference_flow": bool(exchange.get("is_reference_flow")),
+                "existing_io_kind_tag": _normalize_io_kind_tag(
+                    exchange.get("io_kind_tag") or exchange.get(_EXCHANGE_KIND_TAG_NAME)
+                ),
+                "existing_flow_type": _normalize_flow_type(exchange.get("flow_type") or exchange.get("flowType")),
+                "material_role": _normalize_material_role(exchange.get("material_role") or exchange.get("materialRole")),
+                "search_hints": exchange.get("search_hints") if isinstance(exchange.get("search_hints"), list) else [],
+            }
+        )
+    if len(labeled_exchanges) <= 1:
+        for exchange in exchanges:
+            if isinstance(exchange, dict) and bool(exchange.get("is_reference_flow")):
+                exchange["io_kind_tag"] = "product"
+        return
+
+    process_context = {
+        "process_id": str(process_id or (process_plan or {}).get("process_id") or (process_plan or {}).get("processId") or "").strip() or None,
+        "name": str((process_plan or {}).get("name") or "").strip() or None,
+        "reference_flow_name": str((process_plan or {}).get("reference_flow_name") or "").strip() or None,
+        "is_reference_flow_process": bool((process_plan or {}).get("is_reference_flow_process")),
+        "structure": {
+            "technology": str(process_struct.get("technology") or "").strip() or None,
+            "inputs": _clean_string_list(process_struct.get("inputs")),
+            "outputs": _clean_string_list(process_struct.get("outputs")),
+            "boundary": str(process_struct.get("boundary") or "").strip() or None,
+        },
+    }
+    flow_context = {
+        "base_name_en": str((flow_summary or {}).get("base_name_en") or "").strip() or None,
+        "base_name_zh": str((flow_summary or {}).get("base_name_zh") or "").strip() or None,
+        "treatment_en": str((flow_summary or {}).get("treatment_en") or "").strip() or None,
+        "mix_en": str((flow_summary or {}).get("mix_en") or "").strip() or None,
+        "general_comment_en": _compact_text((flow_summary or {}).get("general_comment_en") or "", limit=300) or None,
+        "classification": (flow_summary or {}).get("classification") if isinstance((flow_summary or {}).get("classification"), list) else None,
+    }
+    payload = {
+        "prompt": EXCHANGE_IO_KIND_TAG_BATCH_PROMPT,
+        "context": {
+            "operation": str(operation or "").strip() or None,
+            "flow": flow_context,
+            "process": process_context,
+            "exchanges": labeled_exchanges,
+        },
+        "response_format": {"type": "json_object"},
+    }
+    try:
+        raw = llm.invoke(payload)
+        data = _ensure_dict(raw)
+    except Exception as exc:  # pylint: disable=broad-except
+        LOGGER.warning(
+            "process_from_flow.batch_io_kind_tag_classification_failed",
+            process_id=str(process_id or "").strip() or None,
+            error=str(exc),
+        )
+        data = {}
+
+    result_map = _parse_exchange_io_kind_tag_batch_response(data) if data else {}
+    updated_count = 0
+    for exchange_id, io_kind_tag in result_map.items():
+        exchange = id_to_exchange.get(exchange_id)
+        if not isinstance(exchange, dict):
+            continue
+        if bool(exchange.get("is_reference_flow")):
+            io_kind_tag = "product"
+        previous = _normalize_io_kind_tag(exchange.get("io_kind_tag") or exchange.get(_EXCHANGE_KIND_TAG_NAME))
+        if previous != io_kind_tag:
+            exchange["io_kind_tag"] = io_kind_tag
+            updated_count += 1
+
+    # Keep reference flows stable even if the batch response omits them.
+    for exchange in exchanges:
+        if isinstance(exchange, dict) and bool(exchange.get("is_reference_flow")):
+            exchange["io_kind_tag"] = "product"
+
+    if updated_count > 0:
+        LOGGER.info(
+            "process_from_flow.batch_io_kind_tag_classification_applied",
+            process_id=str(process_id or "").strip() or None,
+            exchange_total=len(labeled_exchanges),
+            updated_count=updated_count,
+        )
 
 
 def _parse_industry_average_response(data: dict[str, Any]) -> tuple[str | None, str | None, list[str], str | None]:
@@ -3759,6 +3919,45 @@ _MATERIAL_ROLE_ALIASES = {
     "product": "product",
     "waste": "waste",
     "service": "service",
+    "unknown": "unknown",
+}
+_IO_KIND_TAG_VALUES = {
+    "raw_material",
+    "auxiliary",
+    "catalyst",
+    "energy",
+    "resource",
+    "emission",
+    "product",
+    "waste",
+    "service",
+    "unknown",
+}
+_IO_KIND_TAG_ALIASES = {
+    "raw": "raw_material",
+    "raw material": "raw_material",
+    "feedstock": "raw_material",
+    "auxiliary material": "auxiliary",
+    "additive": "auxiliary",
+    "elementary_resource": "resource",
+    "natural_resource": "resource",
+    "natural resource": "resource",
+    "resource": "resource",
+    "elementary_emission": "emission",
+    "air_emission": "emission",
+    "water_emission": "emission",
+    "soil_emission": "emission",
+    "air emission": "emission",
+    "water emission": "emission",
+    "soil emission": "emission",
+    "emission": "emission",
+    "product": "product",
+    "waste": "waste",
+    "service": "service",
+    "energy": "energy",
+    "catalyst": "catalyst",
+    "auxiliary": "auxiliary",
+    "raw_material": "raw_material",
     "unknown": "unknown",
 }
 _BALANCE_EXCLUDE_ROLES = {"auxiliary", "catalyst"}
@@ -5074,6 +5273,18 @@ def _normalize_material_role(value: Any) -> str | None:
     return None
 
 
+def _normalize_io_kind_tag(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip().lower()
+    if not text:
+        return None
+    normalized = _IO_KIND_TAG_ALIASES.get(text, text)
+    if normalized in _IO_KIND_TAG_VALUES:
+        return normalized
+    return None
+
+
 def _normalize_balance_exclude(value: Any) -> bool | None:
     if isinstance(value, bool):
         return value
@@ -5549,10 +5760,7 @@ def _apply_balance_auto_revisions(
                     continue
                 material_role = _normalize_material_role(exchange.get("material_role") or exchange.get("materialRole"))
                 balance_exclude = _normalize_balance_exclude(exchange.get("balance_exclude") or exchange.get("balanceExclude"))
-                comment_tags = _parse_exchange_comment_tags(exchange.get("generalComment"))
-                flow_kind = _normalize_flow_type(comment_tags.get(_EXCHANGE_KIND_TAG_NAME))
-                if not flow_kind:
-                    flow_kind = _exchange_flow_type_for_dedupe(exchange, direction=direction)
+                flow_kind = _exchange_flow_type_for_dedupe(exchange, direction=direction)
                 if not _is_core_mass_exchange(
                     material_role=material_role,
                     flow_kind=flow_kind,
@@ -6628,7 +6836,6 @@ def _build_langgraph(
                 citations = _clean_evidence_list(data_source.get("citations")) if isinstance(data_source, dict) else []
                 evidence = _clean_evidence_list(cleaned_exchange.get("evidence"))
                 _merge_value_evidence(cleaned_exchange, citations, evidence)
-                _ensure_exchange_comment_tags(cleaned_exchange)
                 cleaned_exchanges.append(cleaned_exchange)
             if plan_reference_flow and not matched_reference:
                 reference_exchange = {
@@ -6649,7 +6856,6 @@ def _build_langgraph(
                 citations = _clean_evidence_list(data_source.get("citations")) if isinstance(data_source, dict) else []
                 evidence = _clean_evidence_list(reference_exchange.get("evidence"))
                 _merge_value_evidence(reference_exchange, citations, evidence)
-                _ensure_exchange_comment_tags(reference_exchange)
                 cleaned_exchanges.append(reference_exchange)
             cleaned_exchanges = _dedupe_reference_exchanges(
                 cleaned_exchanges,
@@ -6669,6 +6875,17 @@ def _build_langgraph(
                 ]
                 if filtered:
                     cleaned_exchanges = filtered
+            _batch_classify_exchange_io_kind_tags(
+                llm=llm,
+                flow_summary=flow_summary,
+                process_plan=plan,
+                process_id=process_id,
+                operation=operation,
+                exchanges=cleaned_exchanges,
+            )
+            for exchange_item in cleaned_exchanges:
+                if isinstance(exchange_item, dict):
+                    _ensure_exchange_comment_tags(exchange_item)
             cleaned_processes.append({"process_id": process_id, "exchanges": cleaned_exchanges})
         coverage_metrics = _compute_coverage_metrics(cleaned_processes)
         stop_state = dict(state)
@@ -7743,7 +7960,7 @@ def _build_langgraph(
                                 comment_text = f"{comment_text} {evidence_text}"
                         else:
                             comment_text = evidence_text
-                    comment_flow_kind = _exchange_flow_type_for_dedupe(exchange, direction=direction)
+                    comment_flow_kind = _exchange_kind_for_comment_tag(exchange, direction=direction)
                     comment_unit = _resolve_exchange_comment_tag_unit(
                         exchange,
                         reference_info=reference_info,
@@ -8365,10 +8582,7 @@ def _build_langgraph(
                         direction = "Input"
                     if bool(exchange.get("is_reference_flow")):
                         direction = reference_direction
-                    comment_tags = _parse_exchange_comment_tags(exchange.get("generalComment"))
-                    flow_kind = _normalize_flow_type(comment_tags.get(_EXCHANGE_KIND_TAG_NAME))
-                    if not flow_kind:
-                        flow_kind = _exchange_flow_type_for_dedupe(exchange, direction=direction)
+                    flow_kind = _exchange_flow_type_for_dedupe(exchange, direction=direction)
                     is_core_exchange = _is_core_mass_exchange(
                         material_role=material_role,
                         flow_kind=flow_kind,
