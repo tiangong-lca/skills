@@ -3983,9 +3983,12 @@ class ProcessFromFlowState(TypedDict, total=False):
     process_exchanges: list[dict[str, Any]]
     chain_contract: list[dict[str, Any]]
     chain_preflight: dict[str, Any]
+    chain_link_enforcement: dict[str, Any]
     exchange_value_candidates: list[dict[str, Any]]
     exchange_values_applied: bool
     matched_process_exchanges: list[dict[str, Any]]
+    chain_uuid_sync: dict[str, Any]
+    chain_uuid_verify: dict[str, Any]
     process_datasets: list[dict[str, Any]]
     source_datasets: list[dict[str, Any]]
     source_references: list[dict[str, Any]]
@@ -6050,6 +6053,7 @@ def _build_chain_contract(processes: list[dict[str, Any]] | None) -> list[dict[s
         ]
         contract.append(
             {
+                "chain_link_id": f"chain_{idx + 1}_{from_pid}_{to_pid}",
                 "from_pid": from_pid,
                 "to_pid": to_pid,
                 "reference_flow_name": reference_flow_name,
@@ -6121,6 +6125,428 @@ def _run_chain_preflight(
         "errors": errors,
         "checked_pairs": len(checks),
     }
+
+
+def _process_exchanges_by_id(process_exchanges: list[dict[str, Any]] | None) -> dict[str, dict[str, Any]]:
+    mapping: dict[str, dict[str, Any]] = {}
+    for proc in process_exchanges or []:
+        if not isinstance(proc, dict):
+            continue
+        process_id = str(proc.get("process_id") or proc.get("processId") or "").strip()
+        if not process_id:
+            continue
+        mapping[process_id] = proc
+    return mapping
+
+
+def _exchange_direction_text(exchange: dict[str, Any]) -> str:
+    direction = str(exchange.get("exchangeDirection") or "").strip()
+    return direction if direction in {"Input", "Output"} else "Input"
+
+
+def _chain_candidate_exchanges(
+    proc_entry: dict[str, Any] | None,
+    *,
+    direction: str | None = None,
+) -> list[dict[str, Any]]:
+    exchanges = proc_entry.get("exchanges") if isinstance(proc_entry, dict) and isinstance(proc_entry.get("exchanges"), list) else []
+    if direction is None:
+        return [item for item in exchanges if isinstance(item, dict)]
+    return [item for item in exchanges if isinstance(item, dict) and _exchange_direction_text(item) == direction]
+
+
+def _find_upstream_chain_exchange(
+    *,
+    proc_entry: dict[str, Any] | None,
+    contract: dict[str, Any],
+) -> dict[str, Any] | None:
+    if not isinstance(proc_entry, dict):
+        return None
+    chain_link_id = str(contract.get("chain_link_id") or "").strip()
+    ref_name = str(contract.get("reference_flow_name") or "").strip()
+    exchanges = _chain_candidate_exchanges(proc_entry)
+    if chain_link_id:
+        for exchange in exchanges:
+            if str(exchange.get("chain_link_id") or "").strip() != chain_link_id:
+                continue
+            role = str(exchange.get("chain_link_role") or "").strip()
+            if role in {"upstream_reference_output", "upstream_reference_flow"}:
+                return exchange
+    candidates = [item for item in exchanges if bool(item.get("is_reference_flow"))]
+    if ref_name:
+        exact = [item for item in candidates if _flow_name_matches(str(item.get("exchangeName") or "").strip(), ref_name)]
+        if exact:
+            candidates = exact
+    if not candidates:
+        return None
+    if len(candidates) == 1:
+        return candidates[0]
+    return max(candidates, key=_score_product_exchange)
+
+
+def _find_downstream_chain_exchange(
+    *,
+    proc_entry: dict[str, Any] | None,
+    contract: dict[str, Any],
+) -> dict[str, Any] | None:
+    if not isinstance(proc_entry, dict):
+        return None
+    chain_link_id = str(contract.get("chain_link_id") or "").strip()
+    ref_name = str(contract.get("reference_flow_name") or "").strip()
+    inputs = _chain_candidate_exchanges(proc_entry, direction="Input")
+    if chain_link_id:
+        for exchange in inputs:
+            if str(exchange.get("chain_link_id") or "").strip() != chain_link_id:
+                continue
+            role = str(exchange.get("chain_link_role") or "").strip()
+            if role in {"downstream_main_input", "downstream_chain_input"}:
+                return exchange
+    if ref_name:
+        exact = [item for item in inputs if _flow_name_matches(str(item.get("exchangeName") or "").strip(), ref_name)]
+        if exact:
+            if len(exact) == 1:
+                return exact[0]
+            return max(exact, key=_score_product_exchange)
+    return None
+
+
+def _annotate_chain_link_exchange(
+    exchange: dict[str, Any],
+    *,
+    contract: dict[str, Any],
+    role: str,
+) -> None:
+    chain_link_id = str(contract.get("chain_link_id") or "").strip()
+    if chain_link_id:
+        exchange["chain_link_id"] = chain_link_id
+    exchange["chain_link_role"] = role
+    exchange["chain_link_from_pid"] = str(contract.get("from_pid") or "").strip() or None
+    exchange["chain_link_to_pid"] = str(contract.get("to_pid") or "").strip() or None
+    exchange["chain_link_flow_name"] = str(contract.get("reference_flow_name") or "").strip() or None
+
+
+def _derive_injected_chain_input_types(upstream_exchange: dict[str, Any] | None) -> tuple[str, str]:
+    upstream_flow_type = _normalize_flow_type((upstream_exchange or {}).get("flow_type") or (upstream_exchange or {}).get("flowType"))
+    if upstream_flow_type == "waste":
+        return "waste", "waste"
+    if upstream_flow_type == "service":
+        return "service", "service"
+    if upstream_flow_type == "elementary":
+        return "elementary", "resource"
+    return "product", "raw_material"
+
+
+def _inject_missing_downstream_chain_input(
+    *,
+    proc_entry: dict[str, Any],
+    contract: dict[str, Any],
+    upstream_exchange: dict[str, Any] | None,
+) -> dict[str, Any]:
+    exchanges = proc_entry.get("exchanges") if isinstance(proc_entry.get("exchanges"), list) else []
+    unit = str((upstream_exchange or {}).get("unit") or "").strip() or "unit"
+    flow_type, io_kind_tag = _derive_injected_chain_input_types(upstream_exchange)
+    from_pid = str(contract.get("from_pid") or "").strip()
+    to_pid = str(contract.get("to_pid") or "").strip()
+    note = f"Auto-injected chain continuity input ({from_pid} -> {to_pid})."
+    injected: dict[str, Any] = {
+        "exchangeDirection": "Input",
+        "exchangeName": str(contract.get("reference_flow_name") or "").strip() or "intermediate product",
+        "generalComment": note,
+        "unit": unit,
+        "amount": None,
+        "is_reference_flow": False,
+        "flow_type": flow_type,
+        "io_kind_tag": io_kind_tag,
+        "is_chain_link_injected": True,
+        "data_source": {"source_type": "expert_judgement"},
+        "evidence": [note],
+    }
+    if io_kind_tag == "raw_material":
+        injected["material_role"] = "raw_material"
+    _annotate_chain_link_exchange(injected, contract=contract, role="downstream_main_input")
+    _ensure_exchange_comment_tags(injected)
+    exchanges.insert(0, injected)
+    proc_entry["exchanges"] = exchanges
+    return injected
+
+
+def _enforce_chain_input_links(
+    *,
+    chain_contract: list[dict[str, Any]] | None,
+    process_exchanges: list[dict[str, Any]] | None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    updated = copy.deepcopy(process_exchanges) if isinstance(process_exchanges, list) else []
+    proc_by_id = _process_exchanges_by_id(updated)
+    summary: dict[str, Any] = {
+        "checked_pairs": 0,
+        "annotated_upstream": 0,
+        "annotated_downstream": 0,
+        "injected_downstream_inputs": 0,
+        "issues": [],
+        "changes": [],
+    }
+    for contract in [item for item in (chain_contract or []) if isinstance(item, dict)]:
+        summary["checked_pairs"] += 1
+        from_pid = str(contract.get("from_pid") or "").strip()
+        to_pid = str(contract.get("to_pid") or "").strip()
+        ref_name = str(contract.get("reference_flow_name") or "").strip()
+        chain_link_id = str(contract.get("chain_link_id") or "").strip() or None
+        upstream_proc = proc_by_id.get(from_pid)
+        downstream_proc = proc_by_id.get(to_pid)
+        if upstream_proc is None or downstream_proc is None:
+            summary["issues"].append(
+                {
+                    "code": "missing_process_for_chain_link",
+                    "chain_link_id": chain_link_id,
+                    "from_pid": from_pid,
+                    "to_pid": to_pid,
+                    "reference_flow_name": ref_name,
+                }
+            )
+            continue
+        upstream_exchange = _find_upstream_chain_exchange(proc_entry=upstream_proc, contract=contract)
+        if upstream_exchange is None:
+            summary["issues"].append(
+                {
+                    "code": "missing_upstream_reference_exchange",
+                    "chain_link_id": chain_link_id,
+                    "from_pid": from_pid,
+                    "to_pid": to_pid,
+                    "reference_flow_name": ref_name,
+                }
+            )
+        else:
+            had = bool(str(upstream_exchange.get("chain_link_id") or "").strip())
+            _annotate_chain_link_exchange(upstream_exchange, contract=contract, role="upstream_reference_output")
+            if not had:
+                summary["annotated_upstream"] += 1
+
+        downstream_exchange = _find_downstream_chain_exchange(proc_entry=downstream_proc, contract=contract)
+        if downstream_exchange is None:
+            _inject_missing_downstream_chain_input(
+                proc_entry=downstream_proc,
+                contract=contract,
+                upstream_exchange=upstream_exchange,
+            )
+            summary["injected_downstream_inputs"] += 1
+            summary["changes"].append(
+                {
+                    "action": "inject_downstream_main_input",
+                    "chain_link_id": chain_link_id,
+                    "from_pid": from_pid,
+                    "to_pid": to_pid,
+                    "reference_flow_name": ref_name,
+                }
+            )
+        else:
+            had = bool(str(downstream_exchange.get("chain_link_id") or "").strip())
+            _annotate_chain_link_exchange(downstream_exchange, contract=contract, role="downstream_main_input")
+            if not had:
+                summary["annotated_downstream"] += 1
+    summary["status"] = "ok" if not summary["issues"] else "check"
+    return updated, summary
+
+
+def _exchange_selected_uuid(exchange: dict[str, Any]) -> str | None:
+    flow_search = exchange.get("flow_search") if isinstance(exchange.get("flow_search"), dict) else {}
+    value = str(flow_search.get("selected_uuid") or "").strip()
+    return value or None
+
+
+def _exchange_candidate_records_for_chain_uuid_sync(exchange: dict[str, Any]) -> list[dict[str, Any]]:
+    flow_search = exchange.get("flow_search") if isinstance(exchange.get("flow_search"), dict) else {}
+    merged: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for key in ("candidates", "resolution_raw_candidates", "resolution_candidates"):
+        records = flow_search.get(key)
+        if not isinstance(records, list):
+            continue
+        for item in records:
+            if not isinstance(item, dict):
+                continue
+            uuid_value = str(item.get("uuid") or "").strip()
+            if not uuid_value or uuid_value in seen:
+                continue
+            seen.add(uuid_value)
+            merged.append(item)
+    return merged
+
+
+def _exchange_candidates_contain_uuid(exchange: dict[str, Any], uuid_value: str | None) -> bool:
+    target = str(uuid_value or "").strip()
+    if not target:
+        return False
+    return any(str(item.get("uuid") or "").strip() == target for item in _exchange_candidate_records_for_chain_uuid_sync(exchange))
+
+
+def _exchange_candidate_version_for_uuid(exchange: dict[str, Any], uuid_value: str | None) -> str | None:
+    target = str(uuid_value or "").strip()
+    if not target:
+        return None
+    for item in _exchange_candidate_records_for_chain_uuid_sync(exchange):
+        if str(item.get("uuid") or "").strip() != target:
+            continue
+        version = str(item.get("version") or "").strip()
+        if version:
+            return version
+    return None
+
+
+def _set_exchange_selected_uuid_for_chain(
+    exchange: dict[str, Any],
+    *,
+    selected_uuid: str,
+    selected_version: str | None,
+    reason: str,
+    stage: str,
+) -> None:
+    flow_search = exchange.get("flow_search") if isinstance(exchange.get("flow_search"), dict) else {}
+    flow_search["selected_uuid"] = selected_uuid
+    if selected_version:
+        flow_search["selected_version"] = selected_version
+    flow_search["selected_reason"] = reason
+    flow_search["chain_uuid_sync"] = {
+        "stage": stage,
+        "selected_uuid": selected_uuid,
+        "selected_version": selected_version,
+        "reason": reason,
+    }
+    exchange["flow_search"] = flow_search
+
+
+def _sync_chain_link_uuids(
+    *,
+    chain_contract: list[dict[str, Any]] | None,
+    process_exchanges: list[dict[str, Any]] | None,
+    apply_repairs: bool,
+    stage: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    updated = copy.deepcopy(process_exchanges) if (apply_repairs and isinstance(process_exchanges, list)) else [item for item in (process_exchanges or []) if isinstance(item, dict)]
+    proc_by_id = _process_exchanges_by_id(updated)
+    summary: dict[str, Any] = {
+        "stage": stage,
+        "status": "ok",
+        "apply_repairs": bool(apply_repairs),
+        "checked_pairs": 0,
+        "ok_pairs": 0,
+        "repaired_pairs": 0,
+        "mismatch_pairs": 0,
+        "missing_exchange_pairs": 0,
+        "missing_uuid_pairs": 0,
+        "issues": [],
+        "repairs": [],
+    }
+    for contract in [item for item in (chain_contract or []) if isinstance(item, dict)]:
+        summary["checked_pairs"] += 1
+        chain_link_id = str(contract.get("chain_link_id") or "").strip() or None
+        from_pid = str(contract.get("from_pid") or "").strip()
+        to_pid = str(contract.get("to_pid") or "").strip()
+        ref_name = str(contract.get("reference_flow_name") or "").strip()
+        upstream_exchange = _find_upstream_chain_exchange(proc_entry=proc_by_id.get(from_pid), contract=contract)
+        downstream_exchange = _find_downstream_chain_exchange(proc_entry=proc_by_id.get(to_pid), contract=contract)
+        if upstream_exchange is None or downstream_exchange is None:
+            summary["missing_exchange_pairs"] += 1
+            summary["issues"].append(
+                {
+                    "code": "chain_exchange_missing",
+                    "chain_link_id": chain_link_id,
+                    "from_pid": from_pid,
+                    "to_pid": to_pid,
+                    "reference_flow_name": ref_name,
+                    "upstream_missing": upstream_exchange is None,
+                    "downstream_missing": downstream_exchange is None,
+                }
+            )
+            continue
+
+        upstream_uuid = _exchange_selected_uuid(upstream_exchange)
+        downstream_uuid = _exchange_selected_uuid(downstream_exchange)
+        if upstream_uuid and downstream_uuid and upstream_uuid == downstream_uuid:
+            summary["ok_pairs"] += 1
+            continue
+
+        if not upstream_uuid and not downstream_uuid:
+            summary["missing_uuid_pairs"] += 1
+            summary["issues"].append(
+                {
+                    "code": "chain_uuid_missing_both",
+                    "chain_link_id": chain_link_id,
+                    "from_pid": from_pid,
+                    "to_pid": to_pid,
+                    "reference_flow_name": ref_name,
+                }
+            )
+            continue
+
+        repaired = False
+        if apply_repairs:
+            if upstream_uuid and (not downstream_uuid or downstream_uuid != upstream_uuid):
+                if _exchange_candidates_contain_uuid(downstream_exchange, upstream_uuid):
+                    version = _exchange_candidate_version_for_uuid(downstream_exchange, upstream_uuid)
+                    _set_exchange_selected_uuid_for_chain(
+                        downstream_exchange,
+                        selected_uuid=upstream_uuid,
+                        selected_version=version,
+                        reason=f"Synchronized chain UUID from upstream ({from_pid}->{to_pid}).",
+                        stage=stage,
+                    )
+                    summary["repaired_pairs"] += 1
+                    summary["repairs"].append(
+                        {
+                            "chain_link_id": chain_link_id,
+                            "from_pid": from_pid,
+                            "to_pid": to_pid,
+                            "direction": "upstream_to_downstream",
+                            "selected_uuid": upstream_uuid,
+                            "selected_version": version,
+                        }
+                    )
+                    repaired = True
+            elif downstream_uuid and not upstream_uuid:
+                if _exchange_candidates_contain_uuid(upstream_exchange, downstream_uuid):
+                    version = _exchange_candidate_version_for_uuid(upstream_exchange, downstream_uuid)
+                    _set_exchange_selected_uuid_for_chain(
+                        upstream_exchange,
+                        selected_uuid=downstream_uuid,
+                        selected_version=version,
+                        reason=f"Synchronized chain UUID from downstream ({from_pid}->{to_pid}).",
+                        stage=stage,
+                    )
+                    summary["repaired_pairs"] += 1
+                    summary["repairs"].append(
+                        {
+                            "chain_link_id": chain_link_id,
+                            "from_pid": from_pid,
+                            "to_pid": to_pid,
+                            "direction": "downstream_to_upstream",
+                            "selected_uuid": downstream_uuid,
+                            "selected_version": version,
+                        }
+                    )
+                    repaired = True
+        if repaired:
+            continue
+
+        summary["mismatch_pairs"] += 1
+        summary["issues"].append(
+            {
+                "code": "chain_uuid_mismatch" if (upstream_uuid and downstream_uuid) else "chain_uuid_partial_missing",
+                "chain_link_id": chain_link_id,
+                "from_pid": from_pid,
+                "to_pid": to_pid,
+                "reference_flow_name": ref_name,
+                "upstream_uuid": upstream_uuid,
+                "downstream_uuid": downstream_uuid,
+                "downstream_has_upstream_in_candidates": bool(upstream_uuid and _exchange_candidates_contain_uuid(downstream_exchange, upstream_uuid)),
+                "upstream_has_downstream_in_candidates": bool(downstream_uuid and _exchange_candidates_contain_uuid(upstream_exchange, downstream_uuid)),
+            }
+        )
+
+    if summary["missing_exchange_pairs"] or summary["mismatch_pairs"]:
+        summary["status"] = "check"
+    elif summary["missing_uuid_pairs"]:
+        summary["status"] = "insufficient"
+    return updated, summary
 
 
 
@@ -6629,15 +7055,31 @@ def _build_langgraph(
 
     def generate_exchanges(state: ProcessFromFlowState) -> ProcessFromFlowState:
         if state.get("process_exchanges"):
-            updates: dict[str, Any] = {"step_markers": _update_step_markers(state, "step3")}
+            chain_contract = state.get("chain_contract") if isinstance(state.get("chain_contract"), list) else _build_chain_contract(state.get("processes"))
+            existing_process_exchanges = state.get("process_exchanges") if isinstance(state.get("process_exchanges"), list) else []
+            enforced_processes, chain_link_enforcement = _enforce_chain_input_links(
+                chain_contract=chain_contract,
+                process_exchanges=existing_process_exchanges,
+            )
+            updates: dict[str, Any] = {
+                "step_markers": _update_step_markers(state, "step3"),
+                "chain_contract": chain_contract,
+                "chain_link_enforcement": chain_link_enforcement,
+            }
+            if enforced_processes != existing_process_exchanges:
+                updates["process_exchanges"] = enforced_processes
             coverage_metrics = state.get("coverage_metrics")
             if not isinstance(coverage_metrics, dict):
-                coverage_metrics = _compute_coverage_metrics(state.get("process_exchanges") or [])
+                coverage_metrics = _compute_coverage_metrics(enforced_processes)
                 updates["coverage_metrics"] = coverage_metrics
             if not isinstance(state.get("stop_rule_decision"), dict):
-                updates["stop_rule_decision"] = _evaluate_stop_rules(state, coverage_metrics)
+                stop_state = dict(state)
+                stop_state["process_exchanges"] = enforced_processes
+                updates["stop_rule_decision"] = _evaluate_stop_rules(stop_state, coverage_metrics)
             if not isinstance(state.get("coverage_history"), list):
-                updates["coverage_history"] = _append_coverage_history(state, coverage_metrics)
+                history_state = dict(state)
+                history_state["process_exchanges"] = enforced_processes
+                updates["coverage_history"] = _append_coverage_history(history_state, coverage_metrics)
             return updates
         if llm is None:
             summary = state.get("flow_summary") or {}
@@ -6662,14 +7104,23 @@ def _build_langgraph(
             _merge_value_evidence(exchange, citations, evidence)
             _ensure_exchange_comment_tags(exchange)
             process_exchanges = [{"process_id": "P1", "exchanges": [exchange]}]
-            coverage_metrics = _compute_coverage_metrics(process_exchanges)
-            stop_rule_decision = _evaluate_stop_rules(state, coverage_metrics)
-            coverage_history = _append_coverage_history(state, coverage_metrics)
+            chain_contract = state.get("chain_contract") if isinstance(state.get("chain_contract"), list) else _build_chain_contract(state.get("processes"))
+            enforced_processes, chain_link_enforcement = _enforce_chain_input_links(
+                chain_contract=chain_contract,
+                process_exchanges=process_exchanges,
+            )
+            coverage_metrics = _compute_coverage_metrics(enforced_processes)
+            stop_state = dict(state)
+            stop_state["process_exchanges"] = enforced_processes
+            stop_rule_decision = _evaluate_stop_rules(stop_state, coverage_metrics)
+            coverage_history = _append_coverage_history(stop_state, coverage_metrics)
             return {
-                "process_exchanges": process_exchanges,
+                "process_exchanges": enforced_processes,
                 "coverage_metrics": coverage_metrics,
                 "coverage_history": coverage_history,
                 "stop_rule_decision": stop_rule_decision,
+                "chain_contract": chain_contract,
+                "chain_link_enforcement": chain_link_enforcement,
                 "step_markers": _update_step_markers(state, "step3"),
             }
         # Search for scientific references for exchange generation
@@ -6887,17 +7338,25 @@ def _build_langgraph(
                 if isinstance(exchange_item, dict):
                     _ensure_exchange_comment_tags(exchange_item)
             cleaned_processes.append({"process_id": process_id, "exchanges": cleaned_exchanges})
-        coverage_metrics = _compute_coverage_metrics(cleaned_processes)
+        chain_contract = state.get("chain_contract") if isinstance(state.get("chain_contract"), list) else _build_chain_contract(state.get("processes"))
+        enforced_processes, chain_link_enforcement = _enforce_chain_input_links(
+            chain_contract=chain_contract,
+            process_exchanges=cleaned_processes,
+        )
+        coverage_metrics = _compute_coverage_metrics(enforced_processes)
         stop_state = dict(state)
         stop_state["scientific_references"] = scientific_references
+        stop_state["process_exchanges"] = enforced_processes
         stop_rule_decision = _evaluate_stop_rules(stop_state, coverage_metrics)
         coverage_history = _append_coverage_history(stop_state, coverage_metrics)
         return {
-            "process_exchanges": cleaned_processes,
+            "process_exchanges": enforced_processes,
             "scientific_references": scientific_references,
             "coverage_metrics": coverage_metrics,
             "coverage_history": coverage_history,
             "stop_rule_decision": stop_rule_decision,
+            "chain_contract": chain_contract,
+            "chain_link_enforcement": chain_link_enforcement,
             "step_markers": _update_step_markers(state, "step3"),
         }
 
@@ -7269,6 +7728,49 @@ def _build_langgraph(
             elapsed_seconds=round(elapsed_total, 2),
         )
         return {"matched_process_exchanges": matched}
+
+    def sync_chain_link_uuids(state: ProcessFromFlowState) -> ProcessFromFlowState:
+        matched_process_exchanges = state.get("matched_process_exchanges")
+        chain_contract = state.get("chain_contract") if isinstance(state.get("chain_contract"), list) else _build_chain_contract(state.get("processes"))
+        if not isinstance(matched_process_exchanges, list):
+            summary = {
+                "stage": "post_match",
+                "status": "insufficient",
+                "apply_repairs": True,
+                "checked_pairs": 0,
+                "ok_pairs": 0,
+                "repaired_pairs": 0,
+                "mismatch_pairs": 0,
+                "missing_exchange_pairs": 0,
+                "missing_uuid_pairs": 0,
+                "issues": [{"code": "matched_process_exchanges_missing"}],
+                "repairs": [],
+            }
+            return {
+                "chain_contract": chain_contract,
+                "chain_uuid_sync": summary,
+            }
+        updated_matches, summary = _sync_chain_link_uuids(
+            chain_contract=chain_contract,
+            process_exchanges=matched_process_exchanges,
+            apply_repairs=True,
+            stage="post_match",
+        )
+        if str(summary.get("status") or "").strip().lower() == "check":
+            LOGGER.warning(
+                "process_from_flow.chain_uuid_sync_check",
+                stage=summary.get("stage"),
+                mismatch_pairs=summary.get("mismatch_pairs"),
+                missing_exchange_pairs=summary.get("missing_exchange_pairs"),
+                missing_uuid_pairs=summary.get("missing_uuid_pairs"),
+                repaired_pairs=summary.get("repaired_pairs"),
+                checked_pairs=summary.get("checked_pairs"),
+            )
+        return {
+            "matched_process_exchanges": updated_matches,
+            "chain_contract": chain_contract,
+            "chain_uuid_sync": summary,
+        }
 
     def align_exchange_units(state: ProcessFromFlowState) -> ProcessFromFlowState:
         if state.get("unit_alignment_applied"):
@@ -8479,6 +8981,49 @@ def _build_langgraph(
             "step_markers": _update_step_markers(state, "placeholders"),
         }
 
+    def verify_chain_link_uuids(state: ProcessFromFlowState) -> ProcessFromFlowState:
+        matched_process_exchanges = state.get("matched_process_exchanges")
+        chain_contract = state.get("chain_contract") if isinstance(state.get("chain_contract"), list) else _build_chain_contract(state.get("processes"))
+        if not isinstance(matched_process_exchanges, list):
+            summary = {
+                "stage": "post_placeholder_verify",
+                "status": "insufficient",
+                "apply_repairs": False,
+                "checked_pairs": 0,
+                "ok_pairs": 0,
+                "repaired_pairs": 0,
+                "mismatch_pairs": 0,
+                "missing_exchange_pairs": 0,
+                "missing_uuid_pairs": 0,
+                "issues": [{"code": "matched_process_exchanges_missing"}],
+                "repairs": [],
+            }
+            return {
+                "chain_contract": chain_contract,
+                "chain_uuid_verify": summary,
+            }
+        _, summary = _sync_chain_link_uuids(
+            chain_contract=chain_contract,
+            process_exchanges=matched_process_exchanges,
+            apply_repairs=False,
+            stage="post_placeholder_verify",
+        )
+        status = str(summary.get("status") or "").strip().lower()
+        if status in {"check", "insufficient"}:
+            LOGGER.warning(
+                "process_from_flow.chain_uuid_verify_status",
+                stage=summary.get("stage"),
+                status=status,
+                mismatch_pairs=summary.get("mismatch_pairs"),
+                missing_exchange_pairs=summary.get("missing_exchange_pairs"),
+                missing_uuid_pairs=summary.get("missing_uuid_pairs"),
+                checked_pairs=summary.get("checked_pairs"),
+            )
+        return {
+            "chain_contract": chain_contract,
+            "chain_uuid_verify": summary,
+        }
+
     def balance_review(state: ProcessFromFlowState) -> ProcessFromFlowState:
         if "balance_review" in state:
             return {}
@@ -8991,12 +9536,14 @@ def _build_langgraph(
     graph.add_node("enrich_exchange_amounts", enrich_exchange_amounts)
     graph.add_node("preflight_chain_continuity", preflight_chain_continuity)
     graph.add_node("match_flows", match_flows)
+    graph.add_node("sync_chain_link_uuids", sync_chain_link_uuids)
     graph.add_node("align_exchange_units", align_exchange_units)
     graph.add_node("density_conversion", density_conversion)
     graph.add_node("build_sources", build_sources)
     graph.add_node("generate_intended_applications", generate_intended_applications)
     graph.add_node("build_process_datasets", build_process_datasets)
     graph.add_node("resolve_placeholders", resolve_placeholders)
+    graph.add_node("verify_chain_link_uuids", verify_chain_link_uuids)
     graph.add_node("balance_review", balance_review)
     graph.add_node("generate_data_cutoff_principles", generate_data_cutoff_principles)
 
@@ -9024,6 +9571,10 @@ def _build_langgraph(
     )
     graph.add_conditional_edges(
         "match_flows",
+        lambda state: "sync_chain_link_uuids",
+    )
+    graph.add_conditional_edges(
+        "sync_chain_link_uuids",
         lambda state: END if (str(state.get("stop_after") or "").strip().lower() == "matches") else "align_exchange_units",
     )
     graph.add_edge("align_exchange_units", "density_conversion")
@@ -9034,7 +9585,8 @@ def _build_langgraph(
     )
     graph.add_edge("generate_intended_applications", "build_process_datasets")
     graph.add_edge("build_process_datasets", "resolve_placeholders")
-    graph.add_edge("resolve_placeholders", "balance_review")
+    graph.add_edge("resolve_placeholders", "verify_chain_link_uuids")
+    graph.add_edge("verify_chain_link_uuids", "balance_review")
     graph.add_edge("balance_review", "generate_data_cutoff_principles")
     graph.add_edge("generate_data_cutoff_principles", END)
 
