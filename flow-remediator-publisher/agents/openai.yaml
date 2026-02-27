@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flow Remediator Publisher"
+  short_description: "Review, fix, and publish flow versions"
+  default_prompt: "Use $flow-remediator-publisher to review a UUID list of flows, generate safe fixes, and publish new versions via MCP insert."
