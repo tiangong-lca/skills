@@ -142,8 +142,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--publish-flows",
+        dest="publish_flows",
         action="store_true",
-        help="Also publish placeholder flow datasets, rewrite process references, and export flow JSONs (disabled by default).",
+        help="Publish placeholder flow datasets, rewrite process references, and export flow JSONs (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-publish-flows",
+        dest="publish_flows",
+        action="store_false",
+        help="Disable placeholder flow publishing and keep unresolved flow placeholders in process datasets.",
     )
     parser.add_argument(
         "--commit",
@@ -170,6 +177,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow --publish-only --publish-flows to rebuild flow publish plans from process datasets when needed.",
     )
+    parser.set_defaults(publish_flows=True)
     return parser.parse_args()
 
 

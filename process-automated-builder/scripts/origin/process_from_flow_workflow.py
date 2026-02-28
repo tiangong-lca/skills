@@ -84,7 +84,18 @@ def parse_args() -> argparse.Namespace:
         action="store_false",
         help="Disable publishing and keep outputs local under exports/.",
     )
-    parser.add_argument("--publish-flows", action="store_true", help="Also publish placeholder flow datasets.")
+    parser.add_argument(
+        "--publish-flows",
+        dest="publish_flows",
+        action="store_true",
+        help="Also publish placeholder flow datasets (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-publish-flows",
+        dest="publish_flows",
+        action="store_false",
+        help="Disable placeholder flow publishing.",
+    )
     parser.add_argument(
         "--commit",
         dest="commit",
@@ -97,7 +108,7 @@ def parse_args() -> argparse.Namespace:
         action="store_false",
         help="Publish in dry-run mode without remote commit.",
     )
-    parser.set_defaults(publish=True, commit=True)
+    parser.set_defaults(publish=True, publish_flows=True, commit=True)
     parser.add_argument(
         "--stop-after",
         choices=("references", "tech", "processes", "exchanges", "matches", "sources", "datasets"),
