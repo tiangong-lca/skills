@@ -1383,6 +1383,7 @@ class FlowPublisher:
         self._prepared: list[FlowPublishPlan] = []
         self._strict_flow_property_check = bool(strict_flow_property_check)
         self._flow_property_candidate_limit = max(4, min(int(flow_property_candidate_limit), 20))
+        self._flow_property_min_confidence = max(0.0, min(float(os.getenv("TIANGONG_PFF_FLOW_PROPERTY_MIN_CONFIDENCE", "0.6")), 1.0))
         self._flow_property_decisions: list[dict[str, Any]] = []
         self._held_flows: list[dict[str, Any]] = []
 
@@ -1673,7 +1674,7 @@ class FlowPublisher:
                 selected_uuid=descriptor.uuid,
                 candidate_uuids=(descriptor.uuid,),
             )
-            return PropertyDecision(
+            return self._apply_confidence_gate(PropertyDecision(
                 selected_uuid=descriptor.uuid,
                 selected_name=descriptor.name,
                 selected_version=self._registry.get_version(descriptor.uuid),
@@ -1684,7 +1685,7 @@ class FlowPublisher:
                 validation_passed=validation_passed,
                 validation_errors=validation_errors,
                 mean_value=override.mean_value,
-            )
+            ))
 
         candidate_property = _coerce_text(candidate.get("flow_properties")) if candidate else ""
         if candidate_property:
@@ -1695,7 +1696,7 @@ class FlowPublisher:
                     selected_uuid=descriptor.uuid,
                     candidate_uuids=(descriptor.uuid,),
                 )
-                return PropertyDecision(
+                return self._apply_confidence_gate(PropertyDecision(
                     selected_uuid=descriptor.uuid if validation_passed else None,
                     selected_name=descriptor.name,
                     selected_version=self._registry.get_version(descriptor.uuid),
@@ -1710,9 +1711,20 @@ class FlowPublisher:
                     validation_passed=validation_passed,
                     validation_errors=validation_errors,
                     is_uncertain=not validation_passed,
-                )
+                ))
 
         hints = _parse_flowsearch_hints(_extract_general_comment(exchange))
+        if self._is_ambiguous_unit_selection(exchange):
+            return PropertyDecision(
+                selected_uuid=None,
+                confidence=0.0,
+                reason="Reference output unit is item/unit-like without explicit physical dimension evidence; manual review required.",
+                candidate_uuids=(),
+                decision_mode="manual_required",
+                validation_passed=False,
+                validation_errors=("unit_dimension_ambiguous",),
+                is_uncertain=True,
+            )
         ranked_candidates = self._rank_property_candidates(exchange=exchange, hints=hints, candidate=candidate)
         candidate_descriptors = [descriptor for descriptor, _score, _why in ranked_candidates]
         candidate_uuids = tuple(descriptor.uuid for descriptor in candidate_descriptors)
@@ -1731,24 +1743,24 @@ class FlowPublisher:
         top_descriptor, top_score, top_reasons = ranked_candidates[0]
         second_score = ranked_candidates[1][1] if len(ranked_candidates) > 1 else None
         if len(ranked_candidates) == 1:
-            return self._decision_from_descriptor(
+            return self._apply_confidence_gate(self._decision_from_descriptor(
                 exchange=exchange,
                 descriptor=top_descriptor,
                 candidate_uuids=candidate_uuids,
                 confidence=0.92,
                 reason=f"Only one unit-compatible candidate available ({top_descriptor.name}).",
                 decision_mode="rule_fallback",
-            )
+            ))
 
         if self._is_property_rule_strong_match(top_descriptor, top_score, second_score, exchange):
-            return self._decision_from_descriptor(
+            return self._apply_confidence_gate(self._decision_from_descriptor(
                 exchange=exchange,
                 descriptor=top_descriptor,
                 candidate_uuids=candidate_uuids,
                 confidence=min(0.96, 0.65 + max(0.0, top_score) / 20.0),
                 reason="Rule-based selection from local candidate ranking. " + "; ".join(top_reasons[:3]),
                 decision_mode="rule_fallback",
-            )
+            ))
 
         if self._llm is not None:
             llm_payload = self._select_flow_property_with_llm(
@@ -1787,16 +1799,18 @@ class FlowPublisher:
                             return retry_decision
                         decision = retry_decision
                 if decision.validation_passed:
-                    return decision
+                    return self._apply_confidence_gate(decision)
 
         if top_score > 0:
-            return self._decision_from_descriptor(
-                exchange=exchange,
-                descriptor=top_descriptor,
-                candidate_uuids=candidate_uuids,
+            return PropertyDecision(
+                selected_uuid=None,
                 confidence=min(0.8, 0.5 + max(0.0, top_score) / 30.0),
-                reason="Rule fallback after LLM unavailable/invalid. " + "; ".join(top_reasons[:3]),
-                decision_mode="rule_fallback",
+                reason="Candidates exist but auto-selection is disallowed without high-confidence deterministic/validated decision.",
+                candidate_uuids=candidate_uuids,
+                decision_mode="manual_required",
+                validation_passed=False,
+                validation_errors=("auto_selection_blocked",),
+                is_uncertain=True,
             )
 
         return PropertyDecision(
@@ -1807,6 +1821,38 @@ class FlowPublisher:
             decision_mode="manual_required",
             validation_passed=False,
             validation_errors=("selection_uncertain",),
+            is_uncertain=True,
+        )
+
+    def _is_ambiguous_unit_selection(self, exchange: Mapping[str, Any]) -> bool:
+        unit_raw = _resolve_unit(exchange)
+        token = _normalize_unit_token(unit_raw)
+        dim = _unit_dimension(unit_raw)
+        if token in {"unit", "item", "items"}:
+            return True
+        return dim == "items"
+
+    def _apply_confidence_gate(self, decision: PropertyDecision) -> PropertyDecision:
+        if decision.selected_uuid is None:
+            return decision
+        if decision.confidence >= self._flow_property_min_confidence:
+            return decision
+        errors = tuple(list(decision.validation_errors) + ["confidence_below_threshold"])
+        return PropertyDecision(
+            selected_uuid=None,
+            selected_name=decision.selected_name,
+            selected_version=decision.selected_version,
+            confidence=decision.confidence,
+            reason=(
+                f"Automatic decision confidence {decision.confidence:.3f} below threshold "
+                f"{self._flow_property_min_confidence:.3f}; manual review required."
+            ),
+            candidate_uuids=decision.candidate_uuids,
+            decision_mode="manual_required",
+            validation_passed=False,
+            validation_errors=errors,
+            mean_value=decision.mean_value,
+            retry_count=decision.retry_count,
             is_uncertain=True,
         )
 
