@@ -115,6 +115,7 @@ from .prompts import (
     PLACEHOLDER_QUERY_BUILDER_PROMPT,
     PLACEHOLDER_UUID_SELECTOR_PROMPT,
     PROCESS_SPLIT_PROMPT,
+    REFERENCE_OUTPUT_UNIT_PROMPT,
     REFERENCE_CLUSTER_PROMPT,
     TECH_DESCRIPTION_PROMPT,
 )
@@ -128,9 +129,6 @@ REFERENCE_CLUSTER_MAX_RECORDS = 2
 INDUSTRY_AVERAGE_TOP_K = 5
 REFERENCE_COUNTRY_PREFERENCE = "China"
 REFERENCE_COUNTRY_ALIASES = ("China", "Chinese", "中国")
-_LOCATION_DATA_DIR = Path(__file__).resolve().parents[3] / "input_data" / "location"
-_LOCATION_EN_PATH = _LOCATION_DATA_DIR / "tidas_locations.json"
-_LOCATION_ZH_PATH = _LOCATION_DATA_DIR / "tidas_locations_zh.json"
 _LOCATION_SPLIT_PATTERN = re.compile(r"[;,/|>]+")
 
 REFERENCE_SEARCH_KEY = "step_1a_reference_search"
@@ -151,13 +149,64 @@ SI_DOCX_MAX_TABLES = 6
 SI_DOCX_MAX_PARAGRAPHS = 40
 SI_XLSX_MAX_SHEETS = 3
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_FLOWPROPERTY_DIR = _REPO_ROOT / "input_data" / "flowproperties"
-_UNIT_GROUP_DIR = _REPO_ROOT / "input_data" / "units"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_RESOURCE_ROOT = _REPO_ROOT / "tiangong_lca_spec" / "resources"
+_LOCATION_DATA_DIR = _RESOURCE_ROOT / "location"
+_LOCATION_EN_PATH = _LOCATION_DATA_DIR / "tidas_locations.json"
+_LOCATION_ZH_PATH = _LOCATION_DATA_DIR / "tidas_locations_zh.json"
+_FLOWPROPERTY_DIR = _RESOURCE_ROOT / "flowproperties"
+_UNIT_GROUP_DIR = _RESOURCE_ROOT / "units"
 _PFF_RUNTIME_STATE_PATH_ENV = "TIANGONG_PFF_STATE_PATH"
 _PFF_RUNTIME_RUN_ID_ENV = "TIANGONG_PFF_RUN_ID"
 _PFF_RUNTIME_ARTIFACTS_ROOT = Path("artifacts/process_from_flow")
 _ILCD_GUARDRAILS_PATH = _REPO_ROOT / "references" / "ilcd_method_guardrails.md"
+_REFERENCE_OUTPUT_POLICY_PATH = _REPO_ROOT / "references" / "reference_output_policy.json"
+
+_REFERENCE_OUTPUT_DEFAULT_POLICY: dict[str, Any] = {
+    "reference_output": {
+        "fallback_unit": "unit",
+        "prefer_physical_dimensions": ["mass", "energy", "volume", "area", "length"],
+        "allow_count_unit_fallback": True,
+        "llm_enabled": True,
+        "llm_min_confidence": 0.55,
+        "low_confidence_threshold": 0.45,
+    },
+    "hard_rules": {
+        "forbid_lcia_units_for_product_waste": True,
+        "forbid_lcia_keywords_for_product_waste": True,
+    },
+    "lcia_tokens": {
+        "unit_tokens": [
+            "ctue",
+            "ctuh",
+            "daly",
+            "kgco2eq",
+            "kgco2e",
+            "kgso2eq",
+            "kgpo4eq",
+            "kgpo43eq",
+            "kgpm25eq",
+            "m3a",
+            "m3*d",
+        ],
+        "name_keywords": [
+            "impact",
+            "potential",
+            "gwp",
+            "adp",
+            "ep",
+            "ped",
+            "ri",
+            "ctue",
+            "ctuh",
+            "daly",
+            "acidification",
+            "eutrophication",
+            "photochemical",
+        ],
+    },
+    "reference_unit_overrides": [],
+}
 
 
 @lru_cache(maxsize=1)
@@ -174,6 +223,41 @@ def _load_ilcd_guardrails_excerpt(*, max_chars: int = 2600) -> str:
     if len(compact) > max_chars:
         compact = compact[:max_chars].rstrip() + "\n..."
     return compact
+
+
+def _deep_merge_mapping(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    merged = copy.deepcopy(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge_mapping(merged[key], value)
+        else:
+            merged[key] = copy.deepcopy(value)
+    return merged
+
+
+@lru_cache(maxsize=1)
+def _load_reference_output_policy() -> dict[str, Any]:
+    policy = copy.deepcopy(_REFERENCE_OUTPUT_DEFAULT_POLICY)
+    path = _REFERENCE_OUTPUT_POLICY_PATH
+    if not path.exists():
+        return policy
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:  # pylint: disable=broad-except
+        LOGGER.warning(
+            "process_from_flow.reference_output_policy_load_failed",
+            path=str(path),
+            error=str(exc),
+        )
+        return policy
+    if not isinstance(loaded, dict):
+        LOGGER.warning(
+            "process_from_flow.reference_output_policy_invalid",
+            path=str(path),
+            reason="top_level_not_object",
+        )
+        return policy
+    return _deep_merge_mapping(policy, loaded)
 
 
 @dataclass(frozen=True, slots=True)
@@ -2107,6 +2191,19 @@ _UNIT_DIMENSIONS: dict[str, tuple[str, float]] = {
     "dm3": ("volume", 0.001),
     "cm3": ("volume", 1.0e-6),
     "ml": ("volume", 1.0e-6),
+    "m2": ("area", 1.0),
+    "cm2": ("area", 1.0e-4),
+    "ha": ("area", 1.0e4),
+    "m": ("length", 1.0),
+    "cm": ("length", 1.0e-2),
+    "km": ("length", 1.0e3),
+    "piece": ("items", 1.0),
+    "pieces": ("items", 1.0),
+    "pc": ("items", 1.0),
+    "pcs": ("items", 1.0),
+    "ea": ("items", 1.0),
+    "unit": ("items", 1.0),
+    "units": ("items", 1.0),
 }
 
 _AMBIGUOUS_BALANCE_UNITS = {
@@ -4024,6 +4121,7 @@ class ProcessFromFlowState(TypedDict, total=False):
     technology_routes: list[dict[str, Any]]
     process_routes: list[dict[str, Any]]
     selected_route_id: str
+    reference_output_decision_summary: dict[str, Any]
     intended_applications: dict[str, dict[str, str]] | dict[str, str] | list[str]
     processes: list[dict[str, Any]]
     process_exchanges: list[dict[str, Any]]
@@ -5506,15 +5604,155 @@ def _fallback_data_treatment_principles(
     return notes[:5]
 
 
-def _normalize_quantitative_reference(value: Any, fallback_flow_name: str | None) -> str:
-    text = str(value).strip() if value is not None else ""
+_REFERENCE_UNIT_CANONICAL: dict[str, str] = {
+    "kg": "kg",
+    "g": "g",
+    "mg": "mg",
+    "t": "t",
+    "mj": "MJ",
+    "gj": "GJ",
+    "j": "J",
+    "kwh": "kWh",
+    "mwh": "MWh",
+    "m3": "m3",
+    "l": "L",
+    "liter": "L",
+    "litre": "L",
+    "ml": "mL",
+    "m2": "m2",
+    "m": "m",
+    "piece": "unit",
+    "pieces": "unit",
+    "pc": "unit",
+    "pcs": "unit",
+    "ea": "unit",
+    "unit": "unit",
+    "units": "unit",
+    "item": "unit",
+    "items": "unit",
+}
+
+_REFERENCE_DIMENSION_FALLBACK_UNITS: dict[str, str] = {
+    "mass": "kg",
+    "energy": "kWh",
+    "volume": "m3",
+    "area": "m2",
+    "length": "m",
+}
+
+
+def _canonical_reference_unit(value: str | None) -> str | None:
+    token = _normalize_unit_token(value)
+    if not token:
+        return None
+    if token in _REFERENCE_UNIT_CANONICAL:
+        return _REFERENCE_UNIT_CANONICAL[token]
+    return str(value).strip() if value is not None else None
+
+
+def _reference_output_fallback_unit(policy: dict[str, Any] | None = None) -> str:
+    cfg = (policy or {}).get("reference_output") if isinstance(policy, dict) else {}
+    fallback = str((cfg or {}).get("fallback_unit") or "").strip()
+    canonical = _canonical_reference_unit(fallback)
+    allow_count = bool((cfg or {}).get("allow_count_unit_fallback", True))
+    if canonical and (allow_count or not _is_count_style_unit(canonical)):
+        return canonical
+    preferred_dimensions = cfg.get("prefer_physical_dimensions") if isinstance(cfg, dict) else None
+    if isinstance(preferred_dimensions, list):
+        for item in preferred_dimensions:
+            dimension = str(item or "").strip().lower()
+            unit = _REFERENCE_DIMENSION_FALLBACK_UNITS.get(dimension)
+            if unit:
+                return unit
+    return "kg" if not allow_count else (canonical or "unit")
+
+
+def _lcia_unit_tokens(policy: dict[str, Any] | None = None) -> set[str]:
+    cfg = (policy or {}).get("lcia_tokens") if isinstance(policy, dict) else {}
+    values = cfg.get("unit_tokens") if isinstance(cfg, dict) else None
+    if not isinstance(values, list):
+        return set()
+    return {
+        _normalize_unit_token(str(item))
+        for item in values
+        if isinstance(item, (str, int, float)) and _normalize_unit_token(str(item))
+    }
+
+
+def _lcia_name_keywords(policy: dict[str, Any] | None = None) -> list[str]:
+    cfg = (policy or {}).get("lcia_tokens") if isinstance(policy, dict) else {}
+    values = cfg.get("name_keywords") if isinstance(cfg, dict) else None
+    if not isinstance(values, list):
+        return []
+    return [str(item).strip().lower() for item in values if str(item).strip()]
+
+
+def _is_lcia_impact_unit(unit: str | None, policy: dict[str, Any] | None = None) -> bool:
+    token = _normalize_unit_token(unit)
+    if not token:
+        return False
+    for blocked in _lcia_unit_tokens(policy):
+        if token == blocked or token.startswith(blocked):
+            return True
+    return False
+
+
+def _is_lcia_impact_name(name: str | None, policy: dict[str, Any] | None = None) -> bool:
+    text = str(name or "").strip().lower()
     if not text:
-        fallback = fallback_flow_name or "reference flow"
-        return f"1 unit of {fallback}"
+        return False
+    return any(keyword in text for keyword in _lcia_name_keywords(policy))
+
+
+def _is_count_style_unit(unit: str | None) -> bool:
+    token = _normalize_unit_token(unit)
+    return token in {"unit", "units", "item", "items", "piece", "pieces", "pc", "pcs", "ea", "count", "set", "batch"}
+
+
+def _is_physical_reference_unit(unit: str | None) -> bool:
+    dimension = _unit_dimension_from_unit(unit)
+    return dimension in {"mass", "energy", "volume", "area", "length"}
+
+
+def _normalize_reference_amount(value: float | None) -> str:
+    if value is None:
+        return "1"
+    if value <= 0:
+        return "1"
+    return _format_amount_value(value)
+
+
+def _format_quantitative_reference(*, amount: float | None, unit: str | None, flow_name: str | None) -> str:
+    flow = str(flow_name or "").strip() or "reference flow"
+    normalized_unit = _canonical_reference_unit(unit) or "unit"
+    amount_text = _normalize_reference_amount(amount)
+    return f"{amount_text} {normalized_unit} of {flow}"
+
+
+def _normalize_quantitative_reference(
+    value: Any,
+    fallback_flow_name: str | None,
+    *,
+    preferred_unit: str | None = None,
+    preferred_amount: float | None = None,
+    policy: dict[str, Any] | None = None,
+) -> str:
+    text = str(value).strip() if value is not None else ""
+    fallback = str(fallback_flow_name or "").strip() or "reference flow"
+    fallback_unit = _canonical_reference_unit(preferred_unit) or _reference_output_fallback_unit(policy)
+    if not text:
+        return _format_quantitative_reference(amount=preferred_amount or 1.0, unit=fallback_unit, flow_name=fallback)
+    amount, unit, flow = _parse_quantitative_reference(text)
+    if amount is not None and unit:
+        canonical_unit = _canonical_reference_unit(unit)
+        if canonical_unit and not _is_lcia_impact_unit(canonical_unit, policy):
+            return _format_quantitative_reference(amount=amount, unit=canonical_unit, flow_name=flow or fallback)
     if any(ch.isdigit() for ch in text):
+        # Keep the original string when it is already numeric but parser failed.
         return text
-    fallback = fallback_flow_name or text
-    return f"1 unit of {fallback}"
+    inferred_flow = flow or fallback
+    inferred_unit = _canonical_reference_unit(unit) or fallback_unit
+    return _format_quantitative_reference(amount=preferred_amount or 1.0, unit=inferred_unit, flow_name=inferred_flow)
 
 
 def _strip_flow_label(value: str) -> str:
@@ -6192,6 +6430,418 @@ def _apply_balance_auto_revisions(
     return revised_matches, revised_datasets, summary
 
 
+def _reference_unit_from_flow_dataset(flow_dataset: dict[str, Any] | None) -> str | None:
+    info = _flow_reference_info_from_dataset(flow_dataset)
+    if not info or not info.unit_group:
+        return None
+    return _canonical_reference_unit(info.unit_group.reference_unit)
+
+
+def _reference_output_overrides(policy: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not isinstance(policy, dict):
+        return []
+    overrides = policy.get("reference_unit_overrides")
+    if not isinstance(overrides, list):
+        return []
+    return [item for item in overrides if isinstance(item, dict)]
+
+
+def _match_reference_output_override(
+    *,
+    process_name: str,
+    reference_flow_name: str,
+    policy: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    process_label = process_name.strip().lower()
+    flow_label = reference_flow_name.strip().lower()
+    for item in _reference_output_overrides(policy):
+        process_pattern = str(item.get("process_name_pattern") or "").strip().lower()
+        flow_pattern = str(item.get("flow_name_pattern") or "").strip().lower()
+        if process_pattern and process_pattern not in process_label:
+            continue
+        if flow_pattern and flow_pattern not in flow_label:
+            continue
+        unit = _canonical_reference_unit(str(item.get("unit") or "").strip())
+        if not unit:
+            continue
+        return {
+            "unit": unit,
+            "source_tier": "case_override",
+            "confidence": 1.0,
+            "reason": str(item.get("reason") or "Matched reference_unit_overrides rule.").strip(),
+            "assumptions": str(item.get("assumptions") or "").strip() or None,
+            "evidence": [str(item.get("source") or "").strip()] if str(item.get("source") or "").strip() else [],
+        }
+    return None
+
+
+def _heuristic_reference_output_unit(
+    *,
+    reference_flow_name: str,
+    process_name: str,
+    operation: str,
+) -> str | None:
+    text = " ".join([reference_flow_name, process_name, operation]).lower()
+    if any(token in text for token in ("electricity", "power", "电力")):
+        return "kWh"
+    if any(token in text for token in ("steam", "heat", "thermal", "energy", "蒸汽", "热")):
+        return "MJ"
+    if any(token in text for token in ("area", "surface", "land", "平方米", "m2")):
+        return "m2"
+    if any(token in text for token in ("volume", "wastewater", "water", "liquid", "体积", "废水", "m3")):
+        return "m3"
+    if any(token in text for token in ("length", "distance", "meter", "米")):
+        return "m"
+    if any(token in text for token in ("ore", "metal", "material", "powder", "sludge", "waste", "product", "feedstock", "原料", "产品", "废物")):
+        return "kg"
+    return None
+
+
+def _reference_output_llm_evidence_snippet(scientific_references: dict[str, Any] | None, *, max_records: int = 3) -> list[dict[str, str]]:
+    if not isinstance(scientific_references, dict):
+        return []
+    records: list[dict[str, Any]] = []
+    for key in ("step2", REFERENCE_FULLTEXT_KEY, REFERENCE_SEARCH_KEY):
+        block = scientific_references.get(key)
+        refs = block.get("references") if isinstance(block, dict) else None
+        if isinstance(refs, list):
+            records = refs
+            if records:
+                break
+    snippets: list[dict[str, str]] = []
+    for item in records[:max_records]:
+        if not isinstance(item, dict):
+            continue
+        doi = _extract_reference_doi(item) or ""
+        source = str(item.get("source") or "").strip()
+        content = str(item.get("content") or item.get("text") or "").strip()
+        entry = {
+            "doi": doi,
+            "source": _compact_text(source, limit=180) if source else "",
+            "content": _compact_text(content, limit=260) if content else "",
+        }
+        if entry["doi"] or entry["source"] or entry["content"]:
+            snippets.append(entry)
+    return snippets
+
+
+def _batch_decide_reference_output_units_with_llm(
+    *,
+    llm: LanguageModelProtocol | None,
+    flow_summary: dict[str, Any],
+    operation: str,
+    processes: list[dict[str, Any]],
+    scientific_references: dict[str, Any] | None,
+    policy: dict[str, Any] | None,
+) -> dict[str, dict[str, Any]]:
+    if llm is None:
+        return {}
+    cfg = (policy or {}).get("reference_output") if isinstance(policy, dict) else {}
+    if isinstance(cfg, dict) and cfg.get("llm_enabled") is False:
+        return {}
+    payload = {
+        "prompt": REFERENCE_OUTPUT_UNIT_PROMPT,
+        "context": {
+            "flow": flow_summary,
+            "operation": operation,
+            "processes": [
+                {
+                    "process_id": str(item.get("process_id") or "").strip(),
+                    "name": str(item.get("name") or "").strip(),
+                    "reference_flow_name": str(item.get("reference_flow_name") or "").strip(),
+                    "structure": item.get("structure") if isinstance(item.get("structure"), dict) else {},
+                }
+                for item in processes
+                if isinstance(item, dict)
+            ],
+            "reference_evidence": _reference_output_llm_evidence_snippet(scientific_references),
+            "policy": {
+                "prefer_physical_dimensions": (cfg.get("prefer_physical_dimensions") if isinstance(cfg, dict) else []) or [],
+                "fallback_unit": _reference_output_fallback_unit(policy),
+            },
+        },
+        "response_format": {"type": "json_object"},
+    }
+    try:
+        raw = llm.invoke(payload)
+        data = _ensure_dict(raw)
+    except Exception as exc:  # pylint: disable=broad-except
+        LOGGER.warning("process_from_flow.reference_output_unit_llm_failed", error=str(exc))
+        return {}
+
+    decisions: dict[str, dict[str, Any]] = {}
+    rows = data.get("processes")
+    if not isinstance(rows, list):
+        return decisions
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        process_id = str(item.get("process_id") or item.get("processId") or "").strip()
+        unit = _canonical_reference_unit(str(item.get("unit") or "").strip())
+        if not process_id or not unit:
+            continue
+        decisions[process_id] = {
+            "unit": unit,
+            "source_tier": str(item.get("source_tier") or item.get("sourceTier") or "expert_judgement").strip() or "expert_judgement",
+            "confidence": _coerce_confidence(item.get("confidence")) or 0.0,
+            "reason": str(item.get("reason") or "").strip() or "LLM reference-output unit decision.",
+            "assumptions": str(item.get("assumptions") or "").strip() or None,
+            "evidence": _clean_evidence_list(item.get("evidence")),
+        }
+    return decisions
+
+
+def _prefer_reference_output_unit(
+    *,
+    process: dict[str, Any],
+    flow_dataset: dict[str, Any] | None,
+    operation: str,
+    llm_decisions: dict[str, dict[str, Any]],
+    policy: dict[str, Any] | None,
+) -> dict[str, Any]:
+    process_id = str(process.get("process_id") or "").strip()
+    process_name = str(process.get("name") or "").strip()
+    reference_flow_name = str(process.get("reference_flow_name") or "").strip() or "reference flow"
+    is_reference_flow_process = bool(process.get("is_reference_flow_process"))
+    cfg = (policy or {}).get("reference_output") if isinstance(policy, dict) else {}
+    min_conf = float((cfg or {}).get("llm_min_confidence") or 0.55)
+    low_conf = float((cfg or {}).get("low_confidence_threshold") or 0.45)
+
+    override = _match_reference_output_override(
+        process_name=process_name,
+        reference_flow_name=reference_flow_name,
+        policy=policy,
+    )
+    if override:
+        return {
+            **override,
+            "process_id": process_id,
+            "low_confidence": False,
+        }
+
+    name_parts = process.get("name_parts") if isinstance(process.get("name_parts"), dict) else {}
+    qref = str(name_parts.get("quantitative_reference") or "").strip()
+    qref_amount, qref_unit, _qref_flow = _parse_quantitative_reference(qref)
+    canonical_qref_unit = _canonical_reference_unit(qref_unit)
+    if canonical_qref_unit and not _is_lcia_impact_unit(canonical_qref_unit, policy) and not _is_count_style_unit(canonical_qref_unit):
+        return {
+            "process_id": process_id,
+            "unit": canonical_qref_unit,
+            "amount": qref_amount if qref_amount is not None else 1.0,
+            "source_tier": "process_split_quantitative_reference",
+            "confidence": 0.9,
+            "reason": "Using quantitative_reference unit from process split output.",
+            "assumptions": None,
+            "evidence": [],
+            "low_confidence": False,
+        }
+
+    if is_reference_flow_process:
+        target_unit = _reference_unit_from_flow_dataset(flow_dataset)
+        if target_unit and not _is_lcia_impact_unit(target_unit, policy):
+            return {
+                "process_id": process_id,
+                "unit": target_unit,
+                "amount": qref_amount if qref_amount is not None else 1.0,
+                "source_tier": "reference_flow_dataset",
+                "confidence": 0.95,
+                "reason": "Using target reference flow dataset reference unit.",
+                "assumptions": None,
+                "evidence": [],
+                "low_confidence": False,
+            }
+
+    llm_decision = llm_decisions.get(process_id) if process_id else None
+    if isinstance(llm_decision, dict):
+        unit = _canonical_reference_unit(str(llm_decision.get("unit") or "").strip())
+        confidence = _coerce_confidence(llm_decision.get("confidence")) or 0.0
+        if unit and not _is_lcia_impact_unit(unit, policy):
+            use_llm = confidence >= min_conf or _is_physical_reference_unit(unit)
+            if use_llm:
+                return {
+                    "process_id": process_id,
+                    "unit": unit,
+                    "amount": qref_amount if qref_amount is not None else 1.0,
+                    "source_tier": str(llm_decision.get("source_tier") or "expert_judgement"),
+                    "confidence": confidence,
+                    "reason": str(llm_decision.get("reason") or "LLM selected reference-output unit."),
+                    "assumptions": llm_decision.get("assumptions"),
+                    "evidence": _clean_evidence_list(llm_decision.get("evidence")),
+                    "low_confidence": confidence < low_conf,
+                }
+
+    heuristic = _heuristic_reference_output_unit(
+        reference_flow_name=reference_flow_name,
+        process_name=process_name,
+        operation=operation,
+    )
+    if heuristic:
+        return {
+            "process_id": process_id,
+            "unit": heuristic,
+            "amount": qref_amount if qref_amount is not None else 1.0,
+            "source_tier": "industry_benchmark",
+            "confidence": 0.6,
+            "reason": "Heuristic industry benchmark from process/reference-flow semantics.",
+            "assumptions": "No direct numeric evidence for unit; benchmark heuristic applied.",
+            "evidence": [],
+            "low_confidence": False,
+        }
+
+    fallback_unit = _reference_output_fallback_unit(policy)
+    return {
+        "process_id": process_id,
+        "unit": fallback_unit,
+        "amount": qref_amount if qref_amount is not None else 1.0,
+        "source_tier": "expert_judgement",
+        "confidence": 0.2,
+        "reason": "No defensible physical unit identified; fallback unit applied.",
+        "assumptions": "Physical reference unit unresolved at split stage.",
+        "evidence": [],
+        "low_confidence": True,
+    }
+
+
+def _apply_reference_output_unit_policy(
+    *,
+    processes: list[dict[str, Any]],
+    flow_summary: dict[str, Any],
+    flow_dataset: dict[str, Any] | None,
+    operation: str,
+    llm: LanguageModelProtocol | None,
+    scientific_references: dict[str, Any] | None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    policy = _load_reference_output_policy()
+    llm_decisions = _batch_decide_reference_output_units_with_llm(
+        llm=llm,
+        flow_summary=flow_summary,
+        operation=operation,
+        processes=processes,
+        scientific_references=scientific_references,
+        policy=policy,
+    )
+    updated = copy.deepcopy(processes)
+    decisions: list[dict[str, Any]] = []
+    for proc in updated:
+        if not isinstance(proc, dict):
+            continue
+        name_parts = proc.get("name_parts") if isinstance(proc.get("name_parts"), dict) else {}
+        decision = _prefer_reference_output_unit(
+            process=proc,
+            flow_dataset=flow_dataset,
+            operation=operation,
+            llm_decisions=llm_decisions,
+            policy=policy,
+        )
+        reference_flow_name = str(proc.get("reference_flow_name") or "").strip() or "reference flow"
+        quant_ref = _normalize_quantitative_reference(
+            name_parts.get("quantitative_reference"),
+            reference_flow_name,
+            preferred_unit=decision.get("unit"),
+            preferred_amount=_parse_amount_value(decision.get("amount")),
+            policy=policy,
+        )
+        name_parts["quantitative_reference"] = quant_ref
+        proc["name_parts"] = name_parts
+        base_name = str(name_parts.get("base_name") or proc.get("name") or "").strip() or reference_flow_name
+        treatment_and_route = str(name_parts.get("treatment_and_route") or "Unspecified route").strip()
+        mix_and_location = str(name_parts.get("mix_and_location") or flow_summary.get("mix_en") or "Unspecified mix/location").strip()
+        proc["name"] = " | ".join([base_name, treatment_and_route, mix_and_location, quant_ref])
+        proc["reference_output_basis"] = {
+            "unit": decision.get("unit"),
+            "source_tier": decision.get("source_tier"),
+            "confidence": round(float(decision.get("confidence") or 0.0), 4),
+            "reason": decision.get("reason"),
+            "assumptions": decision.get("assumptions"),
+            "evidence": _clean_evidence_list(decision.get("evidence")),
+            "low_confidence": bool(decision.get("low_confidence")),
+        }
+        decisions.append(
+            {
+                "process_id": str(proc.get("process_id") or "").strip() or None,
+                "process_name": str(proc.get("name") or "").strip() or None,
+                "reference_flow_name": reference_flow_name,
+                "quantitative_reference": quant_ref,
+                **proc["reference_output_basis"],
+            }
+        )
+
+    fallback_unit = _reference_output_fallback_unit(policy)
+    low_confidence = [item for item in decisions if bool(item.get("low_confidence"))]
+    fallback_count = sum(1 for item in decisions if _canonical_reference_unit(str(item.get("unit") or "")) == fallback_unit)
+    physical_count = sum(1 for item in decisions if _is_physical_reference_unit(str(item.get("unit") or "")))
+    summary = {
+        "policy_path": str(_REFERENCE_OUTPUT_POLICY_PATH),
+        "decision_total": len(decisions),
+        "physical_unit_count": physical_count,
+        "fallback_unit_count": fallback_count,
+        "low_confidence_count": len(low_confidence),
+        "low_confidence_processes": [
+            {
+                "process_id": item.get("process_id"),
+                "unit": item.get("unit"),
+                "source_tier": item.get("source_tier"),
+                "confidence": item.get("confidence"),
+                "reason": item.get("reason"),
+            }
+            for item in low_confidence
+        ],
+        "decisions": decisions,
+    }
+    return updated, summary
+
+
+def _reference_basis_from_process_plan(
+    *,
+    process_plan: dict[str, Any] | None,
+    fallback_flow_dataset: dict[str, Any] | None,
+    is_reference_flow_process: bool,
+    policy: dict[str, Any] | None,
+) -> tuple[str, str]:
+    name_parts = process_plan.get("name_parts") if isinstance((process_plan or {}).get("name_parts"), dict) else {}
+    basis = process_plan.get("reference_output_basis") if isinstance((process_plan or {}).get("reference_output_basis"), dict) else {}
+    qref = str(name_parts.get("quantitative_reference") or "").strip()
+    q_amount, q_unit, _q_flow = _parse_quantitative_reference(qref)
+    unit = _canonical_reference_unit(str(basis.get("unit") or "").strip()) or _canonical_reference_unit(q_unit)
+    amount_text = _normalize_reference_amount(q_amount)
+    if (not unit or _is_count_style_unit(unit) or _is_lcia_impact_unit(unit, policy)) and is_reference_flow_process:
+        unit = _reference_unit_from_flow_dataset(fallback_flow_dataset)
+    if not unit or _is_lcia_impact_unit(unit, policy):
+        unit = _reference_output_fallback_unit(policy)
+    return amount_text, unit
+
+
+def _is_lcia_forbidden_on_product_waste(
+    *,
+    exchange_name: str,
+    unit: str,
+    flow_type: str | None,
+    is_reference_flow: bool,
+    policy: dict[str, Any] | None,
+) -> bool:
+    hard = (policy or {}).get("hard_rules") if isinstance(policy, dict) else {}
+    forbid_by_unit = bool((hard or {}).get("forbid_lcia_units_for_product_waste", True))
+    forbid_by_name = bool((hard or {}).get("forbid_lcia_keywords_for_product_waste", True))
+    normalized_type = _normalize_flow_type(flow_type)
+    is_product_or_waste = normalized_type in {"product", "waste"} or is_reference_flow
+    if not is_product_or_waste:
+        return False
+    if forbid_by_unit and _is_lcia_impact_unit(unit, policy):
+        return True
+    if forbid_by_name and _is_lcia_impact_name(exchange_name, policy):
+        return True
+    return False
+
+
+def _append_reference_rule_comment(comment: str | None, message: str) -> str:
+    prefix = str(comment or "").strip()
+    if not prefix:
+        return message
+    if message in prefix:
+        return prefix
+    return f"{prefix} {message}".strip()
+
+
 def _normalize_route_processes(
     processes: list[dict[str, Any]],
     *,
@@ -6232,7 +6882,13 @@ def _normalize_route_processes(
         if not treatment_and_route:
             treatment_and_route = "Unspecified route"
         mix_and_location = str(name_parts.get("mix_and_location") or flow_summary.get("mix_en") or "Unspecified mix/location").strip()
-        quantitative_reference = _normalize_quantitative_reference(name_parts.get("quantitative_reference"), reference_flow_name)
+        basis = proc.get("reference_output_basis") if isinstance(proc.get("reference_output_basis"), dict) else {}
+        quantitative_reference = _normalize_quantitative_reference(
+            name_parts.get("quantitative_reference"),
+            reference_flow_name,
+            preferred_unit=str(basis.get("unit") or "").strip() or None,
+            policy=_load_reference_output_policy(),
+        )
 
         name_parts = {
             "base_name": base_name,
@@ -7102,6 +7758,14 @@ def _build_langgraph(
                     flow_summary=state.get("flow_summary") or {},
                     route_name="Default route",
                 )
+                normalized, reference_output_summary = _apply_reference_output_unit_policy(
+                    processes=normalized,
+                    flow_summary=state.get("flow_summary") or {},
+                    flow_dataset=state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None,
+                    operation=str(state.get("operation") or "produce"),
+                    llm=llm,
+                    scientific_references=state.get("scientific_references") if isinstance(state.get("scientific_references"), dict) else None,
+                )
                 default_route = {
                     "route_id": "R1",
                     "route_name": "Default route",
@@ -7112,10 +7776,49 @@ def _build_langgraph(
                     "selected_route_id": "R1",
                     "processes": normalized,
                     "chain_contract": _build_chain_contract(normalized),
+                    "reference_output_decision_summary": reference_output_summary,
                     "step_markers": _update_step_markers(state, "step2"),
                 }
             updates: dict[str, Any] = {"step_markers": _update_step_markers(state, "step2")}
-            if not isinstance(state.get("chain_contract"), list):
+            existing_processes = [item for item in (state.get("processes") or []) if isinstance(item, dict)]
+            has_reference_output_summary = isinstance(state.get("reference_output_decision_summary"), dict)
+            has_reference_output_basis = all(
+                isinstance(item.get("reference_output_basis"), dict) for item in existing_processes
+            ) if existing_processes else False
+            if existing_processes and (not has_reference_output_summary or not has_reference_output_basis):
+                updated_processes, reference_output_summary = _apply_reference_output_unit_policy(
+                    processes=existing_processes,
+                    flow_summary=state.get("flow_summary") or {},
+                    flow_dataset=state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None,
+                    operation=str(state.get("operation") or "produce"),
+                    llm=llm,
+                    scientific_references=state.get("scientific_references") if isinstance(state.get("scientific_references"), dict) else None,
+                )
+                updates["processes"] = updated_processes
+                updates["reference_output_decision_summary"] = reference_output_summary
+                existing_routes = state.get("process_routes")
+                selected_route_id = str(state.get("selected_route_id") or "").strip()
+                if isinstance(existing_routes, list) and existing_routes:
+                    synced_routes: list[dict[str, Any]] = []
+                    synced = False
+                    for route_idx, route in enumerate(existing_routes):
+                        if not isinstance(route, dict):
+                            continue
+                        route_copy = copy.deepcopy(route)
+                        route_id = str(route_copy.get("route_id") or route_copy.get("routeId") or "").strip()
+                        should_sync = False
+                        if selected_route_id:
+                            should_sync = route_id == selected_route_id
+                        elif not synced and route_idx == 0:
+                            should_sync = True
+                        if should_sync:
+                            route_copy["processes"] = copy.deepcopy(updated_processes)
+                            synced = True
+                        synced_routes.append(route_copy)
+                    if synced_routes:
+                        updates["process_routes"] = synced_routes
+                updates["chain_contract"] = _build_chain_contract(updated_processes)
+            elif not isinstance(state.get("chain_contract"), list):
                 updates["chain_contract"] = _build_chain_contract(state.get("processes"))
             return updates
         if llm is None:
@@ -7123,11 +7826,17 @@ def _build_langgraph(
             flow_name = summary.get("base_name_en") or "reference flow"
             operation = str(state.get("operation") or "produce").strip().lower()
             prefix = "Treatment of" if operation in {"treat", "dispose", "disposal", "treatment"} else "Production of"
+            target_unit = _reference_unit_from_flow_dataset(state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None)
             name_parts = {
                 "base_name": f"{prefix} {flow_name}",
                 "treatment_and_route": "Generic route",
                 "mix_and_location": summary.get("mix_en") or "Unspecified mix/location",
-                "quantitative_reference": _normalize_quantitative_reference(None, flow_name),
+                "quantitative_reference": _normalize_quantitative_reference(
+                    None,
+                    flow_name,
+                    preferred_unit=target_unit,
+                    policy=_load_reference_output_policy(),
+                ),
             }
             process_entry = {
                 "process_id": "P1",
@@ -7146,11 +7855,21 @@ def _build_langgraph(
                 },
                 "exchange_keywords": {"inputs": [], "outputs": _dedupe_flows([flow_name])},
             }
+            processes, reference_output_summary = _apply_reference_output_unit_policy(
+                processes=[process_entry],
+                flow_summary=state.get("flow_summary") or {},
+                flow_dataset=state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None,
+                operation=operation,
+                llm=llm,
+                scientific_references=state.get("scientific_references") if isinstance(state.get("scientific_references"), dict) else None,
+            )
+            process_entry = processes[0] if processes and isinstance(processes[0], dict) else process_entry
             return {
                 "processes": [process_entry],
                 "process_routes": [{"route_id": "R1", "route_name": "Default route", "processes": [process_entry]}],
                 "selected_route_id": "R1",
                 "chain_contract": _build_chain_contract([process_entry]),
+                "reference_output_decision_summary": reference_output_summary,
                 "step_markers": _update_step_markers(state, "step2"),
             }
         # Search for scientific references for process splitting
@@ -7293,6 +8012,20 @@ def _build_langgraph(
                 selected_route_id = str(selected_route.get("route_id") or "")
         if selected_route:
             processes = selected_route.get("processes") or []
+            processes, reference_output_summary = _apply_reference_output_unit_policy(
+                processes=[item for item in processes if isinstance(item, dict)],
+                flow_summary=state.get("flow_summary") or {},
+                flow_dataset=state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None,
+                operation=str(operation or "produce"),
+                llm=llm,
+                scientific_references=scientific_references if isinstance(scientific_references, dict) else None,
+            )
+            selected_route["processes"] = processes
+            if selected_route_id:
+                for route in cleaned_routes:
+                    if isinstance(route, dict) and str(route.get("route_id") or "") == selected_route_id:
+                        route["processes"] = processes
+                        break
             tech_routes = state.get("technology_routes") or []
             selected_summary = None
             if isinstance(tech_routes, list):
@@ -7306,6 +8039,7 @@ def _build_langgraph(
                 "processes": processes,
                 "chain_contract": _build_chain_contract(processes),
                 "scientific_references": scientific_references,
+                "reference_output_decision_summary": reference_output_summary,
                 "step_markers": _update_step_markers(state, "step2"),
             }
             if selected_summary and not state.get("technical_description"):
@@ -7343,10 +8077,24 @@ def _build_langgraph(
             cleaned[0]["is_reference_flow_process"] = True
             for proc in cleaned[1:]:
                 proc["is_reference_flow_process"] = False
+        cleaned = _normalize_route_processes(
+            cleaned,
+            flow_summary=state.get("flow_summary") or {},
+            route_name="Default route",
+        )
+        cleaned, reference_output_summary = _apply_reference_output_unit_policy(
+            processes=cleaned,
+            flow_summary=state.get("flow_summary") or {},
+            flow_dataset=state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None,
+            operation=str(operation or "produce"),
+            llm=llm,
+            scientific_references=scientific_references if isinstance(scientific_references, dict) else None,
+        )
         return {
             "processes": cleaned,
             "chain_contract": _build_chain_contract(cleaned),
             "scientific_references": scientific_references,
+            "reference_output_decision_summary": reference_output_summary,
             "step_markers": _update_step_markers(state, "step2"),
         }
 
@@ -7382,12 +8130,20 @@ def _build_langgraph(
             summary = state.get("flow_summary") or {}
             base_name = summary.get("base_name_en") or "reference flow"
             direction = _reference_direction(state.get("operation"))
+            plans = [item for item in (state.get("processes") or []) if isinstance(item, dict)]
+            first_plan = plans[0] if plans else {}
+            amount_text, reference_unit = _reference_basis_from_process_plan(
+                process_plan=first_plan,
+                fallback_flow_dataset=state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None,
+                is_reference_flow_process=bool(first_plan.get("is_reference_flow_process")),
+                policy=_load_reference_output_policy(),
+            )
             exchange = {
                 "exchangeDirection": direction,
                 "exchangeName": base_name,
                 "generalComment": summary.get("general_comment_en") or "",
-                "unit": None,
-                "amount": None,
+                "unit": reference_unit,
+                "amount": amount_text,
                 "is_reference_flow": True,
             }
             exchange = _apply_exchange_evidence_defaults(
@@ -7514,6 +8270,8 @@ def _build_langgraph(
         process_plan_index = {str(item.get("process_id") or ""): item for item in (state.get("processes") or []) if isinstance(item, dict)}
         target_flow_name = str((state.get("flow_summary") or {}).get("base_name_en") or "reference flow").strip()
         reference_direction = _reference_direction(state.get("operation"))
+        reference_output_policy = _load_reference_output_policy()
+        fallback_flow_dataset = state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None
         cleaned_processes: list[dict[str, Any]] = []
         for proc in processes:
             if not isinstance(proc, dict):
@@ -7527,6 +8285,12 @@ def _build_langgraph(
             is_reference_flow_process = bool(plan.get("is_reference_flow_process"))
             if is_reference_flow_process:
                 plan_reference_flow = target_flow_name
+            reference_amount_text, reference_unit = _reference_basis_from_process_plan(
+                process_plan=plan,
+                fallback_flow_dataset=fallback_flow_dataset,
+                is_reference_flow_process=is_reference_flow_process,
+                policy=reference_output_policy,
+            )
             structure = plan.get("structure") if isinstance(plan.get("structure"), dict) else {}
             structure_inputs = {_normalize_exchange_name(_strip_flow_label(value)) for value in _clean_string_list(structure.get("inputs")) if _strip_flow_label(value).strip()}
             structure_outputs = {_normalize_exchange_name(_strip_flow_label(value)) for value in _clean_string_list(structure.get("outputs")) if _strip_flow_label(value).strip()}
@@ -7537,7 +8301,7 @@ def _build_langgraph(
                     continue
                 name = _strip_flow_label(str(exchange.get("exchangeName") or "").strip())
                 raw_flow_type = _normalize_flow_type(exchange.get("flow_type") or exchange.get("flowType"))
-                unit = str(exchange.get("unit") or "").strip() or "unit"
+                unit = str(exchange.get("unit") or "").strip()
                 amount = _coerce_amount_text(exchange.get("amount"))
                 exchange_direction = str(exchange.get("exchangeDirection") or "").strip()
                 name_key = _normalize_exchange_name(name)
@@ -7566,10 +8330,35 @@ def _build_langgraph(
                     flow_type=flow_type,
                     is_reference_flow=is_reference,
                 )
+                if is_reference:
+                    if not unit or _is_count_style_unit(unit):
+                        unit = reference_unit
+                    if not amount:
+                        amount = reference_amount_text
+                if _is_lcia_forbidden_on_product_waste(
+                    exchange_name=name,
+                    unit=unit,
+                    flow_type=flow_type,
+                    is_reference_flow=is_reference,
+                    policy=reference_output_policy,
+                ):
+                    corrected_unit = reference_unit or _reference_output_fallback_unit(reference_output_policy)
+                    unit = corrected_unit
+                    comment_seed = str(exchange.get("generalComment") or "").strip()
+                    exchange["generalComment"] = _append_reference_rule_comment(
+                        comment_seed,
+                        "Reference-output policy: replaced LCIA-like unit with allowed reference unit.",
+                    )
+                resolved_unit = unit
+                if not resolved_unit:
+                    if is_reference:
+                        resolved_unit = reference_unit
+                    else:
+                        resolved_unit = _reference_output_fallback_unit(reference_output_policy)
                 cleaned_exchange = {
                     **exchange,
                     "exchangeName": name,
-                    "unit": unit,
+                    "unit": resolved_unit,
                     "amount": amount,
                     "is_reference_flow": is_reference,
                     "exchangeDirection": exchange_direction,
@@ -7602,8 +8391,8 @@ def _build_langgraph(
                     "exchangeDirection": reference_direction,
                     "exchangeName": plan_reference_flow,
                     "generalComment": "Reference flow for this unit process.",
-                    "unit": "unit",
-                    "amount": "1",
+                    "unit": reference_unit,
+                    "amount": reference_amount_text,
                     "is_reference_flow": True,
                     "flow_type": "product",
                 }
@@ -8737,6 +9526,12 @@ def _build_langgraph(
                 process_reference_items: dict[str, GlobalReferenceTypeVariant1Item] = {}
                 reference_internal_id: str | None = None
                 next_internal_id = 1
+                reference_amount_text, reference_unit = _reference_basis_from_process_plan(
+                    process_plan=plan,
+                    fallback_flow_dataset=state.get("flow_dataset") if isinstance(state.get("flow_dataset"), dict) else None,
+                    is_reference_flow_process=is_reference_flow_process,
+                    policy=_load_reference_output_policy(),
+                )
                 if isinstance(exchanges_raw, list):
                     exchanges_raw = _dedupe_product_uuid_exchanges(
                         exchanges_raw,
@@ -8847,33 +9642,46 @@ def _build_langgraph(
                                 translator=translator,
                             ),
                             exchange_direction=reference_direction,
-                            mean_amount=_default_exchange_amount(),
-                            resulting_amount=_default_exchange_amount(),
+                            mean_amount=reference_amount_text,
+                            resulting_amount=reference_amount_text,
                             data_derivation_type_status="Estimated",
                             general_comment=_as_multilang_list(
                                 _build_multilang_entries(
                                     _apply_exchange_comment_tags(
                                         flow_summary.get("general_comment_en") or "",
                                         flow_kind="product",
-                                        unit="unit",
+                                        unit=reference_unit,
                                     ),
                                     translator=translator,
                                     zh_text=_apply_exchange_comment_tags(
                                         flow_summary.get("general_comment_zh") or "",
                                         flow_kind="product",
-                                        unit="unit",
+                                        unit=reference_unit,
                                     ),
                                 )
                             ),
                         )
                     )
 
-                functional_unit = quantitative_ref or f"1 unit of {process_reference_flow}".strip()
+                functional_unit = quantitative_ref or _format_quantitative_reference(
+                    amount=_parse_amount_value(reference_amount_text),
+                    unit=reference_unit,
+                    flow_name=process_reference_flow,
+                )
                 if is_reference_flow_process:
                     if reference_direction == "Input":
-                        functional_unit = quantitative_ref or f"1 unit of {target_flow_name} treated"
+                        base_functional = quantitative_ref or _format_quantitative_reference(
+                            amount=_parse_amount_value(reference_amount_text),
+                            unit=reference_unit,
+                            flow_name=target_flow_name,
+                        )
+                        functional_unit = f"{base_functional} treated" if not quantitative_ref else quantitative_ref
                     else:
-                        functional_unit = quantitative_ref or f"1 unit of {target_flow_name}"
+                        functional_unit = quantitative_ref or _format_quantitative_reference(
+                            amount=_parse_amount_value(reference_amount_text),
+                            unit=reference_unit,
+                            flow_name=target_flow_name,
+                        )
 
                 name_entries = _build_multilang_entries(base_name_for_dataset, translator=translator)
                 treatment_entries = _build_multilang_entries(treatment_route, translator=translator)

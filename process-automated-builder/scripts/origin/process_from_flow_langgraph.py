@@ -1244,6 +1244,18 @@ def _load_flow_property_holds(run_id: str) -> list[dict[str, Any]]:
     return [item for item in held if isinstance(item, dict)]
 
 
+def _load_reference_output_low_confidence(run_id: str) -> list[dict[str, Any]]:
+    try:
+        state = _load_run_state(run_id)
+    except SystemExit:
+        return []
+    summary = state.get("reference_output_decision_summary")
+    rows = summary.get("low_confidence_processes") if isinstance(summary, Mapping) else None
+    if not isinstance(rows, list):
+        return []
+    return [item for item in rows if isinstance(item, dict)]
+
+
 def _build_flow_alignment_from_process_datasets(datasets: list[dict[str, Any]]) -> list[dict[str, Any]]:
     alignment: list[dict[str, Any]] = []
     for payload in datasets:
@@ -1953,6 +1965,21 @@ def _run_publish_sequence(
         "rebuild_attempts": [],
         "manual_required": [],
     }
+
+    def _append_manual_required(entry: dict[str, Any]) -> None:
+        code = str(entry.get("code") or "").strip()
+        reason = str(entry.get("reason") or "").strip()
+        items = method_policy_report.get("manual_required")
+        if not isinstance(items, list):
+            items = []
+            method_policy_report["manual_required"] = items
+        for item in items:
+            if not isinstance(item, Mapping):
+                continue
+            if str(item.get("code") or "").strip() == code and str(item.get("reason") or "").strip() == reason:
+                return
+        items.append(entry)
+
     if int(method_policy_report["deterministic_fixes"].get("fix_total") or 0) > 0:
         _write_process_exports(datasets, exports_dir)
         print("[info] Applied deterministic method-policy auto-fixes before publish sequence.", file=sys.stderr)
@@ -1966,6 +1993,18 @@ def _run_publish_sequence(
                     "code": "remaining_placeholder_refs",
                     "reason": f"{remaining_refs} placeholder flow reference(s) remain after process-update.",
                     "remaining_placeholder_refs": remaining_refs,
+                }
+            )
+        low_conf_outputs = _load_reference_output_low_confidence(run_id)
+        if low_conf_outputs:
+            signals.append(
+                {
+                    "code": "reference_output_low_confidence",
+                    "reason": (
+                        f"{len(low_conf_outputs)} process(es) have low-confidence reference-output unit decisions."
+                    ),
+                    "low_confidence_count": len(low_conf_outputs),
+                    "examples": low_conf_outputs[:5],
                 }
             )
         held_flows = _load_flow_property_holds(run_id)
@@ -2043,7 +2082,7 @@ def _run_publish_sequence(
     rebuild_signals, held_after_first = _collect_rebuild_signals(process_update_report)
     if rebuild_signals:
         if skip_flow_auto_build or skip_process_update:
-            method_policy_report["manual_required"].append(
+            _append_manual_required(
                 {
                     "code": "auto_rebuild_skipped",
                     "reason": "Method-policy rebuild path was skipped by flags (--skip-flow-auto-build/--skip-process-update).",
@@ -2094,7 +2133,7 @@ def _run_publish_sequence(
                 for signal in post_retry_signals:
                     code = str(signal.get("code") or "manual_required")
                     if code == "remaining_placeholder_refs":
-                        method_policy_report["manual_required"].append(
+                        _append_manual_required(
                             {
                                 "code": code,
                                 "reason": signal.get("reason"),
@@ -2105,7 +2144,7 @@ def _run_publish_sequence(
                             }
                         )
                     elif code == "flow_property_semantic_conflict":
-                        method_policy_report["manual_required"].append(
+                        _append_manual_required(
                             {
                                 "code": code,
                                 "reason": signal.get("reason"),
@@ -2115,6 +2154,38 @@ def _run_publish_sequence(
                                 ),
                             }
                         )
+                    elif code == "reference_output_low_confidence":
+                        _append_manual_required(
+                            {
+                                "code": code,
+                                "reason": signal.get("reason"),
+                                "minimum_action": (
+                                    "Review state.reference_output_decision_summary.low_confidence_processes, "
+                                    "add evidence/overrides for reference-output units, then rerun --publish-only."
+                                ),
+                            }
+                        )
+
+    final_signals, _final_held = _collect_rebuild_signals(process_update_report)
+    low_confidence_signals = [item for item in final_signals if str(item.get("code") or "") == "reference_output_low_confidence"]
+    if low_confidence_signals:
+        _append_manual_required(
+            {
+                "code": "reference_output_low_confidence",
+                "reason": low_confidence_signals[0].get("reason"),
+                "minimum_action": (
+                    "Fix low-confidence reference-output unit decisions before publish "
+                    "(state.reference_output_decision_summary.low_confidence_processes)."
+                ),
+            }
+        )
+        if commit:
+            method_policy_report["updated_at_utc"] = _utc_now_iso()
+            dump_json(method_policy_report, _method_policy_autofix_report_path(cache_dir))
+            raise SystemExit(
+                "Publish blocked: low-confidence reference-output unit decisions remain. "
+                "Resolve state.reference_output_decision_summary.low_confidence_processes first."
+            )
 
     flow_publish_stats = _publish_prepared_flow_plans(
         flow_plans,

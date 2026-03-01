@@ -1,0 +1,51 @@
+{
+  "reference_output": {
+    "fallback_unit": "unit",
+    "prefer_physical_dimensions": [
+      "mass",
+      "energy",
+      "volume",
+      "area",
+      "length"
+    ],
+    "allow_count_unit_fallback": true,
+    "llm_enabled": true,
+    "llm_min_confidence": 0.55,
+    "low_confidence_threshold": 0.45
+  },
+  "hard_rules": {
+    "forbid_lcia_units_for_product_waste": true,
+    "forbid_lcia_keywords_for_product_waste": true
+  },
+  "lcia_tokens": {
+    "unit_tokens": [
+      "ctue",
+      "ctuh",
+      "daly",
+      "kgco2eq",
+      "kgco2e",
+      "kgso2eq",
+      "kgpo4eq",
+      "kgpo43eq",
+      "kgpm25eq",
+      "m3a",
+      "m3*d"
+    ],
+    "name_keywords": [
+      "impact",
+      "potential",
+      "gwp",
+      "adp",
+      "ep",
+      "ped",
+      "ri",
+      "ctue",
+      "ctuh",
+      "daly",
+      "acidification",
+      "eutrophication",
+      "photochemical"
+    ]
+  },
+  "reference_unit_overrides": []
+}

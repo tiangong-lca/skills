@@ -96,7 +96,9 @@ PROCESS_SPLIT_PROMPT = (
     "- Each process must include structured fields split by: technology/process, inputs, outputs, boundary, assumptions.\n"
     "- Each process MUST define reference_flow_name (the main output flow of the process).\n"
     "- Process name must include four modules: base_name, treatment_and_route, mix_and_location, quantitative_reference.\n"
-    "- quantitative_reference must be a numeric expression like '1 kg of <reference_flow_name>' or '1 unit of <reference_flow_name>'. If unit is unknown, use 'unit'.\n"
+    "- quantitative_reference must be a numeric expression like '1 kg of <reference_flow_name>' or '1 kWh of <reference_flow_name>'.\n"
+    "- Prefer physically meaningful units supported by evidence (kg, m2, m3, kWh, MJ, m, ...).\n"
+    "- If direct evidence is missing, use a defensible industry benchmark/expert unit and state the assumption; use 'unit' only as last resort.\n"
     "- For each process, provide a geography decision describing where the process occurs.\n"
     "- Use ILCD/TIDAS location codes (see input_data/location). Choose the most specific code supported by evidence.\n"
     "- If the process is located in China but some inputs use non-China datasets, keep location_code=CN and explain the substitution in description_of_restrictions.\n"
@@ -147,6 +149,33 @@ PROCESS_SPLIT_PROMPT = (
     "}\n"
 )
 
+REFERENCE_OUTPUT_UNIT_PROMPT = (
+    "You are choosing reference-output units for unit processes in an LCA foreground chain.\n"
+    "Use process context and available references to decide a defensible quantitative reference unit for each process.\n"
+    "\n"
+    "Rules:\n"
+    "- Prefer physically meaningful units supported by evidence (kg, kWh, MJ, m3, m2, m, ...).\n"
+    "- If direct evidence is unavailable, choose a defensible industry benchmark or expert rule and mark assumptions.\n"
+    "- Use 'unit' only when no defensible physical unit can be justified.\n"
+    "- Product/waste reference outputs MUST NOT use LCIA impact units (e.g., CTUe, DALY, kg CO2 eq).\n"
+    "- Return one decision per process_id.\n"
+    "\n"
+    "Return strict JSON:\n"
+    "{\n"
+    '  "processes": [\n'
+    "    {\n"
+    '      "process_id": "P1",\n'
+    '      "unit": "kg|kWh|MJ|m3|m2|m|unit|...",\n'
+    '      "source_tier": "literature|industry_benchmark|expert_judgement",\n'
+    '      "confidence": 0.0,\n'
+    '      "reason": "short reason",\n'
+    '      "assumptions": "optional assumptions",\n'
+    '      "evidence": ["optional citation or rationale"]\n'
+    "    }\n"
+    "  ]\n"
+    "}\n"
+)
+
 EXCHANGES_PROMPT = (
     "You are defining the inventory exchanges (inputs/outputs) for each process.\n"
     "Input context includes the reference flow summary, a technical description, and a list of processes.\n"
@@ -174,7 +203,10 @@ EXCHANGES_PROMPT = (
     "- Use auxiliary/catalyst for inputs that are not embodied in the main product; set balance_exclude=true for those.\n"
     "- Provide role_reason to justify the material_role choice when it is not obvious.\n"
     "- For emissions, include 'to air' / 'to water' / 'to soil' in exchangeName when applicable.\n"
-    "- Provide unit for each exchange (e.g., kg, kWh, MJ, m3, unit). If unsure, use 'unit'.\n"
+    "- Provide unit for each exchange (e.g., kg, kWh, MJ, m3, m2, unit).\n"
+    "- For the reference flow exchange of each process, prioritize the same physical unit as quantitative_reference when available.\n"
+    "- Product/waste exchanges MUST NOT use LCIA impact units (e.g., CTUe, CTUh, DALY, kg CO2 eq).\n"
+    "- Use 'unit' only when no defensible physical unit is available.\n"
     "- Provide amount as a numeric string; use null when unknown (placeholders are filled later).\n"
     "- For every exchange, provide data_source and evidence: data_source.source_type must be literature|si|expert_judgement.\n"
     "- data_source.citations must include DOI or URL when available (e.g., 'DOI 10.xxx' or 'https://doi.org/...').\n"
