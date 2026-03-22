@@ -1,4 +1,0 @@
-interface:
-  display_name: "Flow Remediator Publisher"
-  short_description: "Review, LLM-remediate, gate, and publish flow versions"
-  default_prompt: "Use $flow-remediator-publisher to review a UUID list of flows, remediate each finding with structured LLM output, run schema/version gates, and publish new versions via MCP insert."

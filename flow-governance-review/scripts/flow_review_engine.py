@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Flow profile LCI review (LLM-driven semantic review + structured evidence extraction).
+"""Flow governance review engine (LLM-driven semantic review + structured evidence extraction).
 
-This script is designed to mirror the process profile style:
+This script keeps the original flow review logic local to flow-governance-review:
 - deterministic local extraction builds evidence summaries
 - optional LLM layer performs semantic review on the summaries
 - outputs both markdown reports and machine-readable findings
@@ -19,6 +19,8 @@ from datetime import datetime
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+
+from flow_governance_common import extract_flow_record, flow_dataset_from_row, load_rows_from_file
 
 
 UUID_RE = re.compile(
@@ -134,6 +136,51 @@ def _iter_flow_files(flows_dir: Path) -> List[Path]:
     return sorted([p for p in flows_dir.glob("*.json") if p.is_file()])
 
 
+def _materialize_rows_file(rows_file: Path, out_dir: Path) -> Path:
+    rows = load_rows_from_file(rows_file)
+    target_dir = out_dir / "review-input" / "flows"
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    by_key: Dict[str, Dict[str, Any]] = {}
+    duplicate_count = 0
+    for index, row in enumerate(rows):
+        record = extract_flow_record(row)
+        flow_id = record.id or f"row-{index}"
+        version = record.version or "01.00.000"
+        key = f"{flow_id}@{version}"
+        if key in by_key:
+            duplicate_count += 1
+        by_key[key] = row
+
+    manifest_rows: List[Dict[str, Any]] = []
+    for key, row in sorted(by_key.items()):
+        record = extract_flow_record(row)
+        file_name = f"{record.id or key.split('@', 1)[0]}__{record.version or '01.00.000'}.json"
+        payload = {"flowDataSet": flow_dataset_from_row(row)}
+        path = target_dir / file_name
+        _write_json(path, payload)
+        manifest_rows.append(
+            {
+                "flow_key": key,
+                "primary_name": record.name,
+                "file": str(path),
+            }
+        )
+
+    _write_json(
+        out_dir / "review-input" / "materialization-summary.json",
+        {
+            "source_rows_file": str(rows_file),
+            "input_row_count": len(rows),
+            "materialized_flow_count": len(by_key),
+            "duplicate_input_rows_collapsed": duplicate_count,
+            "flows_dir": str(target_dir),
+            "items": manifest_rows,
+        },
+    )
+    return target_dir
+
+
 def _normalize_name_token(value: str) -> str:
     text = value.strip().lower()
     text = re.sub(r"\s+", " ", text)
@@ -149,7 +196,7 @@ class _FlowPropertyRegistryFacade:
         self._source = "process-automated-builder:tiangong_lca_spec.tidas.flow_property_registry"
 
     def open(self) -> None:
-        repo_root = Path(__file__).resolve().parents[4]
+        repo_root = Path(__file__).resolve().parents[2]
         pb_root = repo_root / "process-automated-builder"
         if not pb_root.exists():
             raise RuntimeError(f"process-automated-builder not found: {pb_root}")
@@ -913,7 +960,8 @@ def _rule_counts(rows: Iterable[Dict[str, Any]]) -> Dict[str, int]:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Flow profile LCI review (LLM-driven)")
+    ap = argparse.ArgumentParser(description="Flow governance review engine (LLM-driven)")
+    ap.add_argument("--rows-file", help="Flow rows JSON/JSONL file to materialize into a review snapshot.")
     ap.add_argument("--run-root", help="Run root containing cache/flows (used when --flows-dir omitted)")
     ap.add_argument("--run-id", help="Run id for reporting")
     ap.add_argument("--out-dir", required=True)
@@ -958,14 +1006,34 @@ def main() -> None:
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
+    input_modes = [bool(args.rows_file), bool(args.flows_dir), bool(args.run_root)]
+    if sum(input_modes) != 1:
+        ap.error("flow review requires exactly one of --rows-file, --flows-dir, or --run-root")
+
+    rows_file: Optional[Path] = Path(args.rows_file).resolve() if args.rows_file else None
+    materialized_dir: Optional[Path] = None
     flows_dir: Optional[Path] = Path(args.flows_dir).resolve() if args.flows_dir else None
-    if flows_dir is None:
-        if not args.run_root:
-            ap.error("flow profile requires --flows-dir or --run-root")
+    if rows_file is not None:
+        materialized_dir = _materialize_rows_file(rows_file, out)
+        flows_dir = materialized_dir
+    elif flows_dir is None:
         root = Path(args.run_root).resolve()
         candidates = [root / "cache" / "flows", root / "exports" / "flows"]
         flows_dir = next((p for p in candidates if p.exists()), candidates[0])
-    run_id = args.run_id or (Path(args.run_root).name if args.run_root else flows_dir.name)
+    _write_json(
+        out / "review-input-summary.json",
+        {
+            "input_mode": "rows_file" if rows_file is not None else ("flows_dir" if args.flows_dir else "run_root"),
+            "rows_file": str(rows_file) if rows_file is not None else "",
+            "flows_dir": str(Path(args.flows_dir).resolve()) if args.flows_dir else "",
+            "run_root": str(Path(args.run_root).resolve()) if args.run_root else "",
+            "materialized_flows_dir": str(materialized_dir) if materialized_dir is not None else "",
+            "effective_flows_dir": str(flows_dir),
+        },
+    )
+    run_id = args.run_id or (
+        Path(args.run_root).name if args.run_root else (rows_file.stem if rows_file is not None else flows_dir.name)
+    )
 
     files = _iter_flow_files(flows_dir)
     if not files:

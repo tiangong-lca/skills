@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flow Governance Review"
+  short_description: "Run fixed flow governance from local snapshots"
+  default_prompt: "Use $flow-governance-review to run the fixed governance workflow on local flow/process snapshots and export OpenClaw review packs with flow naming context."
