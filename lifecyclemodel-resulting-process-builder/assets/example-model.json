@@ -1,0 +1,90 @@
+{
+  "lifeCycleModelDataSet": {
+    "@id": "lm-demo-battery-pack",
+    "@version": "00.00.001",
+    "lifeCycleModelInformation": {
+      "dataSetInformation": {
+        "common:UUID": "lm-demo-battery-pack",
+        "name": {
+          "baseName": [
+            {
+              "@xml:lang": "en",
+              "#text": "Battery pack model"
+            }
+          ]
+        },
+        "referenceToResultingProcess": {
+          "@refObjectId": "proc-demo-battery-pack-primary",
+          "@type": "process data set",
+          "@uri": "../processes/proc-demo-battery-pack-primary_00.00.001.xml",
+          "@version": "00.00.001",
+          "common:shortDescription": [
+            {
+              "@xml:lang": "en",
+              "#text": "Battery pack resulting process"
+            }
+          ]
+        }
+      },
+      "quantitativeReference": {
+        "referenceToReferenceProcess": "2"
+      },
+      "technology": {
+        "processes": {
+          "processInstance": [
+            {
+              "@dataSetInternalID": "1",
+              "@multiplicationFactor": "1",
+              "referenceToProcess": {
+                "@refObjectId": "proc-cell-module",
+                "@type": "process data set",
+                "@uri": "../processes/proc-cell-module_00.00.001.xml",
+                "@version": "00.00.001",
+                "common:shortDescription": [
+                  {
+                    "@xml:lang": "en",
+                    "#text": "Cell module assembly"
+                  }
+                ]
+              },
+              "connections": {
+                "outputExchange": {
+                  "@id": "edge-cell-to-pack",
+                  "@flowUUID": "flow-cell-module",
+                  "downstreamProcess": {
+                    "@id": "2",
+                    "@flowUUID": "flow-cell-module"
+                  }
+                }
+              }
+            },
+            {
+              "@dataSetInternalID": "2",
+              "@multiplicationFactor": "1",
+              "referenceToProcess": {
+                "@refObjectId": "proc-pack-assembly",
+                "@type": "process data set",
+                "@uri": "../processes/proc-pack-assembly_00.00.001.xml",
+                "@version": "00.00.001",
+                "common:shortDescription": [
+                  {
+                    "@xml:lang": "en",
+                    "#text": "Pack assembly"
+                  }
+                ]
+              },
+              "connections": {
+                "outputExchange": []
+              }
+            }
+          ]
+        }
+      }
+    },
+    "administrativeInformation": {
+      "publicationAndOwnership": {
+        "common:dataSetVersion": "00.00.001"
+      }
+    }
+  }
+}

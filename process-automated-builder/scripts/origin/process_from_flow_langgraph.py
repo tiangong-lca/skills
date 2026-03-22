@@ -40,10 +40,13 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
+import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 from urllib.parse import parse_qs, urlparse
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -81,6 +84,8 @@ except ModuleNotFoundError:  # pragma: no cover
         generate_cost_report,
     )
 
+from tiangong_lca_spec.state_lock import hold_state_file_lock
+
 PROCESS_FROM_FLOW_ARTIFACTS_ROOT = Path("artifacts/process_from_flow")
 LATEST_RUN_ID_PATH = PROCESS_FROM_FLOW_ARTIFACTS_ROOT / ".latest_run_id"
 DATABASE_TOOL_NAME = "Database_CRUD_Tool"
@@ -97,6 +102,13 @@ DEFAULT_COST_INPUT_PRICE_PER_1M = float(DEFAULT_INPUT_PRICE_PER_1M)
 DEFAULT_COST_OUTPUT_PRICE_PER_1M = float(DEFAULT_OUTPUT_PRICE_PER_1M)
 ENV_COST_INPUT_PRICE_PER_1M = "TIANGONG_PFF_COST_INPUT_PRICE_PER_1M"
 ENV_COST_OUTPUT_PRICE_PER_1M = "TIANGONG_PFF_COST_OUTPUT_PRICE_PER_1M"
+DEFAULT_SI_SUBDIR = Path("input/si")
+MINERU_SUFFIXES = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
+TEXT_SUFFIXES = {".txt", ".md", ".markdown", ".csv", ".tsv", ".xlsx", ".docx"}
+WORKFLOW_LOG_SUBDIR = Path("cache/workflow_logs")
+WORKFLOW_TIMING_REPORT = Path("cache/workflow_timing_report.json")
+WORKFLOW_TIMING_HEARTBEAT_SECONDS = 5.0
+AGENT_HANDOFF_SUMMARY = "agent_handoff_summary.json"
 
 _RUN_ID_SAFE_TOKEN_PATTERN = re.compile(r"[^0-9A-Za-z._-]+")
 
@@ -258,6 +270,131 @@ def _build_main_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _build_workflow_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="process_from_flow_langgraph.py workflow",
+        description="Run the SI-enhanced process_from_flow recipe before resuming the main pipeline.",
+    )
+    parser.add_argument(
+        "--flow",
+        type=Path,
+        required=True,
+        help="Path to the reference flow JSON (ILCD flowDataSet wrapper).",
+    )
+    parser.add_argument(
+        "--operation",
+        choices=("produce", "treat"),
+        default="produce",
+        help="Whether the process produces or treats the reference flow.",
+    )
+    parser.add_argument(
+        "--run-id",
+        help="Run identifier under artifacts/process_from_flow/<run_id>.",
+    )
+    parser.add_argument("--no-translate-zh", action="store_true", help="Skip adding Chinese translations.")
+    parser.add_argument(
+        "--allow-density-conversion",
+        dest="allow_density_conversion",
+        action="store_true",
+        help="Enable LLM-based density conversion for mass/volume mismatches (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-allow-density-conversion",
+        dest="allow_density_conversion",
+        action="store_false",
+        help="Disable LLM-based density conversion for mass/volume mismatches.",
+    )
+    parser.add_argument(
+        "--auto-balance-revise",
+        dest="auto_balance_revise",
+        action="store_true",
+        help=(
+            "Enable auto-revision after the first balance review: revise severe core-mass "
+            "imbalances on non-reference exchanges, then recompute balance review (default: enabled)."
+        ),
+    )
+    parser.add_argument(
+        "--no-auto-balance-revise",
+        dest="auto_balance_revise",
+        action="store_false",
+        help="Disable auto-revision after balance review.",
+    )
+    parser.add_argument("--min-si-hint", default="possible", help="Min si_hint to download (none|possible|likely).")
+    parser.add_argument("--si-max-links", type=int, help="Max SI links per DOI.")
+    parser.add_argument("--si-timeout", type=float, help="HTTP timeout for SI download.")
+    parser.add_argument(
+        "--publish",
+        dest="publish",
+        action="store_true",
+        help="Publish generated flow/process/source datasets after completion (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-publish",
+        dest="publish",
+        action="store_false",
+        help="Disable publishing and keep outputs local under exports/.",
+    )
+    parser.add_argument(
+        "--commit",
+        dest="commit",
+        action="store_true",
+        help="Commit publish actions to remote CRUD service (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-commit",
+        dest="commit",
+        action="store_false",
+        help="Publish in dry-run mode without remote commit.",
+    )
+    parser.add_argument(
+        "--skip-flow-auto-build",
+        action="store_true",
+        help="Skip flow-auto-build during publish (debug only).",
+    )
+    parser.add_argument(
+        "--skip-process-update",
+        action="store_true",
+        help="Skip process-update during publish (debug only).",
+    )
+    parser.add_argument(
+        "--cost-report",
+        dest="cost_report",
+        action="store_true",
+        help="Generate cache/llm_cost_report.json after run/publish (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-cost-report",
+        dest="cost_report",
+        action="store_false",
+        help="Disable automatic LLM cost report generation.",
+    )
+    parser.add_argument(
+        "--cost-input-price-per-1m",
+        type=float,
+        default=_read_cost_price_from_env(ENV_COST_INPUT_PRICE_PER_1M, DEFAULT_COST_INPUT_PRICE_PER_1M),
+        help=f"USD per 1M input tokens for cost report (default: {DEFAULT_COST_INPUT_PRICE_PER_1M}).",
+    )
+    parser.add_argument(
+        "--cost-output-price-per-1m",
+        type=float,
+        default=_read_cost_price_from_env(ENV_COST_OUTPUT_PRICE_PER_1M, DEFAULT_COST_OUTPUT_PRICE_PER_1M),
+        help=f"USD per 1M output tokens for cost report (default: {DEFAULT_COST_OUTPUT_PRICE_PER_1M}).",
+    )
+    parser.add_argument(
+        "--stop-after",
+        choices=("references", "tech", "processes", "exchanges", "matches", "sources", "datasets"),
+        help="Stop after a stage (debug only).",
+    )
+    parser.set_defaults(
+        publish=True,
+        commit=True,
+        auto_balance_revise=True,
+        allow_density_conversion=True,
+        cost_report=True,
+    )
+    return parser
+
+
 def _build_flow_auto_build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="process_from_flow_langgraph.py flow-auto-build",
@@ -301,6 +438,11 @@ def _build_process_update_arg_parser() -> argparse.ArgumentParser:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     cli_args = list(argv) if argv is not None else sys.argv[1:]
+    if cli_args and cli_args[0] == "workflow":
+        parser = _build_workflow_arg_parser()
+        namespace = parser.parse_args(cli_args[1:])
+        setattr(namespace, "command", "workflow")
+        return namespace
     if cli_args and cli_args[0] == "flow-auto-build":
         parser = _build_flow_auto_build_arg_parser()
         namespace = parser.parse_args(cli_args[1:])
@@ -527,6 +669,251 @@ def _format_placeholder_flow_refs(refs: list[dict[str, str]]) -> str:
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _format_seconds(seconds: float | None) -> str:
+    if seconds is None:
+        return "unknown"
+    if seconds < 60:
+        return f"{seconds:.1f}s"
+    minutes = int(seconds // 60)
+    remain = seconds - (minutes * 60)
+    return f"{minutes}m{remain:04.1f}s"
+
+
+def _tail_log(path: Path, *, max_lines: int = 80) -> str:
+    if not path.exists():
+        return ""
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    return "\n".join(lines[-max_lines:])
+
+
+def _run_python(script: Path, args: list[str], *, log_path: Path | None = None) -> None:
+    cmd = [sys.executable, str(script), *args]
+    if log_path is None:
+        subprocess.run(cmd, cwd=REPO_ROOT, check=True)
+        return
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    with log_path.open("a", encoding="utf-8") as handle:
+        handle.write(f"\n[{datetime.now(timezone.utc).isoformat()}] CMD: {' '.join(cmd)}\n")
+        handle.flush()
+        subprocess.run(
+            cmd,
+            cwd=REPO_ROOT,
+            check=True,
+            stdout=handle,
+            stderr=subprocess.STDOUT,
+        )
+
+
+def _run_reference_stage(args: argparse.Namespace, run_id: str, *, log_path: Path | None = None) -> None:
+    script = SCRIPT_DIR / "process_from_flow_langgraph.py"
+    cmd = [
+        "--flow",
+        str(args.flow),
+        "--operation",
+        args.operation,
+        "--run-id",
+        run_id,
+        "--stop-after",
+        "references",
+    ]
+    if args.no_translate_zh:
+        cmd.append("--no-translate-zh")
+    if args.allow_density_conversion:
+        cmd.append("--allow-density-conversion")
+    else:
+        cmd.append("--no-allow-density-conversion")
+    if args.auto_balance_revise:
+        cmd.append("--auto-balance-revise")
+    else:
+        cmd.append("--no-auto-balance-revise")
+    if args.cost_report:
+        cmd.append("--cost-report")
+    else:
+        cmd.append("--no-cost-report")
+    cmd.extend(
+        [
+            "--cost-input-price-per-1m",
+            str(args.cost_input_price_per_1m),
+            "--cost-output-price-per-1m",
+            str(args.cost_output_price_per_1m),
+        ]
+    )
+    _run_python(script, cmd, log_path=log_path)
+
+
+def _run_usability(_args: argparse.Namespace, run_id: str, *, log_path: Path | None = None) -> None:
+    script = SCRIPT_DIR / "process_from_flow_reference_usability.py"
+    _run_python(script, ["--run-id", run_id], log_path=log_path)
+
+
+def _run_si_download(args: argparse.Namespace, run_id: str, *, log_path: Path | None = None) -> None:
+    script = SCRIPT_DIR / "process_from_flow_download_si.py"
+    cmd = [
+        "--run-id",
+        run_id,
+        "--min-si-hint",
+        args.min_si_hint,
+    ]
+    if args.si_max_links is not None:
+        cmd.extend(["--max-links", str(args.si_max_links)])
+    if args.si_timeout is not None:
+        cmd.extend(["--timeout", str(args.si_timeout)])
+    _run_python(script, cmd, log_path=log_path)
+
+
+def _run_usage_tagging(_args: argparse.Namespace, run_id: str, *, log_path: Path | None = None) -> None:
+    script = SCRIPT_DIR / "process_from_flow_reference_usage_tagging.py"
+    _run_python(script, ["--run-id", run_id], log_path=log_path)
+
+
+def _iter_si_files(run_id: str) -> list[Path]:
+    si_root = PROCESS_FROM_FLOW_ARTIFACTS_ROOT / run_id / DEFAULT_SI_SUBDIR
+    if not si_root.exists():
+        return []
+    files: list[Path] = []
+    for path in sorted(si_root.rglob("*")):
+        if path.is_file():
+            files.append(path)
+    return files
+
+
+def _run_mineru_for_si(args: argparse.Namespace, run_id: str, *, log_path: Path | None = None) -> None:
+    script = SCRIPT_DIR / "mineru_for_process_si.py"
+    failures: list[Path] = []
+    for path in _iter_si_files(run_id):
+        suffix = path.suffix.lower()
+        if suffix in TEXT_SUFFIXES:
+            continue
+        if suffix not in MINERU_SUFFIXES:
+            print(f"[warn] Skip unsupported SI file: {path}", file=sys.stderr)
+            continue
+        cmd = [str(path), "--run-id", run_id]
+        try:
+            _run_python(script, cmd, log_path=log_path)
+        except subprocess.CalledProcessError:
+            failures.append(path)
+    if failures:
+        print(f"[warn] MinerU failed for {len(failures)} SI file(s).", file=sys.stderr)
+
+
+def _run_main_pipeline(args: argparse.Namespace, run_id: str, *, log_path: Path | None = None) -> None:
+    script = SCRIPT_DIR / "process_from_flow_langgraph.py"
+    cmd = [
+        "--flow",
+        str(args.flow),
+        "--operation",
+        args.operation,
+        "--run-id",
+        run_id,
+        "--resume",
+    ]
+    if args.no_translate_zh:
+        cmd.append("--no-translate-zh")
+    if args.allow_density_conversion:
+        cmd.append("--allow-density-conversion")
+    else:
+        cmd.append("--no-allow-density-conversion")
+    if args.auto_balance_revise:
+        cmd.append("--auto-balance-revise")
+    else:
+        cmd.append("--no-auto-balance-revise")
+    if args.stop_after:
+        cmd.extend(["--stop-after", args.stop_after])
+    if args.publish:
+        cmd.append("--publish")
+        if args.skip_flow_auto_build:
+            cmd.append("--skip-flow-auto-build")
+        if args.skip_process_update:
+            cmd.append("--skip-process-update")
+    if args.commit:
+        cmd.append("--commit")
+    if args.cost_report:
+        cmd.append("--cost-report")
+    else:
+        cmd.append("--no-cost-report")
+    cmd.extend(
+        [
+            "--cost-input-price-per-1m",
+            str(args.cost_input_price_per_1m),
+            "--cost-output-price-per-1m",
+            str(args.cost_output_price_per_1m),
+        ]
+    )
+    _run_python(script, cmd, log_path=log_path)
+
+
+def _clear_stop_after(run_id: str) -> None:
+    state_path = PROCESS_FROM_FLOW_ARTIFACTS_ROOT / run_id / "cache" / "process_from_flow_state.json"
+    if not state_path.exists():
+        return
+    payload = json.loads(state_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or "stop_after" not in payload:
+        return
+    payload.pop("stop_after", None)
+    with hold_state_file_lock(state_path, reason="workflow.clear_stop_after"):
+        state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[info] Cleared stop_after in {state_path}", file=sys.stderr)
+
+
+def _write_timing_report(
+    *,
+    report_path: Path,
+    run_id: str,
+    flow_path: Path,
+    operation: str,
+    started_at: datetime,
+    stages: list[dict[str, object]],
+) -> None:
+    total_seconds = float(sum(float(item.get("elapsed_seconds") or 0.0) for item in stages))
+    payload = {
+        "run_id": run_id,
+        "flow_path": str(flow_path),
+        "operation": operation,
+        "started_at": started_at.isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "total_elapsed_seconds": round(total_seconds, 3),
+        "stages": stages,
+    }
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _start_timing_heartbeat(
+    *,
+    report_lock: threading.Lock,
+    report_path: Path,
+    run_id: str,
+    flow_path: Path,
+    operation: str,
+    workflow_started_at: datetime,
+    stage_records: list[dict[str, object]],
+    stage_record: dict[str, object],
+    stage_started_perf: float,
+    interval_seconds: float = WORKFLOW_TIMING_HEARTBEAT_SECONDS,
+) -> tuple[threading.Event, threading.Thread]:
+    stop_event = threading.Event()
+
+    def _heartbeat_loop() -> None:
+        while not stop_event.wait(interval_seconds):
+            with report_lock:
+                if stage_record.get("status") != "running":
+                    return
+                stage_record["elapsed_seconds"] = round(time.perf_counter() - stage_started_perf, 3)
+                stage_record["updated_at"] = datetime.now(timezone.utc).isoformat()
+                _write_timing_report(
+                    report_path=report_path,
+                    run_id=run_id,
+                    flow_path=flow_path,
+                    operation=operation,
+                    started_at=workflow_started_at,
+                    stages=stage_records,
+                )
+
+    thread = threading.Thread(target=_heartbeat_loop, name="workflow-timing-heartbeat", daemon=True)
+    thread.start()
+    return stop_event, thread
 
 
 def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> Path:
@@ -2408,6 +2795,8 @@ def _run_flow_auto_build_command(args: argparse.Namespace) -> None:
         llm=llm,
         strict_flow_property_check=args.strict_flow_property_check,
     )
+    handoff_path = _write_agent_handoff_summary(run_id=run_id, command="flow-auto-build", cache_dir=cache_dir)
+    print(f"[progress] agent_handoff_summary={handoff_path}", file=sys.stderr)
 
 
 def _run_process_update_command(args: argparse.Namespace) -> None:
@@ -2444,10 +2833,235 @@ def _run_process_update_command(args: argparse.Namespace) -> None:
         flow_ref_mapping=flow_mapping,
         mapping_source=mapping_source,
     )
+    handoff_path = _write_agent_handoff_summary(run_id=run_id, command="process-update", cache_dir=cache_dir)
+    print(f"[progress] agent_handoff_summary={handoff_path}", file=sys.stderr)
+
+
+def _build_agent_handoff_summary(
+    *,
+    run_id: str,
+    command: str,
+    cache_dir: Path,
+    extra: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    state_path = cache_dir / "process_from_flow_state.json"
+    state = _load_state(state_path) if state_path.exists() else {}
+    process_datasets = state.get("process_datasets") if isinstance(state.get("process_datasets"), list) else []
+    source_datasets = state.get("source_datasets") if isinstance(state.get("source_datasets"), list) else []
+    placeholder_examples = _collect_placeholder_flow_refs(process_datasets, limit=5) if process_datasets else []
+
+    publish_summary_path = _publish_summary_path(cache_dir)
+    publish_summary = {}
+    if publish_summary_path.exists():
+        try:
+            publish_summary = _load_state(publish_summary_path)
+        except Exception:
+            publish_summary = {}
+
+    llm_cost_report_path = cache_dir / "llm_cost_report.json"
+    timing_report_path = cache_dir / WORKFLOW_TIMING_REPORT.name
+
+    next_actions: list[str] = []
+    stop_after = str(state.get("stop_after") or "").strip()
+    if stop_after:
+        next_actions.append(f"resume: process_from_flow_langgraph.py --resume --run-id {run_id}")
+    elif process_datasets and not publish_summary_path.exists():
+        next_actions.append(f"publish: process_from_flow_langgraph.py --publish-only --run-id {run_id}")
+    if placeholder_examples:
+        next_actions.append("inspect: cache/process_update_report.json or cache/placeholder_report.json")
+
+    summary: dict[str, Any] = {
+        "schema_version": 1,
+        "generated_at_utc": _utc_now_iso(),
+        "run_id": run_id,
+        "command": command,
+        "flow_path": state.get("flow_path"),
+        "operation": state.get("operation"),
+        "selected_route_id": state.get("selected_route_id"),
+        "stop_after": stop_after or None,
+        "process_count": len(state.get("processes") or []) if isinstance(state.get("processes"), list) else 0,
+        "matched_exchange_count": (
+            len(state.get("matched_process_exchanges") or [])
+            if isinstance(state.get("matched_process_exchanges"), list)
+            else 0
+        ),
+        "process_dataset_count": len(process_datasets),
+        "source_dataset_count": len(source_datasets),
+        "remaining_placeholder_refs": _count_placeholder_flow_refs(process_datasets) if process_datasets else 0,
+        "placeholder_examples": placeholder_examples,
+        "publish_summary": publish_summary if isinstance(publish_summary, dict) else {},
+        "artifacts": {
+            "state_path": str(state_path),
+            "timing_report": str(timing_report_path) if timing_report_path.exists() else None,
+            "publish_summary": str(publish_summary_path) if publish_summary_path.exists() else None,
+            "llm_cost_report": str(llm_cost_report_path) if llm_cost_report_path.exists() else None,
+            "process_update_report": str(_process_update_report_path(cache_dir)) if _process_update_report_path(cache_dir).exists() else None,
+            "flow_auto_build_manifest": str(_flow_auto_build_manifest_path(cache_dir)) if _flow_auto_build_manifest_path(cache_dir).exists() else None,
+        },
+        "next_actions": next_actions,
+    }
+    if extra:
+        summary["extra"] = dict(extra)
+    return summary
+
+
+def _write_agent_handoff_summary(
+    *,
+    run_id: str,
+    command: str,
+    cache_dir: Path,
+    extra: Mapping[str, Any] | None = None,
+) -> Path:
+    target = cache_dir / AGENT_HANDOFF_SUMMARY
+    dump_json(_build_agent_handoff_summary(run_id=run_id, command=command, cache_dir=cache_dir, extra=extra), target)
+    return target
+
+
+def _run_workflow_command(args: argparse.Namespace) -> None:
+    if not args.flow.exists():
+        raise SystemExit(f"Reference flow file not found: {args.flow}")
+
+    run_id = args.run_id or build_process_from_flow_run_id(args.flow, args.operation)
+    run_root = PROCESS_FROM_FLOW_ARTIFACTS_ROOT / run_id
+    workflow_log_dir = run_root / WORKFLOW_LOG_SUBDIR
+    workflow_log_dir.mkdir(parents=True, exist_ok=True)
+    timing_report_path = run_root / WORKFLOW_TIMING_REPORT
+    started_at = datetime.now(timezone.utc)
+
+    print(f"[progress] run_id={run_id}", file=sys.stderr)
+    print(f"[progress] logs={workflow_log_dir}", file=sys.stderr)
+
+    stage_plan: list[tuple[str, Callable[[Path], None]]] = [
+        ("01_references", lambda log: _run_reference_stage(args, run_id, log_path=log)),
+        ("02_usability", lambda log: _run_usability(args, run_id, log_path=log)),
+        ("03_si_download", lambda log: _run_si_download(args, run_id, log_path=log)),
+        ("04_mineru", lambda log: _run_mineru_for_si(args, run_id, log_path=log)),
+        ("05_usage_tagging", lambda log: _run_usage_tagging(args, run_id, log_path=log)),
+        ("06_clear_stop_after", lambda _log: _clear_stop_after(run_id)),
+        ("07_main_pipeline", lambda log: _run_main_pipeline(args, run_id, log_path=log)),
+    ]
+
+    stage_records: list[dict[str, object]] = []
+    timing_report_lock = threading.Lock()
+    total_start = time.perf_counter()
+    total_stages = len(stage_plan)
+
+    def _write_timing_snapshot() -> None:
+        with timing_report_lock:
+            _write_timing_report(
+                report_path=timing_report_path,
+                run_id=run_id,
+                flow_path=args.flow,
+                operation=args.operation,
+                started_at=started_at,
+                stages=stage_records,
+            )
+
+    for index, (stage_name, runner) in enumerate(stage_plan, start=1):
+        stage_log_path = workflow_log_dir / f"{stage_name}.log"
+        elapsed_before = time.perf_counter() - total_start
+        avg_stage = (
+            sum(float(item.get("elapsed_seconds") or 0.0) for item in stage_records) / len(stage_records)
+            if stage_records
+            else None
+        )
+        remaining_including_current = total_stages - index + 1
+        eta_before = (avg_stage * remaining_including_current) if avg_stage is not None else None
+        print(
+            (
+                f"[progress] stage {index}/{total_stages} start={stage_name} "
+                f"elapsed={_format_seconds(elapsed_before)} eta={_format_seconds(eta_before)} "
+                f"log={stage_log_path}"
+            ),
+            file=sys.stderr,
+        )
+
+        stage_started_at = datetime.now(timezone.utc)
+        stage_start = time.perf_counter()
+        record = {
+            "index": index,
+            "name": stage_name,
+            "status": "running",
+            "started_at": stage_started_at.isoformat(),
+            "updated_at": stage_started_at.isoformat(),
+            "elapsed_seconds": 0.0,
+            "log_path": str(stage_log_path),
+        }
+        stage_records.append(record)
+        _write_timing_snapshot()
+        heartbeat_stop, heartbeat_thread = _start_timing_heartbeat(
+            report_lock=timing_report_lock,
+            report_path=timing_report_path,
+            run_id=run_id,
+            flow_path=args.flow,
+            operation=args.operation,
+            workflow_started_at=started_at,
+            stage_records=stage_records,
+            stage_record=record,
+            stage_started_perf=stage_start,
+        )
+        try:
+            runner(stage_log_path)
+        except BaseException as exc:  # noqa: BLE001
+            heartbeat_stop.set()
+            heartbeat_thread.join()
+            stage_elapsed = time.perf_counter() - stage_start
+            record["status"] = "failed"
+            record["finished_at"] = datetime.now(timezone.utc).isoformat()
+            record["updated_at"] = record["finished_at"]
+            record["elapsed_seconds"] = round(stage_elapsed, 3)
+            record["error_type"] = exc.__class__.__name__
+            record["error"] = str(exc)
+            _write_timing_snapshot()
+            tail = _tail_log(stage_log_path)
+            if tail:
+                print(f"[progress] stage {stage_name} failed. log tail:\n{tail}", file=sys.stderr)
+            raise
+
+        heartbeat_stop.set()
+        heartbeat_thread.join()
+        stage_elapsed = time.perf_counter() - stage_start
+        record["status"] = "ok"
+        record["finished_at"] = datetime.now(timezone.utc).isoformat()
+        record["updated_at"] = record["finished_at"]
+        record["elapsed_seconds"] = round(stage_elapsed, 3)
+        _write_timing_snapshot()
+
+        elapsed_after = time.perf_counter() - total_start
+        remaining = total_stages - index
+        avg_after = sum(float(item.get("elapsed_seconds") or 0.0) for item in stage_records) / len(stage_records)
+        eta_after = avg_after * remaining if remaining > 0 else 0.0
+        print(
+            (
+                f"[progress] stage {index}/{total_stages} done={stage_name} "
+                f"stage_elapsed={_format_seconds(stage_elapsed)} "
+                f"total_elapsed={_format_seconds(elapsed_after)} "
+                f"eta={_format_seconds(eta_after)}"
+            ),
+            file=sys.stderr,
+        )
+
+    total_elapsed = time.perf_counter() - total_start
+    cache_dir = ensure_run_cache_dir(run_id)
+    handoff_path = _write_agent_handoff_summary(
+        run_id=run_id,
+        command="workflow",
+        cache_dir=cache_dir,
+        extra={
+            "workflow_timing_report": str(timing_report_path),
+            "total_elapsed_seconds": round(total_elapsed, 3),
+        },
+    )
+    print(f"[progress] workflow completed run_id={run_id} total={_format_seconds(total_elapsed)}", file=sys.stderr)
+    print(f"[progress] timing_report={timing_report_path}", file=sys.stderr)
+    print(f"[progress] agent_handoff_summary={handoff_path}", file=sys.stderr)
 
 
 def main() -> None:
     args = parse_args()
+    if args.command == "workflow":
+        _run_workflow_command(args)
+        return
     if args.command == "flow-auto-build":
         _run_flow_auto_build_command(args)
         return
@@ -2488,6 +3102,8 @@ def main() -> None:
             input_price_per_1m=float(args.cost_input_price_per_1m),
             output_price_per_1m=float(args.cost_output_price_per_1m),
         )
+        handoff_path = _write_agent_handoff_summary(run_id=run_id, command="publish-only", cache_dir=cache_dir)
+        print(f"[progress] agent_handoff_summary={handoff_path}", file=sys.stderr)
         return
 
     if args.resume:
@@ -2586,6 +3202,8 @@ def main() -> None:
             input_price_per_1m=float(args.cost_input_price_per_1m),
             output_price_per_1m=float(args.cost_output_price_per_1m),
         )
+        handoff_path = _write_agent_handoff_summary(run_id=run_id, command="run", cache_dir=cache_dir)
+        print(f"[progress] agent_handoff_summary={handoff_path}", file=sys.stderr)
         return
 
     datasets = result_state.get("process_datasets") or []
@@ -2598,6 +3216,8 @@ def main() -> None:
             input_price_per_1m=float(args.cost_input_price_per_1m),
             output_price_per_1m=float(args.cost_output_price_per_1m),
         )
+        handoff_path = _write_agent_handoff_summary(run_id=run_id, command="run", cache_dir=cache_dir)
+        print(f"[progress] agent_handoff_summary={handoff_path}", file=sys.stderr)
         return
 
     written = _write_process_exports(datasets, exports_dir)
@@ -2641,6 +3261,8 @@ def main() -> None:
         input_price_per_1m=float(args.cost_input_price_per_1m),
         output_price_per_1m=float(args.cost_output_price_per_1m),
     )
+    handoff_path = _write_agent_handoff_summary(run_id=run_id, command="run", cache_dir=cache_dir)
+    print(f"[progress] agent_handoff_summary={handoff_path}", file=sys.stderr)
     if args.retain_runs:
         _cleanup_runs(retain=args.retain_runs, current_run_id=run_id)
 

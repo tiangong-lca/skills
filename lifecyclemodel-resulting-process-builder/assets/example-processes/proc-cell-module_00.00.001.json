@@ -1,0 +1,61 @@
+{
+  "processDataSet": {
+    "processInformation": {
+      "dataSetInformation": {
+        "common:UUID": "proc-cell-module",
+        "name": {
+          "baseName": [
+            {
+              "@xml:lang": "en",
+              "#text": "Cell module assembly"
+            }
+          ]
+        },
+        "common:generalComment": [
+          {
+            "@xml:lang": "en",
+            "#text": "Example foreground unit process for assembling a cell module."
+          }
+        ]
+      },
+      "quantitativeReference": {
+        "referenceToReferenceFlow": "2"
+      },
+      "technology": {}
+    },
+    "modellingAndValidation": {
+      "LCIMethodAndAllocation": {
+        "typeOfDataSet": "Unit process, single operation"
+      }
+    },
+    "administrativeInformation": {
+      "publicationAndOwnership": {
+        "common:dataSetVersion": "00.00.001"
+      }
+    },
+    "exchanges": {
+      "exchange": [
+        {
+          "@dataSetInternalID": "1",
+          "referenceToFlowDataSet": {
+            "@refObjectId": "flow-electricity",
+            "@type": "flow data set"
+          },
+          "exchangeDirection": "Input",
+          "meanAmount": 5,
+          "resultingAmount": 5
+        },
+        {
+          "@dataSetInternalID": "2",
+          "referenceToFlowDataSet": {
+            "@refObjectId": "flow-cell-module",
+            "@type": "flow data set"
+          },
+          "exchangeDirection": "Output",
+          "meanAmount": 1,
+          "resultingAmount": 1
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/lifecyclemodel-recursive-orchestrator/request.schema.json",
+  "title": "LifecycleModelRecursiveOrchestratorRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["goal", "root", "orchestration", "publish"],
+  "$defs": {
+    "entityRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "score": { "type": "number", "minimum": 0 },
+        "reason": { "type": "string" },
+        "source": { "type": "string" }
+      }
+    },
+    "processBuilder": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "type": "string", "enum": ["workflow", "langgraph"] },
+        "flow_file": { "type": "string", "minLength": 1 },
+        "flow_json": {
+          "anyOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "object" }
+          ]
+        },
+        "run_id": { "type": "string", "minLength": 1 },
+        "python_bin": { "type": "string", "minLength": 1 },
+        "publish": { "type": "boolean" },
+        "commit": { "type": "boolean" },
+        "forward_args": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "submodelBuilder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest"],
+      "properties": {
+        "manifest": { "type": "string", "minLength": 1 },
+        "out_dir": { "type": "string", "minLength": 1 },
+        "dry_run": { "type": "boolean" }
+      }
+    },
+    "projector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "command": { "type": "string", "enum": ["prepare", "build", "project"] },
+        "request": { "type": "string", "minLength": 1 },
+        "model_file": { "type": "string", "minLength": 1 },
+        "out_dir": { "type": "string", "minLength": 1 },
+        "projection_role": { "type": "string", "enum": ["primary", "all"] },
+        "run_always": { "type": "boolean" },
+        "publish_processes": { "type": "boolean" },
+        "publish_relations": { "type": "boolean" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "kind"],
+      "properties": {
+        "node_id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": ["reference_flow", "process", "lifecyclemodel", "resulting_process", "subsystem"]
+        },
+        "label": { "type": "string", "minLength": 1 },
+        "parent_node_id": { "type": "string", "minLength": 1 },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "requested_action": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "reuse_existing_resulting_process",
+            "reuse_existing_process",
+            "reuse_existing_model",
+            "build_process",
+            "build_submodel",
+            "cutoff",
+            "unresolved"
+          ]
+        },
+        "entity": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "flow": { "$ref": "#/$defs/entityRef" },
+        "process": { "$ref": "#/$defs/entityRef" },
+        "lifecyclemodel": { "$ref": "#/$defs/entityRef" },
+        "resulting_process": { "$ref": "#/$defs/entityRef" },
+        "existing_resulting_process_candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/candidate" }
+        },
+        "existing_process_candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/candidate" }
+        },
+        "existing_lifecyclemodel_candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/candidate" }
+        },
+        "process_builder": { "$ref": "#/$defs/processBuilder" },
+        "submodel_builder": { "$ref": "#/$defs/submodelBuilder" },
+        "projector": { "$ref": "#/$defs/projector" }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "relation": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "properties": {
+    "request_id": { "type": "string", "minLength": 1 },
+    "goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "boundary": { "type": "string", "minLength": 1 },
+        "functional_unit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["amount", "unit"],
+          "properties": {
+            "amount": { "type": "number" },
+            "unit": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "root": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "node_id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": ["reference_flow", "process", "lifecyclemodel", "resulting_process"]
+        },
+        "requested_action": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "reuse_existing_resulting_process",
+            "reuse_existing_process",
+            "reuse_existing_model",
+            "build_process",
+            "build_submodel",
+            "cutoff",
+            "unresolved"
+          ]
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "flow": { "$ref": "#/$defs/entityRef" },
+        "process": { "$ref": "#/$defs/entityRef" },
+        "lifecyclemodel": { "$ref": "#/$defs/entityRef" },
+        "resulting_process": { "$ref": "#/$defs/entityRef" },
+        "existing_resulting_process_candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/candidate" }
+        },
+        "existing_process_candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/candidate" }
+        },
+        "existing_lifecyclemodel_candidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/candidate" }
+        },
+        "process_builder": { "$ref": "#/$defs/processBuilder" },
+        "submodel_builder": { "$ref": "#/$defs/submodelBuilder" },
+        "projector": { "$ref": "#/$defs/projector" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "reference_flow" } } },
+          "then": { "required": ["flow"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "process" } } },
+          "then": { "required": ["process"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "lifecyclemodel" } } },
+          "then": { "required": ["lifecyclemodel"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "resulting_process" } } },
+          "then": { "required": ["resulting_process"] }
+        }
+      ]
+    },
+    "orchestration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "max_depth",
+        "reuse_resulting_process_first",
+        "allow_process_build",
+        "allow_submodel_build",
+        "pin_child_versions",
+        "stop_at_elementary_flow"
+      ],
+      "properties": {
+        "mode": { "type": "string", "enum": ["collapsed", "expanded", "hybrid"] },
+        "max_depth": { "type": "integer", "minimum": 0 },
+        "reuse_resulting_process_first": { "type": "boolean" },
+        "allow_process_build": { "type": "boolean" },
+        "allow_submodel_build": { "type": "boolean" },
+        "pin_child_versions": { "type": "boolean" },
+        "stop_at_elementary_flow": { "type": "boolean" },
+        "cutoff_policy": { "type": "string", "minLength": 1 },
+        "fail_fast": { "type": "boolean" }
+      }
+    },
+    "candidate_sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "my_processes": { "type": "boolean" },
+        "team_processes": { "type": "boolean" },
+        "public_processes": { "type": "boolean" },
+        "existing_lifecyclemodels": { "type": "boolean" },
+        "existing_resulting_processes": { "type": "boolean" }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "publish": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent"],
+      "properties": {
+        "intent": { "type": "string", "enum": ["dry_run", "prepare_only", "publish"] },
+        "prepare_lifecyclemodel_payload": { "type": "boolean" },
+        "prepare_resulting_process_payload": { "type": "boolean" },
+        "prepare_relation_payload": { "type": "boolean" }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

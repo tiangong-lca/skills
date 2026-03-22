@@ -1,0 +1,92 @@
+{
+  "request_id": "demo-battery-pack-collapsed-001",
+  "goal": {
+    "name": "Battery pack, 1 kWh",
+    "functional_unit": {
+      "amount": 1,
+      "unit": "kWh"
+    },
+    "boundary": "product system"
+  },
+  "root": {
+    "node_id": "battery-pack-model",
+    "kind": "lifecyclemodel",
+    "lifecyclemodel": {
+      "id": "lm-demo-battery-pack",
+      "version": "00.00.001",
+      "name": "Battery pack model"
+    },
+    "requested_action": "build_submodel",
+    "depends_on": [
+      "pack-housing-process"
+    ],
+    "existing_lifecyclemodel_candidates": [
+      {
+        "id": "lm-battery-pack-legacy",
+        "version": "00.00.004",
+        "name": "Legacy battery pack model",
+        "score": 0.72,
+        "reason": "A pinned legacy submodel exists but the request wants a fresh local build."
+      }
+    ],
+    "submodel_builder": {
+      "manifest": "../../lifecyclemodel-automated-builder/assets/example-request.json",
+      "dry_run": true
+    },
+    "projector": {
+      "command": "build",
+      "request": "../../lifecyclemodel-resulting-process-builder/assets/example-request.json"
+    }
+  },
+  "orchestration": {
+    "mode": "collapsed",
+    "max_depth": 3,
+    "reuse_resulting_process_first": true,
+    "allow_process_build": true,
+    "allow_submodel_build": true,
+    "pin_child_versions": true,
+    "stop_at_elementary_flow": false,
+    "cutoff_policy": "default",
+    "fail_fast": true
+  },
+  "candidate_sources": {
+    "my_processes": true,
+    "team_processes": true,
+    "public_processes": true,
+    "existing_lifecyclemodels": true,
+    "existing_resulting_processes": true
+  },
+  "nodes": [
+    {
+      "node_id": "pack-housing-process",
+      "kind": "process",
+      "label": "Pack housing",
+      "existing_process_candidates": [
+        {
+          "id": "proc-housing-001",
+          "version": "00.00.001",
+          "name": "Existing housing process",
+          "score": 0.91,
+          "reason": "Existing process already matches geography and unit."
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "battery-pack-model",
+      "to": "pack-housing-process",
+      "relation": "consumes"
+    }
+  ],
+  "publish": {
+    "intent": "prepare_only",
+    "prepare_lifecyclemodel_payload": true,
+    "prepare_resulting_process_payload": true,
+    "prepare_relation_payload": true
+  },
+  "notes": [
+    "Demonstrates lifecyclemodel builder invocation plus resulting-process projection.",
+    "Pack housing is reused as an existing process dependency."
+  ]
+}

@@ -35,9 +35,9 @@
 1. Wrapper layer
    - `scripts/run-process-automated-builder.sh`
    - Normalizes flow input (`--flow-file`, `--flow-json`, `--flow-stdin`).
-   - Dispatches to `workflow` mode or `langgraph` mode.
+   - Dispatches to `langgraph.py workflow` or `langgraph` mode.
 2. Orchestration layer
-   - `scripts/origin/process_from_flow_workflow.py`
+   - `scripts/origin/process_from_flow_langgraph.py workflow`
    - Stages: references -> usability -> SI download -> MinerU -> usage tagging -> resume main pipeline.
 3. Core graph layer
    - `scripts/origin/process_from_flow_langgraph.py`
@@ -70,6 +70,7 @@
 - Diagnostics:
   - `cache/workflow_logs/*.log`
   - `cache/workflow_timing_report.json`
+  - `cache/agent_handoff_summary.json`
   - `cache/placeholder_report.json` (if generated)
   - `cache/flow_auto_build_manifest.jsonl`
   - `cache/process_update_report.json`

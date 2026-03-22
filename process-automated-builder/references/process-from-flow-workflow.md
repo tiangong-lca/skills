@@ -8,7 +8,8 @@ This reference is a self-contained migration of the `process_from_flow` workflow
 - Outputs: `process_datasets` and `source_datasets`, plus artifacts under `artifacts/process_from_flow/<run_id>/`.
 
 ## Cross References
-- CLI entrypoints: `scripts/origin/process_from_flow_langgraph.py` and `scripts/origin/process_from_flow_workflow.py` (read module docstrings and `--help`).
+- Canonical CLI entrypoint: `scripts/origin/process_from_flow_langgraph.py`.
+- Compatibility shim: `scripts/origin/process_from_flow_workflow.py` forwards to `process_from_flow_langgraph.py workflow`.
 - Wrapper entrypoint: `scripts/run-process-automated-builder.sh` (supports `--flow-file`, `--flow-json`, `--flow-stdin`).
 
 ## Architecture and Main Flow
@@ -132,8 +133,8 @@ This reference is a self-contained migration of the `process_from_flow` workflow
   `Step 0 -> Step 1a -> Step 1b -> 1b-usability -> Step 1c -> Step 1d -> Step 1e -> Step 1 -> Step 2 -> Step 3 -> Step 3b -> Step 4 -> Step 4b -> Step 4c -> Step 1f -> Step 5a -> Step 5 -> Step 6 -> Step 7 -> Step 8`
 
 ### Core Scripts (Main Chain)
-- `process_from_flow_workflow.py`: Main orchestrator, runs 1b-usability/1d/1e before resuming the main flow.
-- `process_from_flow_langgraph.py`: LangGraph CLI (run/resume/cleanup/publish), supports `--stop-after` and `--publish/--commit`.
+- `process_from_flow_langgraph.py workflow`: SI-enhanced orchestrator, runs 1b-usability/1d/1e before resuming the main flow.
+- `process_from_flow_langgraph.py`: LangGraph CLI (run/resume/cleanup/publish), also owns the `workflow`, `flow-auto-build`, and `process-update` subcommands.
 - `process_from_flow_reference_usability.py`: Step 1b usability screening (LCIA vs LCI).
 - `process_from_flow_download_si.py`: Download SI originals and write SI metadata (supports `--doi/--cluster/--recommendation` filters, `--dry-run`, `--no-update-state`).
 - `mineru_for_process_si.py`: Parse PDF/image SI into JSON structure and save extracted text alongside JSON.
@@ -147,7 +148,7 @@ This reference is a self-contained migration of the `process_from_flow` workflow
 ### Run Notes
 - New runs require explicit `--flow`; no default flow file path is assumed.
 - Flow-search MCP runtime settings can be injected via env (`TIANGONG_LCA_REMOTE_TRANSPORT`, `TIANGONG_LCA_REMOTE_SERVICE_NAME`, `TIANGONG_LCA_REMOTE_URL`, `TIANGONG_LCA_REMOTE_API_KEY`).
-- `process_from_flow_workflow.py` does not expose `--no-llm` (Step 1b/1e require LLM); use `process_from_flow_langgraph.py --no-llm` for deterministic debugging.
+- `process_from_flow_langgraph.py workflow` does not expose `--no-llm` (Step 1b/1e require LLM); use `process_from_flow_langgraph.py --no-llm` for deterministic debugging.
 - `--min-si-hint` controls SI download threshold (`none|possible|likely`), with `--si-max-links/--si-timeout`.
 - Default run-id naming (when `--run-id` is omitted): `pfw_<flow_code>_<flow_uuid8>_<operation>_<UTC_TIMESTAMP>` (example: `pfw_01211_3a8d74d8_produce_20260211T105022Z`).
 
@@ -165,11 +166,11 @@ This reference is a self-contained migration of the `process_from_flow` workflow
   - Only `flow_search` RPC requests are parallelized.
   - Candidate selection and state writeback are still applied in original exchange order.
 - `process_from_flow_langgraph.py --stop-after datasets` means run through dataset writeout; other values stop early and save state.
-- `process_from_flow_workflow.py` writes fixed per-run logs to `artifacts/process_from_flow/<run_id>/cache/workflow_logs/*.log` and timing summary to `artifacts/process_from_flow/<run_id>/cache/workflow_timing_report.json`.
-- `process_from_flow_workflow.py` prints stage progress in stderr (`stage x/y`, elapsed, ETA, log path); `match_flows` logs exchange-level progress with completed/total and ETA.
+- `process_from_flow_langgraph.py workflow` writes fixed per-run logs to `artifacts/process_from_flow/<run_id>/cache/workflow_logs/*.log`, timing summary to `artifacts/process_from_flow/<run_id>/cache/workflow_timing_report.json`, and a compact caller summary to `cache/agent_handoff_summary.json`.
+- `process_from_flow_langgraph.py workflow` prints stage progress in stderr (`stage x/y`, elapsed, ETA, log path); `match_flows` logs exchange-level progress with completed/total and ETA.
 - `--allow-density-conversion` enables LLM density estimates for mass<->volume mismatches (product/waste flows only).
 - Placeholder resolution runs once by default; to re-run, clear `placeholder_resolution_applied/placeholder_resolutions` then `--resume`.
-- `process_from_flow_workflow.py` clears `stop_after` before resuming the main pipeline.
+- `process_from_flow_langgraph.py workflow` clears `stop_after` before resuming the main pipeline.
 - `--stop-after matches` ends after Step 4 matching; it does not produce `process_datasets/source_datasets`, and therefore does not export `exports/flows`.
 
 ## State Fields (`state`)

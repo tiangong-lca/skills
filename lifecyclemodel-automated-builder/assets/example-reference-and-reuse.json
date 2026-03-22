@@ -1,0 +1,33 @@
+{
+  "run_label": "reference-model-and-reuse-test",
+  "allow_remote_write": false,
+  "discovery": {
+    "reference_model_queries": [
+      "生命周期"
+    ],
+    "reference_model_select_limit": 2
+  },
+  "selection": {
+    "mode": "graph_first_local_inference",
+    "max_models": 2,
+    "max_processes_per_model": 12,
+    "decision_factors": [
+      "shared exchange connectivity inside one process-automated-builder run",
+      "reference lifecyclemodel shape from MCP search/select",
+      "native model packaging patterns from earlier lifecycle models",
+      "local validation readiness"
+    ]
+  },
+  "reuse": {
+    "reusable_process_dirs": [],
+    "include_reference_model_resulting_processes": true
+  },
+  "output": {
+    "write_local_models": true,
+    "emit_validation_report": true
+  },
+  "local_runs": [
+    "/home/huimin/projects/lca-skills/process-automated-builder/artifacts/process_from_flow/pfw_21932_98984fb7_produce_20260302T093642Z",
+    "/home/huimin/projects/lca-skills/process-automated-builder/artifacts/process_from_flow/pfw_28222_833dd94b_produce_20260302T151636Z"
+  ]
+}

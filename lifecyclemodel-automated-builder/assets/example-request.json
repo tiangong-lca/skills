@@ -1,0 +1,40 @@
+{
+  "run_label": "account-and-public-open-data",
+  "allow_remote_write": false,
+  "discovery": {
+    "sources": [
+      {
+        "kind": "account_processes",
+        "selector": "all-accessible"
+      },
+      {
+        "kind": "public_open_data",
+        "table": "processes",
+        "filters": {
+          "state_code": 100
+        }
+      }
+    ],
+    "supporting_open_tables": [
+      "flows",
+      "sources",
+      "lifecyclemodels"
+    ],
+    "batch_limit": 200
+  },
+  "selection": {
+    "mode": "llm_judgement",
+    "max_models": 25,
+    "max_processes_per_model": 12,
+    "decision_factors": [
+      "shared product system or classification lineage",
+      "explicit exchange connectivity",
+      "quantitative reference completeness",
+      "geography and time coherence"
+    ]
+  },
+  "output": {
+    "write_local_models": true,
+    "emit_validation_report": true
+  }
+}

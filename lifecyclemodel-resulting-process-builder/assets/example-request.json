@@ -1,0 +1,30 @@
+{
+  "source_model": {
+    "id": "lm-demo-battery-pack",
+    "version": "00.00.001",
+    "name": "Battery pack model",
+    "json_ordered_path": "example-model.json"
+  },
+  "projection": {
+    "mode": "primary-only",
+    "process_id": "proc-demo-battery-pack-primary",
+    "process_version": "00.00.001",
+    "metadata_overrides": {
+      "type_of_data_set": "partly terminated system",
+      "projection_source": "lifecyclemodel_resulting_process_builder"
+    },
+    "attach_graph_snapshot": true,
+    "attach_graph_snapshot_uri": "file:///tmp/example-model-preview.png"
+  },
+  "process_sources": {
+    "process_json_dirs": [
+      "example-processes"
+    ],
+    "allow_mcp_lookup": false
+  },
+  "publish": {
+    "intent": "prepare_only",
+    "prepare_process_payloads": true,
+    "prepare_relation_payloads": true
+  }
+}
