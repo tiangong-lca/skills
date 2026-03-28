@@ -1,19 +1,20 @@
 ---
 name: flow-governance-review
-description: "Run a fixed local flow-governance workflow from flow/process snapshots and emit reusable artifacts: duplicate evidence, alias maps, deterministic process-flow repair plans, validation reports, and OpenClaw review packs with flow naming context. Use when governing product/waste flows during LCA data authoring or when OpenClaw/other skills need one canonical local flow-governance entrypoint."
+description: "Run a fixed flow-governance workflow from a flow UUID or local flow/process snapshots and emit reusable artifacts: duplicate evidence, alias maps, deterministic process-flow repair plans, validation reports, OpenClaw review packs for naming/classification/reference decisions, reusable process-pool sync, and reviewed-row publish reports that can skip unchanged flows. Use when governing product/waste flows during LCA data authoring or when OpenClaw/other skills need one canonical governance entrypoint plus optional publish handoff."
 ---
 
 # Flow Governance Review
 
-Keep the scope local and file-driven. Start from JSON or JSONL snapshots of flows/processes, generate machine-readable artifacts, let OpenClaw or a human make the remaining semantic decisions, then apply and validate only the approved local changes.
+Keep local JSON or JSONL payloads as the system of record. Start from a flow UUID or local snapshots of flows/processes, generate machine-readable artifacts, let OpenClaw or a human make the remaining semantic decisions, then apply, validate, and optionally publish only the approved reviewed rows. Repeated single-flow runs can share a local process pool so the skill reuses exact-version process rows instead of refetching the same full JSON every time.
 
 Do not use this skill for:
 
-- append-only publish or direct CRUD writes
+- arbitrary remote CRUD outside the explicit reviewed-row publish command
 - remote scope export
 
 ## Commands
 
+- `openclaw-entry`
 - `openclaw-full-run`
 - `run-governance`
 - `review-flows`
@@ -23,11 +24,16 @@ Do not use this skill for:
 - `plan-process-flow-repairs`
 - `apply-process-flow-repairs`
 - `validate-processes`
+- `export-openclaw-dedup-review-pack`
 - `export-openclaw-ref-review-pack`
 - `apply-openclaw-ref-decisions`
 - `export-openclaw-text-review-pack`
+- `export-openclaw-classification-review-pack`
 - `apply-openclaw-text-decisions`
+- `apply-openclaw-classification-decisions`
 - `validate-openclaw-text-decisions`
+- `validate-openclaw-classification-decisions`
+- `publish-reviewed-data`
 
 Run them through:
 
@@ -35,18 +41,26 @@ Run them through:
 scripts/run-flow-governance-review.sh <command> ...
 ```
 
-For OpenClaw when only a flow UUID is available, prefer:
+For OpenClaw, prefer the unified entrypoint:
 
 ```bash
-scripts/run-flow-governance-review.sh openclaw-full-run \
+scripts/run-flow-governance-review.sh openclaw-entry \
   --flow-id 4b5eadd2-816c-420c-b382-5e0a975b53a6
 ```
 
-This wrapper materializes live subject-flow and referencing-process snapshots, runs the existing `run-governance` orchestrator unchanged, and writes `openclaw-handoff-summary.json` for downstream agent handoff.
+If you already have a complete local flow snapshot, use the same entrypoint with `--subject-flows-file` or `--flows-file` instead of a UUID.
 
 ## Preferred Entry
 
-Use `run-governance` for the standard end-to-end governance path:
+Use `openclaw-entry` for OpenClaw-facing execution:
+
+1. if only a flow UUID is available, fetch the subject flow through MCP CRUD when available and then run the standard workflow
+2. if a local flow JSON or JSONL file is already available, run the standard workflow directly from that snapshot
+3. if local subject flows are provided without a candidate pool file or live candidate-pool env, fall back to subject-only dedup instead of failing early
+4. if `--process-pool-file` is provided, reuse exact-version process rows from that local pool, fetch only missing referencing rows, and sync deterministic or OpenClaw-applied process patches back into the pool
+5. write `openclaw-handoff-summary.json` for downstream review/apply/publish handoff
+
+Use `run-governance` for the standard local governance path:
 
 1. review the local flow snapshot
 2. build an explicit dedup snapshot and canonical evidence
@@ -55,9 +69,25 @@ Use `run-governance` for the standard end-to-end governance path:
 5. validate repaired processes
 6. export residual OpenClaw review packs
 
-Use `openclaw-full-run` when OpenClaw starts from a flow UUID instead of prebuilt local snapshots and still needs the same standard outputs.
+The dedup stage is conservative: same-UUID version lineage is not treated as semantic dedup and is not auto-merged here. Cross-UUID high-similarity pairs are exported for OpenClaw semantic review instead of being merged by string similarity alone.
+
+Use `publish-reviewed-data` only after explicit OpenClaw decisions have been applied locally and the patched rows passed local validation. Pass `--original-flow-rows-file` when you want unchanged flow rows skipped entirely instead of being version-bumped and published.
 
 Use the lower-level commands only when another skill or an external orchestrator needs one specific artifact.
+
+## Direct Helper Scripts
+
+Some workflows in this skill are intentionally exposed as direct Python helpers under `scripts/` instead of `run-flow-governance-review.sh` subcommands.
+
+Canonical remediation helpers:
+
+- `scripts/remediate_invalid_flow_json_ordered_batch.py`
+- `scripts/mcp_sync_remediated_flows_batch.py`
+- `scripts/remediate_remote_validation_failed_flows_round2.py`
+
+Run these helpers from `flow-governance-review/scripts/` directly. They still depend on the `process-automated-builder` runtime, `tiangong_lca_spec`, and for the remediation passes `tidas_sdk`.
+
+For the full command matrix, auxiliary naming-completion utilities, and recommended sequencing, read `references/workflow.md`.
 
 ## Standard Outputs
 
@@ -65,10 +95,14 @@ Use the lower-level commands only when another skill or an external orchestrator
 - `flow-snapshot-manifest.json` from dedup
 - `flow-dedup-canonical-map.json`
 - `flow-dedup-rewrite-plan.json`
+- `dedup-pack/review-pack.json` when semantic duplicate pairs need OpenClaw review
 - `flow-alias-map.json` when alias building is applicable
 - `scan-findings.json` and `repair-summary.json` when process snapshots are provided
-- `review-pack.json` plus `review-pack-context.json` for OpenClaw text review
+- `review-pack.json` plus `review-pack-context.json` for OpenClaw text review or classification review
 - `live-fetch-manifest.json` and `openclaw-handoff-summary.json` from `openclaw-full-run`
+- `openclaw-handoff-summary.json` from `openclaw-entry`
+- `publish-report.json` from `publish-reviewed-data`
+- `skipped-unchanged-flow-rows.json` from `publish-reviewed-data` when `--original-flow-rows-file` is provided
 
 For flow text review, the exported review pack can include:
 
@@ -76,7 +110,29 @@ For flow text review, the exported review pack can include:
 - linked process context so naming can use producer/consumer evidence instead of guessing in isolation
 - condensed methodology constraints from the bundled `references/tidas_flows.yaml`
 
+For flow classification review, the exported review pack can include:
+
+- the current product or elementary classification path derived from the local flow row
+- candidate classification paths with valid TIDAS class IDs for OpenClaw to choose from
+- relevant review findings filtered from `review/findings.jsonl`
+- condensed methodology constraints for `typeOfDataSet` and classification branches
+
+## Artifact Layout
+
+Keep long-lived flow-processing bundles under `assets/artifacts/flow-processing/` instead of `docs/`.
+
+Canonical retained bundles:
+
+- `assets/artifacts/flow-processing/datasets/`: shared flow pool, invalid-input scope, resolved flow pool, reusable `process_pool.jsonl`
+- `assets/artifacts/flow-processing/validation/`: grouped validation failures that still matter for remediation planning
+- `assets/artifacts/flow-processing/naming/remaining-after-aggressive/`: post-aggressive completeness summaries and zero-process residuals
+- `assets/artifacts/flow-processing/naming/zero-process-completion-pack/`: retained OpenClaw review pack, final decisions, patched rows, and publish summaries for the zero-process completion run
+- `assets/artifacts/flow-processing/remediation/`: deterministic remediation and MCP sync outputs written by related helper scripts
+- `assets/artifacts/flow-remediation-batch-smoketest/`: historical smoke-test evidence for remediation-helper startup checks
+
+Do not treat `docs/` as the canonical home for these machine artifacts anymore. New helper-script defaults in this repo now write to the artifact tree above.
+
 ## Load References On Demand
 
-- `references/workflow.md`: command matrix, standard outputs, and recommended sequencing.
+- `references/workflow.md`: command matrix, direct helper utilities, standard outputs, and recommended sequencing.
 - `references/env.md`: optional live Supabase inputs for dedup analysis.
