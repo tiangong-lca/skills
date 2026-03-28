@@ -10,6 +10,11 @@ scripts/run-process-hybrid-search.sh --token "$TIANGONG_LCA_APIKEY"
 scripts/run-process-hybrid-search.sh --dry-run --token "$TIANGONG_LCA_APIKEY"
 ```
 
+## Direct CLI equivalent
+```bash
+node "${TIANGONG_CLI_DIR:-../tiangong-lca-cli}/bin/tiangong.js" search process --input ./assets/example-request.json --api-key "$TIANGONG_API_KEY" --dry-run
+```
+
 ## Checklist
 - 200 response contains `data` (array, possibly empty).
 - 400 appears only when `query` is missing/invalid.

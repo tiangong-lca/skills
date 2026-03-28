@@ -10,6 +10,11 @@ scripts/run-embedding-ft.sh --token "$TOKEN"
 scripts/run-embedding-ft.sh --dry-run --token "$TOKEN"
 ```
 
+## Direct CLI equivalent
+```bash
+node "${TIANGONG_CLI_DIR:-../tiangong-lca-cli}/bin/tiangong.js" admin embedding-run --input ./assets/example-jobs.json --api-key "$TIANGONG_API_KEY" --dry-run
+```
+
 ## Checklist
 - Response contains `completedJobs` and `failedJobs`.
 - Logs include `processing embedding job` and successful update messages.

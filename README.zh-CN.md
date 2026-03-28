@@ -54,3 +54,13 @@ npm i skills@latest -g
   ```bash
   npx skills update
   ```
+
+## 执行说明
+
+轻量远程 skill 正在逐步收敛到统一的 `tiangong` CLI。
+
+当前约定：
+
+- 本地保留 `tiangong-lca-cli` 仓库
+- 或通过 `TIANGONG_CLI_DIR` 指向该仓库
+- skill wrapper 统一委托 `bin/tiangong.js` 执行，而不是继续各自维护一套 `curl` 逻辑

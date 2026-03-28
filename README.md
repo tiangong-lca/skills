@@ -54,3 +54,13 @@ npm i skills@latest -g
   ```bash
   npx skills update
   ```
+
+## Execution note
+
+Thin remote skills are being migrated to the unified `tiangong` CLI.
+
+Current expectation:
+
+- keep `tiangong-lca-cli` available locally
+- or set `TIANGONG_CLI_DIR` to point at that repo
+- let skill wrappers delegate transport to `bin/tiangong.js` instead of keeping separate `curl` logic

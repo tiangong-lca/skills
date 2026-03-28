@@ -1,11 +1,17 @@
 # Env (caller side)
 
-- Auth header: `Authorization: Bearer <TIANGONG_LCA_APIKEY>`.
-- Required region header: `x-region: us-east-1`.
-- Default endpoint: `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/flow_hybrid_search`.
-- Optional script overrides:
-  - `SUPABASE_FUNCTIONS_URL` (base URL)
-  - `SUPABASE_FUNCTION_REGION` (region header)
-  - `TIANGONG_LCA_APIKEY`
+- CLI path override: `TIANGONG_CLI_DIR`
+- Preferred auth variable: `TIANGONG_API_KEY`
+- Compatible auth alias: `TIANGONG_LCA_APIKEY`
+- Preferred base URL variable: `TIANGONG_API_BASE_URL`
+- Compatible base URL alias: `SUPABASE_FUNCTIONS_URL`
+- Preferred region variable: `TIANGONG_REGION`
+- Compatible region alias: `SUPABASE_FUNCTION_REGION`
+- Default endpoint remains `https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1/flow_hybrid_search`
+
+Wrapper behavior:
+
+- the shell script preserves `--token`, `--data`, `--base-url`, `--region`, and `--max-time`
+- internally it forwards to `tiangong search flow`
 
 Model and embedding providers are configured in the deployed edge function.

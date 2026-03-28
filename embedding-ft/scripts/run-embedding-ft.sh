@@ -3,15 +3,18 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 SKILL_DIR="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd)"
+WORKSPACE_ROOT="$(cd -- "${SKILL_DIR}/../.." >/dev/null 2>&1 && pwd)"
 
-FUNCTION_NAME="embedding_ft"
+DEFAULT_CLI_DIR="${WORKSPACE_ROOT}/tiangong-lca-cli"
 DEFAULT_BASE_URL="https://qgzvkongdjqiiamzbbts.supabase.co/functions/v1"
 DEFAULT_DATA_FILE="${SKILL_DIR}/assets/example-jobs.json"
 
-TOKEN_VALUE="${TOKEN:-${EMBEDDING_FT_TOKEN:-}}"
-BASE_URL="${SUPABASE_FUNCTIONS_URL:-${DEFAULT_BASE_URL}}"
+CLI_DIR="${TIANGONG_CLI_DIR:-${DEFAULT_CLI_DIR}}"
+API_KEY="${TIANGONG_API_KEY:-${TIANGONG_LCA_APIKEY:-${TOKEN:-${EMBEDDING_FT_TOKEN:-}}}}"
+BASE_URL="${TIANGONG_API_BASE_URL:-${SUPABASE_FUNCTIONS_URL:-${DEFAULT_BASE_URL}}}"
 DATA_FILE="${DEFAULT_DATA_FILE}"
-MAX_TIME=60
+TIMEOUT_SEC=60
+COMPACT_JSON=0
 DRY_RUN=0
 
 usage() {
@@ -19,10 +22,12 @@ usage() {
 Usage: run-embedding-ft.sh [options]
 
 Options:
-  --token <token>      Override TOKEN / EMBEDDING_FT_TOKEN
+  --cli-dir <dir>      Override TIANGONG_CLI_DIR
+  --token <token>      Override API key
   --data <file>        JSON body file path (default: assets/example-jobs.json)
-  --base-url <url>     Supabase functions base URL
-  --max-time <sec>     Curl timeout in seconds (default: 60)
+  --base-url <url>     API base URL
+  --max-time <sec>     Request timeout in seconds (default: 60)
+  --json               Print compact JSON
   --dry-run            Print request details without sending
   -h, --help           Show this help message
 USAGE
@@ -35,13 +40,18 @@ fail() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --token)
-      [[ $# -ge 2 ]] || fail "--token requires a value"
-      TOKEN_VALUE="$2"
+    --cli-dir)
+      [[ $# -ge 2 ]] || fail "--cli-dir requires a value"
+      CLI_DIR="$2"
       shift 2
       ;;
-    --data)
-      [[ $# -ge 2 ]] || fail "--data requires a value"
+    --token|--api-key)
+      [[ $# -ge 2 ]] || fail "$1 requires a value"
+      API_KEY="$2"
+      shift 2
+      ;;
+    --data|--input)
+      [[ $# -ge 2 ]] || fail "$1 requires a value"
       DATA_FILE="$2"
       shift 2
       ;;
@@ -52,8 +62,12 @@ while [[ $# -gt 0 ]]; do
       ;;
     --max-time)
       [[ $# -ge 2 ]] || fail "--max-time requires a value"
-      MAX_TIME="$2"
+      TIMEOUT_SEC="$2"
       shift 2
+      ;;
+    --json)
+      COMPACT_JSON=1
+      shift
       ;;
     --dry-run)
       DRY_RUN=1
@@ -69,22 +83,34 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -n "${TOKEN_VALUE}" ]] || fail "Missing token. Set TOKEN (or EMBEDDING_FT_TOKEN) or pass --token."
+[[ "${TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || fail "--max-time must be a positive integer"
+[[ "${TIMEOUT_SEC}" -gt 0 ]] || fail "--max-time must be greater than zero"
+
+CLI_BIN="${CLI_DIR}/bin/tiangong.js"
+[[ -f "${CLI_BIN}" ]] || fail "Cannot find TianGong CLI at ${CLI_BIN}. Set TIANGONG_CLI_DIR."
+[[ -e "${CLI_DIR}/node_modules/tsx" ]] || fail "TianGong CLI dependencies are missing. Run 'npm install' in ${CLI_DIR}."
+[[ -n "${API_KEY}" ]] || fail "Missing token. Set TIANGONG_API_KEY / TOKEN / EMBEDDING_FT_TOKEN or pass --token."
 [[ -f "${DATA_FILE}" ]] || fail "Data file not found: ${DATA_FILE}"
 
-URL="${BASE_URL%/}/${FUNCTION_NAME}"
+TIMEOUT_MS="$((TIMEOUT_SEC * 1000))"
 
-if [[ "${DRY_RUN}" -eq 1 ]]; then
-  echo "POST ${URL}"
-  echo "data-file: ${DATA_FILE}"
-  cat "${DATA_FILE}"
-  exit 0
+command=(
+  node
+  "${CLI_BIN}"
+  admin
+  embedding-run
+  --input "${DATA_FILE}"
+  --api-key "${API_KEY}"
+  --base-url "${BASE_URL}"
+  --timeout-ms "${TIMEOUT_MS}"
+)
+
+if [[ "${COMPACT_JSON}" -eq 1 ]]; then
+  command+=(--json)
 fi
 
-curl -sS --fail-with-body --location --request POST "${URL}" \
-  --max-time "${MAX_TIME}" \
-  --header "Authorization: Bearer ${TOKEN_VALUE}" \
-  --header "Content-Type: application/json" \
-  --data @"${DATA_FILE}"
+if [[ "${DRY_RUN}" -eq 1 ]]; then
+  command+=(--dry-run)
+fi
 
-echo
+"${command[@]}"
