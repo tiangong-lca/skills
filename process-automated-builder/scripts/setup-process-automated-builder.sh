@@ -22,7 +22,7 @@ PACKAGES=(
   "rispy>=0.10.0"
   "structlog>=25.4.0"
   "tenacity>=9.1.2"
-  "tidas-sdk>=0.1.5"
+  "tidas-sdk==0.1.8"
   "tidas-tools>=0.0.21"
 )
 

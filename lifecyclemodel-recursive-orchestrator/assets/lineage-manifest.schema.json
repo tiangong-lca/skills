@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/lifecyclemodel-recursive-orchestrator/lineage-manifest.schema.json",
+  "title": "LifecycleModelRecursiveOrchestratorLineageManifest",
+  "type": "object",
+  "required": ["root_request", "builder_invocations", "node_resolution_log", "published_dependencies", "resulting_process_relations", "unresolved_history"],
+  "properties": {
+    "root_request": { "type": "object" },
+    "builder_invocations": { "type": "array", "items": { "type": "object" } },
+    "node_resolution_log": { "type": "array", "items": { "type": "object" } },
+    "published_dependencies": { "type": "array", "items": { "type": "object" } },
+    "resulting_process_relations": { "type": "array", "items": { "type": "object" } },
+    "unresolved_history": { "type": "array", "items": { "type": "object" } }
+  }
+}

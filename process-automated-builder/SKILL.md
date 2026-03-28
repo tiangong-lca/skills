@@ -1,6 +1,6 @@
 ---
 name: process-automated-builder
-description: Execute and troubleshoot the end-to-end `process_from_flow` automation pipeline that derives ILCD `process_datasets` and `source_datasets` from a reference flow dataset, including literature retrieval, route/process splitting, exchange generation, flow matching, placeholder resolution, balance review, and publish/resume orchestration. Use when running or debugging `scripts/origin/process_from_flow_workflow.py` or `scripts/origin/process_from_flow_langgraph.py`.
+description: Execute and troubleshoot the end-to-end `process_from_flow` automation pipeline that derives ILCD `process_datasets` and `source_datasets` from a reference flow dataset, including literature retrieval, route/process splitting, exchange generation, flow matching, placeholder resolution, balance review, and publish/resume orchestration. Use when running or debugging `scripts/run-process-automated-builder.sh` or the canonical CLI `scripts/origin/process_from_flow_langgraph.py`.
 ---
 
 # Process Automated Builder
@@ -48,11 +48,13 @@ scripts/run-process-automated-builder.sh --mode langgraph -- --resume --run-id <
 scripts/run-process-automated-builder.sh --mode langgraph -- --publish-only --run-id <run_id> --commit
 scripts/run-process-automated-builder.sh --mode langgraph -- flow-auto-build --run-id <run_id>
 scripts/run-process-automated-builder.sh --mode langgraph -- process-update --run-id <run_id>
+python3 scripts/origin/process_from_flow_langgraph.py workflow --flow /abs/path/reference-flow.json --operation produce
 ```
 
 ## Bundled Python Scripts
 - Wrapper and setup: `scripts/run-process-automated-builder.sh`, `scripts/setup-process-automated-builder.sh`
-- Main chain: `scripts/origin/process_from_flow_workflow.py`, `scripts/origin/process_from_flow_langgraph.py`
+- Main chain: `scripts/origin/process_from_flow_langgraph.py`
+- Compatibility shim: `scripts/origin/process_from_flow_workflow.py` forwards to `process_from_flow_langgraph.py workflow`
 - SI and references: `scripts/origin/process_from_flow_download_si.py`, `scripts/origin/mineru_for_process_si.py`, `scripts/origin/process_from_flow_reference_usability.py`, `scripts/origin/process_from_flow_reference_usage_tagging.py`
 - Maintenance: `scripts/origin/process_from_flow_build_sources.py`, `scripts/origin/process_from_flow_placeholder_report.py`
 - Shared helper copied for LangGraph CLI import path: `scripts/md/_workflow_common.py`
@@ -70,6 +72,7 @@ scripts/run-process-automated-builder.sh --mode langgraph -- process-update --ru
 - Too many placeholders: run through Step 6 (`resolve_placeholders`) and inspect `cache/placeholder_report.json`.
 - Unit mismatch failures: inspect Step 4b `flow_search.unit_check`; density conversion only applies to product/waste mass<->volume mismatches.
 - Slow runs: inspect `cache/workflow_timing_report.json`; Step 4 matching is usually the longest stage.
+- OpenClaw handoff: inspect `cache/agent_handoff_summary.json` first instead of loading the full state/log set.
 
 ## Load References On Demand
 - `references/process-from-flow-workflow.md`: complete migrated workflow spec (core flow, orchestration flow, state, outputs, publishing, stop rules).

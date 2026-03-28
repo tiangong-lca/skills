@@ -22,12 +22,12 @@
         },
         {
             "name": "lca-review-and-remediation",
-            "description": "Lifecycle inventory review plus batch flow remediation and publish workflows with schema and version gating.",
+            "description": "Lifecycle inventory review plus local flow governance, remediation planning, and validation workflows with deterministic handoff artifacts.",
             "source": "./",
             "strict": false,
             "skills": [
                 "./lifecycleinventory-review",
-                "./flow-remediator-publisher"
+                "./flow-governance-review"
             ]
         },
         {

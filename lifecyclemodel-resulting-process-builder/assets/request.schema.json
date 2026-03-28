@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/lifecyclemodel-resulting-process-builder/request.schema.json",
+  "title": "LifecycleModelResultingProcessBuilderRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source_model", "projection", "publish"],
+  "properties": {
+    "source_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "json_ordered_path": { "type": "string", "minLength": 1 },
+        "json_ordered": { "type": "object" }
+      },
+      "anyOf": [
+        { "required": ["id"] },
+        { "required": ["json_ordered_path"] },
+        { "required": ["json_ordered"] }
+      ]
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["primary-only", "all-subproducts"] },
+        "process_id": { "type": "string", "minLength": 1 },
+        "process_version": { "type": "string", "minLength": 1 },
+        "metadata_overrides": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "attach_graph_snapshot": { "type": "boolean" },
+        "attach_graph_snapshot_uri": { "type": "string", "minLength": 1 }
+      }
+    },
+    "process_sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "process_catalog_path": { "type": "string", "minLength": 1 },
+        "run_dirs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "process_json_dirs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "process_json_files": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "allow_mcp_lookup": { "type": "boolean" }
+      }
+    },
+    "publish": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent"],
+      "properties": {
+        "intent": { "type": "string", "enum": ["dry_run", "prepare_only", "publish"] },
+        "prepare_process_payloads": { "type": "boolean" },
+        "prepare_relation_payloads": { "type": "boolean" }
+      }
+    }
+  }
+}

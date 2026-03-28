@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.tiangong.invalid/skills/lca-publish-executor/request.schema.json",
+  "type": "object",
+  "required": ["inputs", "publish"],
+  "properties": {
+    "inputs": {
+      "type": "object",
+      "properties": {
+        "bundle_paths": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "lifecyclemodels": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/datasetEntry" }
+        },
+        "processes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/datasetEntry" }
+        },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/datasetEntry" }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "process_build_runs": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string", "minLength": 1 },
+              {
+                "type": "object",
+                "required": ["run_id"],
+                "properties": {
+                  "run_id": { "type": "string", "minLength": 1 },
+                  "run_root": { "type": "string" },
+                  "exports_dir": { "type": "string" }
+                },
+                "additionalProperties": true
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "publish": {
+      "type": "object",
+      "properties": {
+        "commit": { "type": "boolean" },
+        "publish_lifecyclemodels": { "type": "boolean" },
+        "publish_processes": { "type": "boolean" },
+        "publish_sources": { "type": "boolean" },
+        "publish_relations": { "type": "boolean" },
+        "publish_process_build_runs": { "type": "boolean" },
+        "relation_mode": {
+          "type": "string",
+          "enum": ["local_manifest_only"]
+        },
+        "max_attempts": { "type": "integer", "minimum": 1 },
+        "retry_delay_seconds": { "type": "number", "minimum": 0 },
+        "process_build_forward_args": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "out_dir": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "datasetEntry": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        {
+          "type": "object",
+          "properties": {
+            "file": { "type": "string", "minLength": 1 },
+            "path": { "type": "string", "minLength": 1 },
+            "json_ordered": { "type": "object" },
+            "jsonOrdered": { "type": "object" },
+            "payload": { "type": "object" }
+          },
+          "minProperties": 1,
+          "additionalProperties": true
+        }
+      ]
+    }
+  }
+}

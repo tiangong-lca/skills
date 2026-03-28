@@ -1,0 +1,26 @@
+{
+  "inputs": {
+    "bundle_paths": [
+      "/abs/path/to/orchestrator-run/publish-bundle.json",
+      "/abs/path/to/resulting-process-builder-run/publish-bundle.json"
+    ],
+    "process_build_runs": [
+      {
+        "run_id": "pfw_01211_3a8d74d8_produce_20260316T080000Z"
+      }
+    ]
+  },
+  "publish": {
+    "commit": false,
+    "publish_lifecyclemodels": true,
+    "publish_processes": true,
+    "publish_sources": true,
+    "publish_relations": true,
+    "publish_process_build_runs": true,
+    "relation_mode": "local_manifest_only",
+    "max_attempts": 5,
+    "retry_delay_seconds": 2.0,
+    "process_build_forward_args": []
+  },
+  "out_dir": "/tmp/lca-publish-executor-example"
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/lifecyclemodel-recursive-orchestrator/graph-manifest.schema.json",
+  "title": "LifecycleModelRecursiveOrchestratorGraphManifest",
+  "type": "object",
+  "required": ["root", "nodes", "edges", "boundaries", "unresolved", "stats"],
+  "properties": {
+    "root": { "type": "object" },
+    "nodes": { "type": "array", "items": { "type": "object" } },
+    "edges": { "type": "array", "items": { "type": "object" } },
+    "boundaries": { "type": "array", "items": { "type": "object" } },
+    "unresolved": { "type": "array", "items": { "type": "object" } },
+    "stats": { "type": "object" }
+  }
+}

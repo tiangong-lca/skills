@@ -143,7 +143,8 @@ if has_flag "--flow" "${FORWARD_ARGS[@]}"; then
 fi
 
 if [[ "${MODE}" == "workflow" ]]; then
-  TARGET_SCRIPT="${SKILL_DIR}/scripts/origin/process_from_flow_workflow.py"
+  TARGET_SCRIPT="${SKILL_DIR}/scripts/origin/process_from_flow_langgraph.py"
+  LANGGRAPH_SUBCOMMAND="workflow"
 else
   TARGET_SCRIPT="${SKILL_DIR}/scripts/origin/process_from_flow_langgraph.py"
   if [[ ${#FORWARD_ARGS[@]} -gt 0 ]]; then
@@ -164,7 +165,7 @@ if [[ "${REQUIRE_FLOW}" -eq 1 && -z "${FLOW_FILE}" && "${FORWARDED_HAS_FLOW}" -e
 fi
 
 FLOW_ARG=()
-if [[ -n "${LANGGRAPH_SUBCOMMAND}" && -n "${FLOW_FILE}" ]]; then
+if [[ -n "${LANGGRAPH_SUBCOMMAND}" && "${LANGGRAPH_SUBCOMMAND}" != "workflow" && -n "${FLOW_FILE}" ]]; then
   fail "Flow input is not used for langgraph subcommands (${LANGGRAPH_SUBCOMMAND}); remove --flow-file/--flow-json/--flow-stdin."
 fi
 if [[ -z "${LANGGRAPH_SUBCOMMAND}" && -n "${FLOW_FILE}" ]]; then
@@ -174,6 +175,12 @@ fi
 export PYTHONPATH="${SKILL_DIR}:${PYTHONPATH:-}"
 
 if [[ -n "${LANGGRAPH_SUBCOMMAND}" ]]; then
+  if [[ "${LANGGRAPH_SUBCOMMAND}" == "workflow" ]]; then
+    if [[ -n "${FLOW_FILE}" ]]; then
+      FLOW_ARG=(--flow "${FLOW_FILE}")
+    fi
+    exec "${PYTHON_BIN}" "${TARGET_SCRIPT}" "${LANGGRAPH_SUBCOMMAND}" "${FLOW_ARG[@]}" "${FORWARD_ARGS[@]}"
+  fi
   exec "${PYTHON_BIN}" "${TARGET_SCRIPT}" "${FORWARD_ARGS[@]}"
 fi
 exec "${PYTHON_BIN}" "${TARGET_SCRIPT}" "${FLOW_ARG[@]}" "${FORWARD_ARGS[@]}"

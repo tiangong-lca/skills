@@ -1,0 +1,71 @@
+{
+  "processDataSet": {
+    "processInformation": {
+      "dataSetInformation": {
+        "common:UUID": "proc-pack-assembly",
+        "name": {
+          "baseName": [
+            {
+              "@xml:lang": "en",
+              "#text": "Pack assembly"
+            }
+          ]
+        },
+        "common:generalComment": [
+          {
+            "@xml:lang": "en",
+            "#text": "Example foreground unit process for final battery pack assembly."
+          }
+        ]
+      },
+      "quantitativeReference": {
+        "referenceToReferenceFlow": "3"
+      },
+      "technology": {}
+    },
+    "modellingAndValidation": {
+      "LCIMethodAndAllocation": {
+        "typeOfDataSet": "Unit process, single operation"
+      }
+    },
+    "administrativeInformation": {
+      "publicationAndOwnership": {
+        "common:dataSetVersion": "00.00.001"
+      }
+    },
+    "exchanges": {
+      "exchange": [
+        {
+          "@dataSetInternalID": "1",
+          "referenceToFlowDataSet": {
+            "@refObjectId": "flow-cell-module",
+            "@type": "flow data set"
+          },
+          "exchangeDirection": "Input",
+          "meanAmount": 1,
+          "resultingAmount": 1
+        },
+        {
+          "@dataSetInternalID": "2",
+          "referenceToFlowDataSet": {
+            "@refObjectId": "flow-bms",
+            "@type": "flow data set"
+          },
+          "exchangeDirection": "Input",
+          "meanAmount": 1,
+          "resultingAmount": 1
+        },
+        {
+          "@dataSetInternalID": "3",
+          "referenceToFlowDataSet": {
+            "@refObjectId": "flow-battery-pack",
+            "@type": "flow data set"
+          },
+          "exchangeDirection": "Output",
+          "meanAmount": 1,
+          "resultingAmount": 1
+        }
+      ]
+    }
+  }
+}

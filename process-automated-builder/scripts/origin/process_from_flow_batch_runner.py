@@ -29,10 +29,12 @@ from typing import Literal
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_ROOT = SCRIPT_DIR.parent.parent
 RUN_WRAPPER = SKILL_ROOT / "scripts" / "run-process-automated-builder.sh"
+DEFAULT_WORKERS_ENV_FILE = Path.home() / ".config" / "process-from-flow-batch" / "env"
 
 
 TaskStatus = Literal["pending", "running", "success", "failed"]
 RUN_ID_RE = re.compile(r"run_id=([A-Za-z0-9_\-]+)")
+WORKERS_LINE_RE = re.compile(r"^\s*WORKERS\s*=\s*([0-9]+)\s*$", re.MULTILINE)
 
 
 def now_iso() -> str:
@@ -65,6 +67,9 @@ class BatchRunner:
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.python_bin = args.python_bin
         self.max_workers = args.workers
+        workers_env_file = args.workers_env_file or DEFAULT_WORKERS_ENV_FILE
+        self.workers_env_file = workers_env_file.expanduser().resolve()
+        self.workers_reload_seconds = max(0.0, float(args.workers_reload_seconds))
         self.max_attempts = args.max_attempts
         self.operation = args.operation
         self.heartbeat_seconds = args.heartbeat_seconds
@@ -72,10 +77,64 @@ class BatchRunner:
         self.max_runtime_seconds = args.max_runtime_seconds
 
         self._last_heartbeat_monotonic = 0.0
+        self._last_workers_reload_monotonic = 0.0
+        self._workers_env_mtime: float | None = None
 
         self.tasks: dict[str, Task] = {}
         self.procs: dict[str, subprocess.Popen[str]] = {}
         self._stop = False
+
+    def maybe_reload_workers(self, *, force: bool = False) -> None:
+        if self.workers_reload_seconds == 0.0 and not force:
+            return
+
+        now_mono = time.monotonic()
+        if (
+            not force
+            and self.workers_reload_seconds > 0.0
+            and (now_mono - self._last_workers_reload_monotonic) < self.workers_reload_seconds
+        ):
+            return
+        self._last_workers_reload_monotonic = now_mono
+
+        try:
+            mtime = self.workers_env_file.stat().st_mtime
+        except FileNotFoundError:
+            return
+        except Exception as exc:
+            print(
+                f"[batch] workers_reload_read_error env={self.workers_env_file} err={exc}",
+                file=sys.stderr,
+            )
+            return
+
+        if not force and self._workers_env_mtime is not None and mtime <= self._workers_env_mtime:
+            return
+        self._workers_env_mtime = mtime
+
+        try:
+            text = self.workers_env_file.read_text(encoding="utf-8", errors="replace")
+        except Exception as exc:
+            print(
+                f"[batch] workers_reload_parse_error env={self.workers_env_file} err={exc}",
+                file=sys.stderr,
+            )
+            return
+
+        match = WORKERS_LINE_RE.search(text)
+        if not match:
+            return
+        new_workers = int(match.group(1))
+        if new_workers == self.max_workers:
+            return
+
+        prev = self.max_workers
+        self.max_workers = new_workers
+        print(
+            f"[batch] workers_hot_reload old={prev} new={new_workers} env={self.workers_env_file}",
+            file=sys.stderr,
+        )
+        self.save_state()
 
     def _has_process_exports(self, run_id: str | None) -> bool:
         rid = str(run_id or "").strip()
@@ -457,7 +516,8 @@ class BatchRunner:
 
         reason_counts = self.failure_reason_counts()
         print(
-            f"[heartbeat] pending={stat['pending']} running={stat['running']} success={stat['success']} failed={stat['failed']}"
+            f"[heartbeat] workers={self.max_workers}"
+            f" pending={stat['pending']} running={stat['running']} success={stat['success']} failed={stat['failed']}"
             f" failed_reasons={reason_counts}",
             file=sys.stderr,
         )
@@ -466,6 +526,7 @@ class BatchRunner:
 
     def run(self) -> int:
         self.load_or_init()
+        self.maybe_reload_workers(force=True)
 
         def handle_stop(signum: int, _frame: object) -> None:
             self._stop = True
@@ -479,6 +540,7 @@ class BatchRunner:
             if discovered:
                 print(f"[batch] discovered_new_flows={discovered}", file=sys.stderr)
             self.poll_running()
+            self.maybe_reload_workers()
             self.emit_heartbeat_if_due()
 
             if self._stop:
@@ -520,6 +582,21 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--log-dir", type=Path, required=True, help="Directory for per-attempt logs")
     p.add_argument("--workers", type=int, default=3, help="Concurrent worker count")
+    p.add_argument(
+        "--workers-env-file",
+        type=Path,
+        default=None,
+        help=(
+            "Hot-reload source for WORKERS (default: ~/.config/process-from-flow-batch/env). "
+            "If the file WORKERS value changes, new scheduling uses the new concurrency."
+        ),
+    )
+    p.add_argument(
+        "--workers-reload-seconds",
+        type=float,
+        default=5.0,
+        help="Hot-reload interval for --workers-env-file (0 disables hot reload).",
+    )
     p.add_argument("--operation", choices=("produce", "treat"), default="produce")
     p.add_argument("--max-attempts", type=int, default=3, help="Max attempts per flow (resume counts)")
     p.add_argument("--poll-seconds", type=float, default=5.0, help="Polling interval for child processes")
