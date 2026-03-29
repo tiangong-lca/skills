@@ -64,3 +64,24 @@ npm i skills@latest -g
 - 本地保留 `tiangong-lca-cli` 仓库
 - 或通过 `TIANGONG_LCA_CLI_DIR` 指向该仓库
 - skill wrapper 统一委托 `bin/tiangong.js` 执行，而不是继续各自维护一套 `curl` 逻辑
+
+## 迁移矩阵（CLI-first）
+
+| Skill | 当前执行面 | 对应 `tiangong` 子命令 | Python 依赖 | MCP 依赖 | 下一步迁移目标 |
+| --- | --- | --- | --- | --- | --- |
+| `flow-hybrid-search` | CLI 薄 wrapper | `tiangong search flow` | 否 | 否 | 仅维护文档与示例 |
+| `process-hybrid-search` | CLI 薄 wrapper | `tiangong search process` | 否 | 否 | 仅维护文档与示例 |
+| `lifecyclemodel-hybrid-search` | CLI 薄 wrapper | `tiangong search lifecyclemodel` | 否 | 否 | 仅维护文档与示例 |
+| `embedding-ft` | CLI 薄 wrapper | `tiangong admin embedding-run` | 否 | 否 | 仅维护文档与示例 |
+| `lifecyclemodel-resulting-process-builder` | CLI 主链 + skill 薄 wrapper | `tiangong lifecyclemodel build-resulting-process` / `publish-resulting-process` | 否 | 部分（待清理 lookup 遗留） | 去除遗留 lookup 分支并固定为 REST/CLI 语义 |
+| `lca-publish-executor` | Node wrapper -> CLI | `tiangong publish run` | 否 | 否 | 继续清理历史兼容参数与文档 |
+| `process-automated-builder` | CLI + legacy 并存 | `tiangong process auto-build` / `resume-build` / `publish-build` / `batch-build` | 是（legacy） | 是（legacy） | 将剩余 LangGraph/Python 阶段迁入 CLI 模块 |
+| `lifecyclemodel-automated-builder` | legacy workflow | 规划中（`tiangong lifecyclemodel auto-build|validate-build|publish-build`） | 是 | 是 | 迁为 CLI 主链 |
+| `lifecycleinventory-review` | legacy workflow | 规划中（`tiangong review process`） | 是 | 可选 | 迁为 CLI 主链 |
+| `flow-governance-review` | legacy workflow | 规划中（`tiangong review flow`） | 是 | 可选 | 迁为 CLI 主链 |
+| `lifecyclemodel-recursive-orchestrator` | legacy orchestrator | 规划中（CLI orchestrator） | 是 | 间接 | 子命令稳定后再迁 orchestrator |
+
+说明：
+- 目标状态是 `skill -> tiangong`，skills 仓库只保留文档、示例、薄 wrapper。
+- MCP 不再是 CLI 默认传输层；优先直接调用 edge functions 或 Supabase 官方 JS SDK。
+- 历史 Python/MCP 路径仅用于迁移期兼容，不是目标架构。
