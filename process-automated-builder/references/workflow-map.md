@@ -2,12 +2,13 @@
 
 ## Goal
 - Accept an agent-provided reference flow JSON.
-- Execute the CLI-owned local `process_from_flow` handoff stages and keep legacy orchestration available only as a transition path.
+- Execute the Node wrapper -> CLI-owned local `process_from_flow` handoff stages and keep legacy orchestration available only as a transition path.
 - Produce ILCD `process_datasets` and `source_datasets`.
 
 ## Input Contract (Agent -> Skill)
-- Required for CLI-owned new runs:
-  - CLI request JSON consumed by `tiangong process auto-build` / `batch-build`.
+- Required for canonical new runs:
+  - `node scripts/run-process-automated-builder.mjs auto-build --input <request.json>`
+  - or compatibility flow input flags (`--flow-file`, `--flow-json`, `--flow-stdin`) that synthesize a temporary CLI request
 - Required for legacy new runs:
   - `flow` JSON payload (ILCD flowDataSet wrapper) as file path, inline JSON, or stdin.
 - Optional controls:
@@ -34,18 +35,23 @@
   - `TIANGONG_MINERU_WITH_IMAGE_RETURN_TXT` (optional, default: `true`, endpoint detail: `/mineru_with_images`)
 
 ## Execution Layers
-1. CLI-owned handoff layer (canonical)
+1. Node wrapper -> CLI handoff layer (canonical)
+   - `node scripts/run-process-automated-builder.mjs auto-build`
+   - `node scripts/run-process-automated-builder.mjs resume-build`
+   - `node scripts/run-process-automated-builder.mjs publish-build`
+   - `node scripts/run-process-automated-builder.mjs batch-build`
+2. Direct CLI layer
    - `tiangong process auto-build`
    - `tiangong process resume-build`
    - `tiangong process publish-build`
    - `tiangong process batch-build`
-2. Legacy wrapper/orchestration layer (transitional only)
-   - `scripts/run-process-automated-builder.sh`
-   - Normalizes flow input (`--flow-file`, `--flow-json`, `--flow-stdin`) and dispatches to legacy modes.
-3. Legacy orchestration layer (transitional only)
+3. Legacy wrapper/orchestration layer (transitional only)
+   - `node scripts/run-process-automated-builder.mjs legacy ...`
+   - `scripts/run-process-automated-builder.sh` compatibility shim
+4. Legacy orchestration layer (transitional only)
    - `scripts/origin/process_from_flow_langgraph.py workflow`
    - Stages: references -> usability -> SI download -> TianGong unstructured service parsing -> usage tagging -> resume main pipeline.
-4. Core graph layer
+5. Core graph layer
    - `scripts/origin/process_from_flow_langgraph.py`
    - Invokes `tiangong_lca_spec.process_from_flow.ProcessFromFlowService`.
 
@@ -93,10 +99,10 @@
 - Manual fallback: only unresolved items after automatic repair are marked in `cache/method_policy_autofix_report.json` under `manual_required`.
 
 ## Control Flow
-1. Canonical new run: use `tiangong process auto-build` with request input.
-2. Canonical resume/publish: use `tiangong process resume-build` or `tiangong process publish-build`.
-3. Canonical batch: use `tiangong process batch-build` with one manifest.
-4. Legacy debug/resume/publish: use legacy langgraph mode and `--stop-after` / `--resume` / `--publish-only` only when a stage is not yet migrated.
+1. Canonical new run: use `node scripts/run-process-automated-builder.mjs auto-build ...`.
+2. Canonical resume/publish: use `node scripts/run-process-automated-builder.mjs resume-build ...` or `publish-build ...`.
+3. Canonical batch: use `node scripts/run-process-automated-builder.mjs batch-build ...`.
+4. Legacy debug/resume/publish: use `node scripts/run-process-automated-builder.mjs legacy ...` only when a stage is not yet migrated.
 
 ## Preflight Chain Continuity Gate (P0)
 - Added between `enrich_exchange_amounts` and `match_flows`.

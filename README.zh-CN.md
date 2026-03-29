@@ -75,7 +75,7 @@ npm i skills@latest -g
 | `embedding-ft` | CLI 薄 wrapper | `tiangong admin embedding-run` | 否 | 否 | 仅维护文档与示例 |
 | `lifecyclemodel-resulting-process-builder` | CLI 主链 + skill 薄 wrapper | `tiangong lifecyclemodel build-resulting-process` / `publish-resulting-process` | 否 | 部分（待清理 lookup 遗留） | 去除遗留 lookup 分支并固定为 REST/CLI 语义 |
 | `lca-publish-executor` | Node wrapper -> CLI | `tiangong publish run` | 否 | 否 | 继续清理历史兼容参数与文档 |
-| `process-automated-builder` | CLI + legacy 并存 | `tiangong process auto-build` / `resume-build` / `publish-build` / `batch-build` | 是（legacy） | 是（legacy） | 将剩余 LangGraph/Python 阶段迁入 CLI 模块 |
+| `process-automated-builder` | Node wrapper -> CLI + legacy 并存 | `tiangong process auto-build` / `resume-build` / `publish-build` / `batch-build` | 是（legacy） | 是（legacy） | 将剩余 LangGraph/Python 阶段迁入 CLI 模块，并持续缩小 legacy 路径 |
 | `lifecyclemodel-automated-builder` | legacy workflow | 规划中（`tiangong lifecyclemodel auto-build|validate-build|publish-build`） | 是 | 是 | 迁为 CLI 主链 |
 | `lifecycleinventory-review` | legacy workflow | 规划中（`tiangong review process`） | 是 | 可选 | 迁为 CLI 主链 |
 | `flow-governance-review` | legacy workflow | 规划中（`tiangong review flow`） | 是 | 可选 | 迁为 CLI 主链 |

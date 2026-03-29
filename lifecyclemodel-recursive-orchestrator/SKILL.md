@@ -53,7 +53,7 @@ Use extra `nodes` only for additional dependencies or subsystems beyond the root
 
 ## Downstream Builders
 
-- `process_builder` calls `process-automated-builder/scripts/run-process-automated-builder.sh`
+- `process_builder` currently calls `process-automated-builder/scripts/run-process-automated-builder.sh` (compatibility shim to the canonical Node wrapper)
 - `submodel_builder` calls `lifecyclemodel-automated-builder/scripts/run-lifecyclemodel-automated-builder.sh`
 - `projector` calls `lifecyclemodel-resulting-process-builder/scripts/run-lifecyclemodel-resulting-process-builder.sh`
 

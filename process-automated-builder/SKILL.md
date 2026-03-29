@@ -1,6 +1,6 @@
 ---
 name: process-automated-builder
-description: Execute and troubleshoot the `process_from_flow` automation chain with a CLI-first workflow. Use `tiangong process auto-build|resume-build|publish-build|batch-build` as the canonical path, and use legacy Python scripts only for transitional stages that are not yet migrated.
+description: Execute and troubleshoot the `process_from_flow` automation chain with a CLI-first workflow. Use `node scripts/run-process-automated-builder.mjs auto-build|resume-build|publish-build|batch-build` as the canonical path, and use legacy Python scripts only for transitional stages that are not yet migrated.
 ---
 
 # Process Automated Builder
@@ -12,18 +12,19 @@ description: Execute and troubleshoot the `process_from_flow` automation chain w
 
 ## Execution Baseline (CLI First)
 1. Read `references/workflow-map.md` and `references/operations-playbook.md`.
-2. Use `tiangong process auto-build` to create local run artifacts and a deterministic run directory.
-3. Continue with `tiangong process resume-build`, `tiangong process publish-build`, or `tiangong process batch-build` as needed.
+2. Use `node scripts/run-process-automated-builder.mjs auto-build ...` to create local run artifacts and a deterministic run directory.
+3. Continue with `node scripts/run-process-automated-builder.mjs resume-build ...`, `publish-build ...`, or `batch-build ...` as needed.
 4. Use legacy Python entrypoints only for stages that have not yet been migrated into CLI modules.
 
 ## Execution Split
-- CLI-owned local handoff stages (canonical):
-  - `tiangong process auto-build`
-  - `tiangong process resume-build`
-  - `tiangong process publish-build`
-  - `tiangong process batch-build`
+- Node wrapper -> CLI local handoff stages (canonical):
+  - `node scripts/run-process-automated-builder.mjs auto-build`
+  - `node scripts/run-process-automated-builder.mjs resume-build`
+  - `node scripts/run-process-automated-builder.mjs publish-build`
+  - `node scripts/run-process-automated-builder.mjs batch-build`
 - Legacy transitional stages (not canonical):
-  - `scripts/run-process-automated-builder.sh`
+  - `node scripts/run-process-automated-builder.mjs legacy ...`
+  - `scripts/run-process-automated-builder.sh` compatibility shim
   - `scripts/origin/process_from_flow_langgraph.py`
   - Legacy MCP/OpenAI/KB/TianGong unstructured integrations used by those scripts
 
@@ -42,12 +43,12 @@ description: Execute and troubleshoot the `process_from_flow` automation chain w
   - `07_main_pipeline` now parallelizes only `flow_search` requests, then applies selector and state updates in original exchange order.
   - Tune with env `LCA_FLOW_SEARCH_MAX_PARALLEL` (bounded by profile concurrency).
 
-## Canonical CLI Commands
+## Canonical Node Wrapper Commands
 ```bash
-tiangong process auto-build --help
-tiangong process resume-build --help
-tiangong process publish-build --help
-tiangong process batch-build --help
+node scripts/run-process-automated-builder.mjs auto-build --help
+node scripts/run-process-automated-builder.mjs resume-build --help
+node scripts/run-process-automated-builder.mjs publish-build --help
+node scripts/run-process-automated-builder.mjs batch-build --help
 ```
 
 ## Legacy Transitional Commands
@@ -61,17 +62,17 @@ export TIANGONG_LCA_REMOTE_API_KEY="<your-api-key>"
 export OPENAI_API_KEY="<your-openai-api-key>"
 export OPENAI_MODEL="gpt-5"
 
-scripts/run-process-automated-builder.sh --mode workflow --flow-file /abs/path/reference-flow.json -- --operation produce
-scripts/run-process-automated-builder.sh --mode langgraph --flow-file /abs/path/reference-flow.json -- --stop-after matches --operation produce
-scripts/run-process-automated-builder.sh --mode langgraph -- --resume --run-id <run_id>
-scripts/run-process-automated-builder.sh --mode langgraph -- --publish-only --run-id <run_id> --commit
-scripts/run-process-automated-builder.sh --mode langgraph -- flow-auto-build --run-id <run_id>
-scripts/run-process-automated-builder.sh --mode langgraph -- process-update --run-id <run_id>
+node scripts/run-process-automated-builder.mjs legacy --mode workflow --flow-file /abs/path/reference-flow.json -- --operation produce
+node scripts/run-process-automated-builder.mjs legacy --mode langgraph --flow-file /abs/path/reference-flow.json -- --stop-after matches --operation produce
+node scripts/run-process-automated-builder.mjs legacy --mode langgraph -- --resume --run-id <run_id>
+node scripts/run-process-automated-builder.mjs legacy --mode langgraph -- --publish-only --run-id <run_id> --commit
+node scripts/run-process-automated-builder.mjs legacy --mode langgraph -- flow-auto-build --run-id <run_id>
+node scripts/run-process-automated-builder.mjs legacy --mode langgraph -- process-update --run-id <run_id>
 python3 scripts/origin/process_from_flow_langgraph.py workflow --flow /abs/path/reference-flow.json --operation produce
 ```
 
 ## Bundled Python Scripts
-- Wrapper and setup: `scripts/run-process-automated-builder.sh`, `scripts/setup-process-automated-builder.sh`
+- Wrapper and setup: `scripts/run-process-automated-builder.mjs`, `scripts/run-process-automated-builder.sh`, `scripts/setup-process-automated-builder.sh`
 - Main chain: `scripts/origin/process_from_flow_langgraph.py`
 - Compatibility shim: `scripts/origin/process_from_flow_workflow.py` forwards to `process_from_flow_langgraph.py workflow`
 - SI and references: `scripts/origin/process_from_flow_download_si.py`, `scripts/origin/mineru_for_process_si.py`, `scripts/origin/process_from_flow_reference_usability.py`, `scripts/origin/process_from_flow_reference_usage_tagging.py`
@@ -79,7 +80,7 @@ python3 scripts/origin/process_from_flow_langgraph.py workflow --flow /abs/path/
 - Shared helper copied for LangGraph CLI import path: `scripts/md/_workflow_common.py`
 
 ## Runtime Requirements
-- Canonical path: use `tiangong` CLI env contract only (`TIANGONG_LCA_*`) as documented in `tiangong-lca-cli`.
+- Canonical path: use `node scripts/run-process-automated-builder.mjs ...`, which forwards to the `tiangong` CLI env contract only (`TIANGONG_LCA_*`) as documented in `tiangong-lca-cli`.
 - Legacy path: if you execute standalone Python scripts, they still require legacy runtime/env contracts:
   - Flow search MCP: `TIANGONG_LCA_REMOTE_*`
   - LLM: `OPENAI_*` / `LCA_OPENAI_*`

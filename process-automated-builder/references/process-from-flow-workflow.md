@@ -10,7 +10,8 @@ This reference is a self-contained migration of the `process_from_flow` workflow
 ## Cross References
 - Canonical CLI entrypoint: `scripts/origin/process_from_flow_langgraph.py`.
 - Compatibility shim: `scripts/origin/process_from_flow_workflow.py` forwards to `process_from_flow_langgraph.py workflow`.
-- Wrapper entrypoint: `scripts/run-process-automated-builder.sh` (supports `--flow-file`, `--flow-json`, `--flow-stdin`).
+- Canonical wrapper entrypoint: `scripts/run-process-automated-builder.mjs` (`auto-build` / `resume-build` / `publish-build` / `batch-build`).
+- Legacy compatibility shim: `scripts/run-process-automated-builder.sh`.
 
 ## Architecture and Main Flow
 ### Layer Responsibilities

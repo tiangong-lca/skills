@@ -2,17 +2,17 @@
 
 ## 1) Canonical Path: CLI Commands
 ```bash
-tiangong process auto-build --help
-tiangong process resume-build --help
-tiangong process publish-build --help
-tiangong process batch-build --help
+node process-automated-builder/scripts/run-process-automated-builder.mjs auto-build --help
+node process-automated-builder/scripts/run-process-automated-builder.mjs resume-build --help
+node process-automated-builder/scripts/run-process-automated-builder.mjs publish-build --help
+node process-automated-builder/scripts/run-process-automated-builder.mjs batch-build --help
 ```
 
 Run guidance:
-- Use `tiangong process auto-build` as the default entrypoint for single-request local handoff.
-- Use `tiangong process resume-build` to continue an interrupted run.
-- Use `tiangong process publish-build` to execute the local publish handoff path.
-- Use `tiangong process batch-build` for deterministic multi-item manifests.
+- Use `node process-automated-builder/scripts/run-process-automated-builder.mjs auto-build ...` as the default entrypoint for single-request local handoff.
+- Use `node process-automated-builder/scripts/run-process-automated-builder.mjs resume-build ...` to continue an interrupted run.
+- Use `node process-automated-builder/scripts/run-process-automated-builder.mjs publish-build ...` to execute the local publish handoff path.
+- Use `node process-automated-builder/scripts/run-process-automated-builder.mjs batch-build ...` for deterministic multi-item manifests.
 
 ## 2) Transitional Path: Bootstrap Legacy Runtime
 ```bash
@@ -29,7 +29,7 @@ export TIANGONG_LCA_REMOTE_API_KEY="<your-api-key>"
 export OPENAI_API_KEY="<your-openai-api-key>"
 export OPENAI_MODEL="gpt-5"
 
-process-automated-builder/scripts/run-process-automated-builder.sh \
+node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
   --mode workflow \
   --flow-file /abs/path/to/reference-flow.json \
   -- --operation produce
@@ -43,7 +43,7 @@ python3 process-automated-builder/scripts/origin/process_from_flow_langgraph.py 
 
 ## 4) Transitional Path: Run with Inline JSON
 ```bash
-process-automated-builder/scripts/run-process-automated-builder.sh \
+node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
   --mode workflow \
   --flow-json '{"flowDataSet": {...}}' \
   -- --operation produce
@@ -66,7 +66,7 @@ Notes:
 
 ## 6) Transitional Path: Stage Debugging
 ```bash
-process-automated-builder/scripts/run-process-automated-builder.sh \
+node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
   --mode langgraph \
   --flow-file /abs/path/to/reference-flow.json \
   -- --stop-after matches --operation produce
@@ -74,14 +74,14 @@ process-automated-builder/scripts/run-process-automated-builder.sh \
 
 ## 7) Transitional Path: Resume Existing Run
 ```bash
-process-automated-builder/scripts/run-process-automated-builder.sh \
+node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
   --mode langgraph \
   -- --resume --run-id <run_id>
 ```
 
 ## 8) Transitional Path: Publish Existing Run
 ```bash
-process-automated-builder/scripts/run-process-automated-builder.sh \
+node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
   --mode langgraph \
   -- --publish-only --run-id <run_id> --commit
 ```
@@ -92,14 +92,14 @@ Optional debug switches during publish:
 
 ## 8b) Transitional Path: Run flow-auto-build Only
 ```bash
-process-automated-builder/scripts/run-process-automated-builder.sh \
+node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
   --mode langgraph \
   -- flow-auto-build --run-id <run_id>
 ```
 
 ## 8c) Transitional Path: Run process-update Only
 ```bash
-process-automated-builder/scripts/run-process-automated-builder.sh \
+node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
   --mode langgraph \
   -- process-update --run-id <run_id>
 ```
@@ -144,6 +144,7 @@ Notes:
 
 ## Runtime Notes
 - Canonical mode no longer uses MCP as the CLI transport. Preferred replacements are direct edge-function REST or direct Supabase JS CRUD through `tiangong-lca-cli`.
+- `scripts/run-process-automated-builder.sh` now exists only as a compatibility shim to the Node wrapper.
 - New runs require flow input; no default flow file is used.
 - Resume mode can omit `--flow` and read it from cached state.
 - `flow-auto-build` and `process-update` subcommands also do not require `--flow`.
