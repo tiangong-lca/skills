@@ -25,6 +25,7 @@ Commands:
   run-governance
   review-flows
   remediate-flows
+  publish-version
   flow-dedup-candidates
   build-flow-alias-map
   scan-process-flow-refs
@@ -66,6 +67,9 @@ case "${command}" in
     ;;
   remediate-flows)
     exec node "${SCRIPT_DIR}/run-remediate-flows.mjs" "$@"
+    ;;
+  publish-version)
+    exec node "${SCRIPT_DIR}/run-publish-version.mjs" "$@"
     ;;
   flow-dedup-candidates)
     exec "${PYTHON_BIN}" "${SCRIPT_DIR}/flow_dedup_candidates.py" "$@"

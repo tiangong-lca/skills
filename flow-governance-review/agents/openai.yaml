@@ -1,4 +1,4 @@
 interface:
   display_name: "Flow Governance Review"
   short_description: "Govern flow naming, classification, refs, and publish"
-  default_prompt: "Use $flow-governance-review to run the local-first governance workflow from a flow UUID or local snapshots. The review-flows and remediate-flows steps now route through the unified tiangong CLI, while the remaining governance, repair, and publish stages stay local-first in this skill."
+  default_prompt: "Use $flow-governance-review to run the local-first governance workflow from a flow UUID or local snapshots. The review-flows, remediate-flows, and publish-version steps now route through the unified tiangong CLI, while the remaining governance, repair, and publish stages stay local-first in this skill."

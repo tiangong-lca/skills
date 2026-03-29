@@ -6,7 +6,7 @@ Prefer local JSON or JSONL inputs. In local mode, no remote credentials are requ
 
 `--process-pool-file` is also local-first: it is just a JSON or JSONL working pool of exact-version process rows and does not require any remote credential by itself.
 
-`review-flows` and `remediate-flows` now run through unified CLI wrappers. The shared local wrapper/runtime input is:
+`review-flows`, `remediate-flows`, and `publish-version` now run through unified CLI wrappers. The shared local wrapper/runtime input is:
 
 - `TIANGONG_LCA_CLI_DIR`: optional override for the local `tiangong-lca-cli` checkout
 
@@ -17,6 +17,17 @@ Additional `review-flows`-only inputs:
 - `TIANGONG_LCA_LLM_MODEL`
 
 Only set the `TIANGONG_LCA_LLM_*` variables when you intentionally pass `--enable-llm`.
+
+Additional `publish-version` inputs:
+
+- `TIANGONG_LCA_API_BASE_URL`
+- `TIANGONG_LCA_API_KEY`
+
+Notes:
+
+- the canonical `publish-version` wrapper now calls `tiangong flow publish-version`
+- it no longer needs `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_EMAIL`, `SUPABASE_PASSWORD`, `TIANGONG_LCA_REMOTE_URL`, or `TIANGONG_LCA_REMOTE_API_KEY`
+- the wrapper preserves the historical `mcp-sync` artifact directory and legacy file names, but the runtime is direct REST through the unified CLI
 
 ## Optional Live Inputs
 
@@ -66,3 +77,4 @@ Notes:
 - If you want only public live rows, pass `--no-user-0` instead of relying on a default user id.
 - These scripts read the current process environment only; they do not load `.env` files themselves. If you run them through OpenClaw, make sure the runner has already sourced the intended env file, typically `~/.openclaw/.env` unless you explicitly want another env source.
 - These commands do not require `OPENAI_API_KEY`. `review-flows` uses `TIANGONG_LCA_LLM_*` only when `--enable-llm` is explicitly requested; otherwise it stays rule-only. `remediate-flows` is deterministic and does not use any LLM env.
+- `publish-version` does remote writes through the CLI-owned REST path and does not require any `OPENAI_*`, `SUPABASE_*`, or MCP env.

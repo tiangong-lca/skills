@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Deprecated: use scripts/run-publish-version.mjs or tiangong flow publish-version.
+# Retained temporarily for legacy investigation only.
 from __future__ import annotations
 
 import argparse

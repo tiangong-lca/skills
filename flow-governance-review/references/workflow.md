@@ -195,6 +195,45 @@ Defaults:
 
 Use this slice only for deterministic local round1 remediation. It does not do MCP sync, remote validation retry, or publish.
 
+### `publish-version`
+
+Run the unified CLI-backed remediated-flow publish entrypoint from this skill. The compatibility path is:
+
+```bash
+scripts/run-flow-governance-review.sh publish-version ...
+```
+
+which now resolves to:
+
+```bash
+node scripts/run-publish-version.mjs ...
+```
+
+and finally:
+
+```bash
+tiangong flow publish-version ...
+```
+
+Defaults:
+
+- input file: `assets/artifacts/flow-processing/remediation/round1/flows_tidas_sdk_plus_classification_remediated_ready_for_mcp.jsonl`
+- output directory: `assets/artifacts/flow-processing/remediation/mcp-sync/`
+- fallback target user id: `dbcf5d8a-60bb-4dfc-a2b3-e8b4ab9352c0`
+
+Compatibility notes:
+
+- the wrapper preserves the historical publish-stage behavior by adding `--commit` unless `--dry-run` is passed
+- legacy output file flags are still accepted when they keep the canonical filenames
+- the CLI keeps the historical artifact names even though the runtime no longer uses MCP
+- remote writes now go through `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`
+
+Primary outputs:
+
+- `flows_tidas_sdk_plus_classification_remote_validation_failed.jsonl`
+- `flows_tidas_sdk_plus_classification_mcp_success_list.json`
+- `flows_tidas_sdk_plus_classification_mcp_sync_report.json`
+
 When `--rows-file` is used, the engine materializes `review-input/flows/*.json` plus `review-input/materialization-summary.json` so downstream evidence is tied to an explicit local snapshot.
 
 Compatibility notes:
@@ -485,14 +524,25 @@ These are helper entrypoints under `flow-governance-review/scripts/`. Some are C
   - `flows_tidas_sdk_plus_classification_remediation_report.json`
   - `flows_tidas_sdk_plus_classification_residual_manual_queue_prompt.md`
 
-`mcp_sync_remediated_flows_batch.py`
+`run-flow-governance-review.sh publish-version`
 
-- insert or update remediated flow rows through MCP `Database_CRUD_Tool`
-- split remote validation failures from successful rows and save a success id/version list for later SQL or publish follow-up
+`run-publish-version.mjs`
+
+- delegate the remediated-flow publish-version stage to `tiangong flow publish-version`
+- keep the historical ready-for-publish default input and the same `mcp-sync` artifact filenames under `assets/artifacts/flow-processing/remediation/mcp-sync/`
+- accept `TIANGONG_LCA_CLI_DIR` plus `--cli-dir` as local wrapper overrides
+- preserve historical commit semantics by default; pass `--dry-run` only when you explicitly want planning without remote writes
 - default outputs under `assets/artifacts/flow-processing/remediation/mcp-sync/`:
   - `flows_tidas_sdk_plus_classification_remote_validation_failed.jsonl`
   - `flows_tidas_sdk_plus_classification_mcp_success_list.json`
   - `flows_tidas_sdk_plus_classification_mcp_sync_report.json`
+
+Deprecated legacy helper:
+
+`mcp_sync_remediated_flows_batch.py`
+
+- old MCP-based insert/update helper retained for legacy investigation only
+- split remote validation failures from successful rows and save a success id/version list for later SQL or publish follow-up
 
 `remediate_remote_validation_failed_flows_round2.py`
 
@@ -595,9 +645,9 @@ These are helper entrypoints under `flow-governance-review/scripts/`. Some are C
 ### Invalid-flow remediation batch
 
 1. Run `scripts/run-flow-governance-review.sh remediate-flows` or `node scripts/run-remediate-flows.mjs` on the invalid flow pool.
-2. Sync the ready subset with `mcp_sync_remediated_flows_batch.py`.
+2. Publish the ready subset with `scripts/run-flow-governance-review.sh publish-version` or `node scripts/run-publish-version.mjs`.
 3. If remote validation failures remain, run `remediate_remote_validation_failed_flows_round2.py`.
-4. Re-run MCP sync only on the round-2 ready subset.
+4. Re-run `publish-version` only on the round-2 ready subset.
 5. Use the residual manual queue prompts only for the rows that still fail after the deterministic passes.
 
 ### Publish after review
