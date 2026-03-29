@@ -10,11 +10,11 @@ Use this skill when the source of truth is already a lifecycle model `json_order
 ## Run Workflow
 
 1. Ensure `tiangong-lca-cli` is available locally, or set `TIANGONG_LCA_CLI_DIR`.
-2. Use `scripts/run-lifecyclemodel-resulting-process-builder.sh build ...` to delegate to `tiangong lifecyclemodel build-resulting-process`.
-3. Use `scripts/run-lifecyclemodel-resulting-process-builder.sh publish ...` to delegate to `tiangong lifecyclemodel publish-resulting-process`.
+2. Use `node scripts/run-lifecyclemodel-resulting-process-builder.mjs build ...` to delegate to `tiangong lifecyclemodel build-resulting-process`.
+3. Use `node scripts/run-lifecyclemodel-resulting-process-builder.mjs publish ...` to delegate to `tiangong lifecyclemodel publish-resulting-process`.
 4. Confirm the local artifacts in the run directory before any later `tiangong publish run` step.
 
-The active runtime path is `skill -> wrapper -> tiangong CLI`. Python and MCP are no longer part of the normal execution path for this skill.
+The active runtime path is `skill -> Node wrapper -> tiangong CLI`. Python and MCP are no longer part of the normal execution path for this skill. `scripts/run-lifecyclemodel-resulting-process-builder.sh` remains a Unix compatibility shim for existing callers.
 
 ## What The Implementation Does
 
@@ -76,22 +76,22 @@ Canonical request files should use `process_sources.allow_remote_lookup`, but th
 ## Commands
 
 ```bash
-scripts/run-lifecyclemodel-resulting-process-builder.sh build \
+node scripts/run-lifecyclemodel-resulting-process-builder.mjs build \
   --request assets/example-request.json \
   --out-dir /abs/path/run-001
 
-scripts/run-lifecyclemodel-resulting-process-builder.sh build \
+node scripts/run-lifecyclemodel-resulting-process-builder.mjs build \
   --model-file assets/example-model.json \
   --projection-role primary \
   --out-dir /abs/path/run-001
 
-scripts/run-lifecyclemodel-resulting-process-builder.sh publish \
+node scripts/run-lifecyclemodel-resulting-process-builder.mjs publish \
   --run-dir /abs/path/run-001 \
   --publish-processes \
   --publish-relations
 
 TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli \
-  scripts/run-lifecyclemodel-resulting-process-builder.sh build --json
+  node scripts/run-lifecyclemodel-resulting-process-builder.mjs build --json
 ```
 
 Use `--model-file` only when local process sources can be inferred from the model location. Use `--request` to pin `process_sources.*` explicitly. The wrapper keeps `--request` and `--model-file` as compatibility flags, but the underlying CLI contract is `--input <request.json>` for build and `--run-dir <dir>` for publish.

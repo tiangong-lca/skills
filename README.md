@@ -63,4 +63,5 @@ Current expectation:
 
 - keep `tiangong-lca-cli` available locally
 - or set `TIANGONG_LCA_CLI_DIR` to point at that repo
-- let skill wrappers delegate transport to `bin/tiangong.js` instead of keeping separate `curl` logic
+- let thin CLI-backed skills use cross-platform Node wrappers as the canonical entrypoint
+- treat any remaining `.sh` wrapper in those thin skills as a Unix compatibility shim, not the main runtime path

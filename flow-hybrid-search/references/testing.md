@@ -2,12 +2,12 @@
 
 ## Preferred smoke test
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-flow-hybrid-search.sh
+TIANGONG_LCA_API_KEY="<your-api-key>" node scripts/run-flow-hybrid-search.mjs
 ```
 
 ## Dry run (request preview)
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-flow-hybrid-search.sh --dry-run
+TIANGONG_LCA_API_KEY="<your-api-key>" node scripts/run-flow-hybrid-search.mjs --dry-run
 ```
 
 ## Direct CLI equivalent
