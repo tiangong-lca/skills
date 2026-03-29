@@ -29,7 +29,7 @@ This skill intentionally keeps a narrow boundary:
 - The shell wrapper resolves Python in this order: `FLOW_GOVERNANCE_PYTHON_BIN`, `PAB_PYTHON_BIN`, `process-automated-builder/.venv/bin/python`, then `python3`.
 - Main commands are local-first. Live fetches or remote writes are opt-in and depend on env described in `references/env.md`.
 - Some direct helper scripts import `tiangong_lca_spec` or `tidas_sdk`; run them with the `process-automated-builder` venv when in doubt.
-- Not every script in this skill is a shell subcommand. `review-flows` and `remediate-flows` are CLI-backed wrappers; auxiliary naming-completion and later remediation workflows remain direct Python entrypoints under `flow-governance-review/scripts/`.
+- Not every script in this skill is a shell subcommand. `get-flow`, `list-flows`, `review-flows`, `remediate-flows`, and `publish-version` are CLI-backed wrappers; auxiliary naming-completion and later remediation workflows remain direct Python entrypoints under `flow-governance-review/scripts/`.
 - Do not invoke deleted compatibility wrappers under `process-automated-builder/scripts/`. The supported helper locations are the canonical scripts under `flow-governance-review/scripts/`.
 
 ## Artifact Layout
@@ -252,6 +252,50 @@ Primary outputs:
 - `similarity_pairs.jsonl`
 - `flow_review_summary.json`
 - `flow_review_zh.md`, `flow_review_en.md`, `flow_review_timing.md`
+
+### `get-flow`
+
+Run the unified CLI-backed flow detail entrypoint from this skill. The compatibility path is:
+
+```bash
+scripts/run-flow-governance-review.sh get-flow ...
+```
+
+which now resolves to:
+
+```bash
+node scripts/run-flow-get.mjs ...
+```
+
+and finally:
+
+```bash
+tiangong flow get ...
+```
+
+Use this wrapper for deterministic live flow inspection instead of introducing skill-local PostgREST or MCP read glue.
+
+### `list-flows`
+
+Run the unified CLI-backed flow list entrypoint from this skill. The compatibility path is:
+
+```bash
+scripts/run-flow-governance-review.sh list-flows ...
+```
+
+which now resolves to:
+
+```bash
+node scripts/run-flow-list.mjs ...
+```
+
+and finally:
+
+```bash
+tiangong flow list ...
+```
+
+Use this wrapper for deterministic live flow enumeration instead of introducing skill-local PostgREST or MCP read glue.
 
 ### `flow-dedup-candidates`
 

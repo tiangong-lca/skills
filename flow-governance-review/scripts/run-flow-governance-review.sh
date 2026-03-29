@@ -23,6 +23,8 @@ Commands:
   openclaw-entry
   openclaw-full-run
   run-governance
+  get-flow
+  list-flows
   review-flows
   remediate-flows
   publish-version
@@ -61,6 +63,12 @@ case "${command}" in
     ;;
   run-governance)
     exec "${PYTHON_BIN}" "${SCRIPT_DIR}/flow_governance_orchestrator.py" "$@"
+    ;;
+  get-flow)
+    exec node "${SCRIPT_DIR}/run-flow-get.mjs" "$@"
+    ;;
+  list-flows)
+    exec node "${SCRIPT_DIR}/run-flow-list.mjs" "$@"
     ;;
   review-flows)
     exec node "${SCRIPT_DIR}/run-review-flows.mjs" "$@"

@@ -17,6 +17,8 @@ Do not use this skill for:
 - `openclaw-entry`
 - `openclaw-full-run`
 - `run-governance`
+- `get-flow`
+- `list-flows`
 - `review-flows`
 - `remediate-flows`
 - `publish-version`
@@ -42,6 +44,30 @@ Run them through:
 ```bash
 scripts/run-flow-governance-review.sh <command> ...
 ```
+
+`get-flow` is now a thin compatibility wrapper over the unified CLI:
+
+```bash
+tiangong flow get --id <flow-id> [options]
+```
+
+That means:
+
+- the canonical runtime is `Node wrapper -> tiangong CLI`
+- remote reads use `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`
+- this wrapper does not keep any skill-local PostgREST or MCP transport
+
+`list-flows` is also a thin compatibility wrapper over the unified CLI:
+
+```bash
+tiangong flow list [options]
+```
+
+That means:
+
+- the canonical runtime is `Node wrapper -> tiangong CLI`
+- remote reads use `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`
+- filtering, ordering, and `--all --page-size` semantics now follow the CLI contract directly
 
 `review-flows` is now a thin compatibility wrapper over the unified CLI:
 
@@ -121,6 +147,10 @@ Some workflows in this skill are intentionally exposed as helper entrypoints und
 
 Canonical CLI-backed flow-governance entrypoints:
 
+- `scripts/run-flow-governance-review.sh get-flow`
+- `scripts/run-flow-get.mjs`
+- `scripts/run-flow-governance-review.sh list-flows`
+- `scripts/run-flow-list.mjs`
 - `scripts/run-flow-governance-review.sh remediate-flows`
 - `scripts/run-remediate-flows.mjs`
 - `scripts/run-flow-governance-review.sh publish-version`

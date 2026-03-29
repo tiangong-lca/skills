@@ -6,9 +6,20 @@ Prefer local JSON or JSONL inputs. In local mode, no remote credentials are requ
 
 `--process-pool-file` is also local-first: it is just a JSON or JSONL working pool of exact-version process rows and does not require any remote credential by itself.
 
-`review-flows`, `remediate-flows`, and `publish-version` now run through unified CLI wrappers. The shared local wrapper/runtime input is:
+`get-flow`, `list-flows`, `review-flows`, `remediate-flows`, and `publish-version` now run through unified CLI wrappers. The shared local wrapper/runtime input is:
 
 - `TIANGONG_LCA_CLI_DIR`: optional override for the local `tiangong-lca-cli` checkout
+
+Additional `get-flow` / `list-flows` / `publish-version` inputs:
+
+- `TIANGONG_LCA_API_BASE_URL`
+- `TIANGONG_LCA_API_KEY`
+
+Notes:
+
+- the canonical `get-flow` wrapper now calls `tiangong flow get`
+- the canonical `list-flows` wrapper now calls `tiangong flow list`
+- these wrappers no longer need `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_EMAIL`, `SUPABASE_PASSWORD`, `TIANGONG_LCA_REMOTE_URL`, or `TIANGONG_LCA_REMOTE_API_KEY`
 
 Additional `review-flows`-only inputs:
 
@@ -18,15 +29,9 @@ Additional `review-flows`-only inputs:
 
 Only set the `TIANGONG_LCA_LLM_*` variables when you intentionally pass `--enable-llm`.
 
-Additional `publish-version` inputs:
-
-- `TIANGONG_LCA_API_BASE_URL`
-- `TIANGONG_LCA_API_KEY`
-
-Notes:
+Additional `publish-version` notes:
 
 - the canonical `publish-version` wrapper now calls `tiangong flow publish-version`
-- it no longer needs `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_EMAIL`, `SUPABASE_PASSWORD`, `TIANGONG_LCA_REMOTE_URL`, or `TIANGONG_LCA_REMOTE_API_KEY`
 - the wrapper preserves the historical `mcp-sync` artifact directory and legacy file names, but the runtime is direct REST through the unified CLI
 
 ## Optional Live Inputs
