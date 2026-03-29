@@ -53,6 +53,10 @@ def main() -> None:
     args = parse_args()
     if args.enable_review_llm and args.disable_review_llm:
         raise SystemExit("Use at most one of --enable-review-llm or --disable-review-llm.")
+    if args.with_reference_context:
+        raise SystemExit(
+            "--with-reference-context is not implemented in the unified CLI-backed review-flows wrapper yet."
+        )
     if args.candidate_flows_file and not args.subject_flows_file:
         raise SystemExit("--candidate-flows-file requires --subject-flows-file.")
 
@@ -76,8 +80,8 @@ def main() -> None:
 
     review_dir = ensure_dir(out_dir / "review")
     review_cmd = [
-        sys.executable,
-        str(SCRIPT_DIR / "flow_review_engine.py"),
+        "node",
+        str(SCRIPT_DIR / "run-review-flows.mjs"),
         "--rows-file",
         str(review_rows_file),
         "--out-dir",

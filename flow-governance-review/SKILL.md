@@ -41,6 +41,18 @@ Run them through:
 scripts/run-flow-governance-review.sh <command> ...
 ```
 
+`review-flows` is now a thin compatibility wrapper over the unified CLI:
+
+```bash
+tiangong review flow (--rows-file <file> | --flows-dir <dir> | --run-root <dir>) --out-dir <dir>
+```
+
+That means:
+
+- the canonical runtime is `Node wrapper -> tiangong CLI`
+- optional semantic review uses `TIANGONG_LCA_LLM_*`, not `OPENAI_*`
+- `--with-reference-context` is not implemented in the CLI slice yet and should not be used through this skill
+
 For OpenClaw, prefer the unified entrypoint:
 
 ```bash

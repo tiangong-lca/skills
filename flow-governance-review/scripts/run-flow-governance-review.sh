@@ -61,7 +61,7 @@ case "${command}" in
     exec "${PYTHON_BIN}" "${SCRIPT_DIR}/flow_governance_orchestrator.py" "$@"
     ;;
   review-flows)
-    exec "${PYTHON_BIN}" "${SCRIPT_DIR}/flow_review_engine.py" "$@"
+    exec node "${SCRIPT_DIR}/run-review-flows.mjs" "$@"
     ;;
   flow-dedup-candidates)
     exec "${PYTHON_BIN}" "${SCRIPT_DIR}/flow_dedup_candidates.py" "$@"

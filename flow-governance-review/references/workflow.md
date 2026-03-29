@@ -144,7 +144,23 @@ Primary outputs:
 
 ### `review-flows`
 
-Run the bundled local flow review engine directly from this skill. This is the only supported flow-governance QA entrypoint in the repo.
+Run the unified CLI-backed flow review entrypoint from this skill. The compatibility path is:
+
+```bash
+scripts/run-flow-governance-review.sh review-flows ...
+```
+
+which now resolves to:
+
+```bash
+node scripts/run-review-flows.mjs ...
+```
+
+and finally:
+
+```bash
+tiangong review flow ...
+```
 
 It accepts either:
 
@@ -153,6 +169,13 @@ It accepts either:
 - `--run-root` for an existing run with `cache/flows` or `exports/flows`
 
 When `--rows-file` is used, the engine materializes `review-input/flows/*.json` plus `review-input/materialization-summary.json` so downstream evidence is tied to an explicit local snapshot.
+
+Compatibility notes:
+
+- `--enable-llm` forwards to the CLI and uses `TIANGONG_LCA_LLM_*`
+- `--disable-llm` is accepted for backward compatibility and keeps the CLI in rule-only mode
+- `--methodology-file` is compatibility-only in this wrapper; when no explicit `--methodology-id` is provided, the wrapper forwards the file basename as the CLI methodology label
+- `--with-reference-context` is not implemented in the unified CLI slice yet and should not be passed
 
 Primary outputs:
 
