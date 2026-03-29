@@ -1,4 +1,4 @@
 interface:
   display_name: "Lifecycle Inventory Review"
   short_description: "Review process-level LCI outputs locally"
-  default_prompt: "Use $lifecycleinventory-review to review process_from_flow process dataset outputs from a local run root."
+  default_prompt: "Use $lifecycleinventory-review to run the unified TianGong CLI review flow against local lifecycle inventory artifacts."
