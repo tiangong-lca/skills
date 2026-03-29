@@ -1,15 +1,16 @@
 ---
 name: lca-publish-executor
-description: Publish local LCA artifact bundles through the approved MCP/local publish paths, including lifecyclemodels, projected process datasets, source datasets, and delegated `process_from_flow` publish-only runs. Use when OpenClaw or another skill already produced local publish artifacts and needs one stable publish contract instead of custom per-skill glue.
+description: Prepare and execute unified local LCA publish requests through `tiangong publish run`, including lifecyclemodels, projected process datasets, source datasets, relation manifests, and delegated process-build publish entries. Use when OpenClaw or another skill already produced local publish artifacts and needs one stable CLI-first publish contract instead of custom per-skill glue.
 ---
 
 # LCA Publish Executor
 
 ## Overview
 - Accept one JSON request that points at `publish-bundle.json` files, direct dataset payloads, or `process_from_flow` run ids.
-- Publish lifecyclemodels/processes/sources through `Database_CRUD_Tool`, and keep resulting-process relation metadata as a local manifest until a dedicated remote relation table exists.
-- Delegate complex `process_from_flow` publish work back to `process-automated-builder`'s `--publish-only` path instead of reimplementing its flow-auto-build/process-update logic.
-- If a projected process payload is not yet a canonical `processDataSet` wrapper, mark it as deferred in `publish-report.json` instead of attempting a blind remote insert.
+- Delegate request normalization, bundle ingestion, relation-manifest generation, and report writing to `tiangong publish run`.
+- Keep resulting-process relation metadata as a local manifest until a dedicated remote relation table exists.
+- If a projected process payload is not yet a canonical `processDataSet` wrapper, mark it as deferred in `publish-report.json` instead of attempting a blind commit.
+- The skill no longer keeps a Python fallback entrypoint.
 
 ## When To Use
 - Use after `lifecyclemodel-recursive-orchestrator publish`.
@@ -19,9 +20,17 @@ description: Publish local LCA artifact bundles through the approved MCP/local p
 
 ## Commands
 ```bash
-python3 scripts/lca_publish_executor.py publish \
+node scripts/run-lca-publish-executor.mjs publish \
   --request assets/example-request.json \
-  --out-dir /tmp/lca-publish-executor-test
+  --json
+
+node scripts/run-lca-publish-executor.mjs \
+  --input assets/example-request.json \
+  --out-dir ../../artifacts/lca-publish-executor/manual-run \
+  --json
+
+TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli \
+  node scripts/run-lca-publish-executor.mjs publish --request assets/example-request.json
 ```
 
 ## Request Contract
@@ -32,14 +41,16 @@ python3 scripts/lca_publish_executor.py publish \
 - `inputs.process_build_runs[]`: delegated `process_from_flow` publish targets; each item needs `run_id`.
 - `publish.commit=false` means dry-run preparation only.
 - `publish.relation_mode=local_manifest_only` is currently the only supported relation mode.
+- `--request` on the Node wrapper is a compatibility alias for the CLI's `--input`.
 
 ## Outputs
 - `normalized-request.json`
 - `collected-inputs.json`
 - `publish-report.json`
 - `relation-manifest.json`
-- `delegated-process-build-runs/*.log` for any delegated `process_from_flow` publish runs
+- No skill-local delegated publish logs are produced by the canonical path; commit-time execution details live in `publish-report.json`.
 
 ## Notes
-- Keep MCP keys in OpenClaw `.env`; do not hardcode them in requests.
-- This skill is the publish contract layer. OpenClaw should know only how to call this request shape, not the per-skill publish internals.
+- `tiangong publish run` is the only publish contract layer for this skill now.
+- If `publish.commit=true` is requested without configured CLI publish executors, the publish report will mark those operations as deferred instead of performing direct remote writes.
+- OpenClaw should know only how to call this request shape and read `publish-report.json`, not the per-skill publish internals.

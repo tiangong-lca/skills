@@ -4,6 +4,13 @@
 
 This skill is the stable publish boundary for OpenClaw-facing callers.
 
+The canonical execution path is now:
+
+- `node scripts/run-lca-publish-executor.mjs`
+- `-> tiangong publish run`
+
+The skill no longer owns its own Python/MCP publish implementation.
+
 Upstream builder skills may each emit different local artifacts, but OpenClaw should only need one publish request shape:
 
 - `inputs.bundle_paths[]` for upstream `publish-bundle.json`
@@ -24,18 +31,18 @@ Upstream builder skills may each emit different local artifacts, but OpenClaw sh
 
 ## Publish Behavior
 
+- all request normalization, bundle ingestion, relation manifest generation, and report writing are delegated to `tiangong publish run`
 - `lifecyclemodels`:
-  - insert-only via MCP `Database_CRUD_Tool`
-  - existing ids are marked `skipped_existing`
+  - normalized into the unified CLI publish report
+  - commit-time execution requires a CLI publish executor; otherwise the report marks them as deferred
 - `processes`:
-  - select -> update or insert fallback
+  - canonical `processDataSet` payloads are normalized into the unified CLI publish report
   - non-canonical projection payloads are reported as `deferred_projection_payload`
-  - this prevents accidental inserts when an upstream resulting-process build output is still review-stage or incomplete, not a final `processDataSet`
 - `sources`:
-  - select -> update or insert fallback
+  - normalized into the unified CLI publish report
 - `process_build_runs`:
-  - delegated to `process-automated-builder --publish-only`
-  - keeps flow-auto-build / process-update / flow publish logic inside its original implementation
+  - remain part of the stable request contract
+  - commit-time execution requires a CLI publish executor; otherwise the report marks them as deferred
 - `relations`:
   - persisted only to local `relation-manifest.json`
   - no remote relation table is assumed yet
@@ -49,9 +56,10 @@ OpenClaw should know:
 - when to call this skill
 - how to populate the request JSON
 - how to read `publish-report.json`
+- that `commit=true` only performs real remote execution if the CLI runtime has explicit publish executors configured
 
 OpenClaw should not embed per-skill publish internals such as:
 
 - how resulting-process builder bundles map to process payload arrays
 - how orchestrator bundles expose delegated `process_build_runs`
-- how `process_from_flow` publish flags are forwarded
+- how commit executors are implemented under `tiangong publish run`

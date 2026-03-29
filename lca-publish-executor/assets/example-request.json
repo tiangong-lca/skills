@@ -1,13 +1,61 @@
 {
   "inputs": {
-    "bundle_paths": [
-      "/abs/path/to/orchestrator-run/publish-bundle.json",
-      "/abs/path/to/resulting-process-builder-run/publish-bundle.json"
+    "lifecyclemodels": [
+      {
+        "json_ordered": {
+          "@id": "lm-demo-publish-executor",
+          "@version": "01.01.000"
+        }
+      }
+    ],
+    "processes": [
+      {
+        "json_ordered": {
+          "processDataSet": {
+            "processInformation": {
+              "dataSetInformation": {
+                "common:UUID": "proc-demo-publish-executor"
+              }
+            },
+            "administrativeInformation": {
+              "publicationAndOwnership": {
+                "common:dataSetVersion": "01.01.000"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "sources": [
+      {
+        "json_ordered": {
+          "sourceDataSet": {
+            "sourceInformation": {
+              "dataSetInformation": {
+                "common:UUID": "src-demo-publish-executor"
+              }
+            },
+            "administrativeInformation": {
+              "publicationAndOwnership": {
+                "common:dataSetVersion": "01.01.000"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "relations": [
+      {
+        "generated_from_lifecyclemodel_id": "lm-demo-publish-executor",
+        "generated_from_lifecyclemodel_version": "01.01.000",
+        "resulting_process_id": "proc-demo-publish-executor",
+        "resulting_process_version": "01.01.000",
+        "projection_role": "primary",
+        "projection_signature": "sig-demo-publish-executor"
+      }
     ],
     "process_build_runs": [
-      {
-        "run_id": "pfw_01211_3a8d74d8_produce_20260316T080000Z"
-      }
+      "pfw_demo_publish_executor"
     ]
   },
   "publish": {
@@ -22,5 +70,5 @@
     "retry_delay_seconds": 2.0,
     "process_build_forward_args": []
   },
-  "out_dir": "/tmp/lca-publish-executor-example"
+  "out_dir": "../../artifacts/lca-publish-executor/example-run"
 }
