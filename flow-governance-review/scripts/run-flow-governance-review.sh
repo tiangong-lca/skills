@@ -24,6 +24,7 @@ Commands:
   openclaw-full-run
   run-governance
   review-flows
+  remediate-flows
   flow-dedup-candidates
   build-flow-alias-map
   scan-process-flow-refs
@@ -62,6 +63,9 @@ case "${command}" in
     ;;
   review-flows)
     exec node "${SCRIPT_DIR}/run-review-flows.mjs" "$@"
+    ;;
+  remediate-flows)
+    exec node "${SCRIPT_DIR}/run-remediate-flows.mjs" "$@"
     ;;
   flow-dedup-candidates)
     exec "${PYTHON_BIN}" "${SCRIPT_DIR}/flow_dedup_candidates.py" "$@"

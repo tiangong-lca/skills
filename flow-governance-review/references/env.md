@@ -6,9 +6,12 @@ Prefer local JSON or JSONL inputs. In local mode, no remote credentials are requ
 
 `--process-pool-file` is also local-first: it is just a JSON or JSONL working pool of exact-version process rows and does not require any remote credential by itself.
 
-`review-flows` now runs through the unified CLI wrapper. The additional local wrapper/runtime inputs are:
+`review-flows` and `remediate-flows` now run through unified CLI wrappers. The shared local wrapper/runtime input is:
 
 - `TIANGONG_LCA_CLI_DIR`: optional override for the local `tiangong-lca-cli` checkout
+
+Additional `review-flows`-only inputs:
+
 - `TIANGONG_LCA_LLM_BASE_URL`
 - `TIANGONG_LCA_LLM_API_KEY`
 - `TIANGONG_LCA_LLM_MODEL`
@@ -62,4 +65,4 @@ Notes:
 - If you omit `--processes-file`, live process reference counts are no longer implicit; you must opt in with `--live-ref-counts`.
 - If you want only public live rows, pass `--no-user-0` instead of relying on a default user id.
 - These scripts read the current process environment only; they do not load `.env` files themselves. If you run them through OpenClaw, make sure the runner has already sourced the intended env file, typically `~/.openclaw/.env` unless you explicitly want another env source.
-- These commands do not require `OPENAI_API_KEY`. `review-flows` uses `TIANGONG_LCA_LLM_*` only when `--enable-llm` is explicitly requested; otherwise it stays rule-only.
+- These commands do not require `OPENAI_API_KEY`. `review-flows` uses `TIANGONG_LCA_LLM_*` only when `--enable-llm` is explicitly requested; otherwise it stays rule-only. `remediate-flows` is deterministic and does not use any LLM env.

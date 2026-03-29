@@ -18,6 +18,7 @@ Do not use this skill for:
 - `openclaw-full-run`
 - `run-governance`
 - `review-flows`
+- `remediate-flows`
 - `flow-dedup-candidates`
 - `build-flow-alias-map`
 - `scan-process-flow-refs`
@@ -52,6 +53,19 @@ That means:
 - the canonical runtime is `Node wrapper -> tiangong CLI`
 - optional semantic review uses `TIANGONG_LCA_LLM_*`, not `OPENAI_*`
 - `--with-reference-context` is not implemented in the CLI slice yet and should not be used through this skill
+
+`remediate-flows` is also a thin compatibility wrapper over the unified CLI:
+
+```bash
+tiangong flow remediate --input-file <file> --out-dir <dir>
+```
+
+That means:
+
+- the canonical runtime is `Node wrapper -> tiangong CLI`
+- this wrapper owns only the round1 deterministic local remediation slice
+- default local paths still match the historical invalid-flow pool and `assets/artifacts/flow-processing/remediation/round1/`
+- round2 remote-validation recovery and later publish/sync steps remain separate follow-up stages
 
 For OpenClaw, prefer the unified entrypoint:
 
@@ -89,15 +103,19 @@ Use the lower-level commands only when another skill or an external orchestrator
 
 ## Direct Helper Scripts
 
-Some workflows in this skill are intentionally exposed as direct Python helpers under `scripts/` instead of `run-flow-governance-review.sh` subcommands.
+Some workflows in this skill are intentionally exposed as helper entrypoints under `scripts/`. The round1 remediation entrypoint is now CLI-backed; the remaining follow-up helpers below stay as direct Python utilities.
 
-Canonical remediation helpers:
+Canonical remediation entrypoints:
 
-- `scripts/remediate_invalid_flow_json_ordered_batch.py`
+- `scripts/run-flow-governance-review.sh remediate-flows`
+- `scripts/run-remediate-flows.mjs`
+
+Remaining direct follow-up helpers:
+
 - `scripts/mcp_sync_remediated_flows_batch.py`
 - `scripts/remediate_remote_validation_failed_flows_round2.py`
 
-Run these helpers from `flow-governance-review/scripts/` directly. They still depend on the `process-automated-builder` runtime, `tiangong_lca_spec`, and for the remediation passes `tidas_sdk`.
+The round1 remediation path is now CLI-backed. The remaining follow-up helpers above still depend on the `process-automated-builder` runtime, `tiangong_lca_spec`, and `tidas_sdk`.
 
 For the full command matrix, auxiliary naming-completion utilities, and recommended sequencing, read `references/workflow.md`.
 

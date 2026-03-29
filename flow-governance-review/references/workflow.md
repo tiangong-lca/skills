@@ -29,7 +29,7 @@ This skill intentionally keeps a narrow boundary:
 - The shell wrapper resolves Python in this order: `FLOW_GOVERNANCE_PYTHON_BIN`, `PAB_PYTHON_BIN`, `process-automated-builder/.venv/bin/python`, then `python3`.
 - Main commands are local-first. Live fetches or remote writes are opt-in and depend on env described in `references/env.md`.
 - Some direct helper scripts import `tiangong_lca_spec` or `tidas_sdk`; run them with the `process-automated-builder` venv when in doubt.
-- Not every script in this skill is a shell subcommand. Auxiliary remediation and naming-completion workflows are direct Python entrypoints under `flow-governance-review/scripts/`.
+- Not every script in this skill is a shell subcommand. `review-flows` and `remediate-flows` are CLI-backed wrappers; auxiliary naming-completion and later remediation workflows remain direct Python entrypoints under `flow-governance-review/scripts/`.
 - Do not invoke deleted compatibility wrappers under `process-automated-builder/scripts/`. The supported helper locations are the canonical scripts under `flow-governance-review/scripts/`.
 
 ## Artifact Layout
@@ -167,6 +167,33 @@ It accepts either:
 - `--rows-file` for a local JSON/JSONL flow snapshot
 - `--flows-dir` for an existing per-flow JSON directory
 - `--run-root` for an existing run with `cache/flows` or `exports/flows`
+
+### `remediate-flows`
+
+Run the unified CLI-backed round1 remediation entrypoint from this skill. The compatibility path is:
+
+```bash
+scripts/run-flow-governance-review.sh remediate-flows ...
+```
+
+which now resolves to:
+
+```bash
+node scripts/run-remediate-flows.mjs ...
+```
+
+and finally:
+
+```bash
+tiangong flow remediate ...
+```
+
+Defaults:
+
+- input file: `assets/artifacts/flow-processing/datasets/flows_tidas_sdk_plus_classification_invalid.jsonl`
+- output directory: `assets/artifacts/flow-processing/remediation/round1/`
+
+Use this slice only for deterministic local round1 remediation. It does not do MCP sync, remote validation retry, or publish.
 
 When `--rows-file` is used, the engine materializes `review-input/flows/*.json` plus `review-input/materialization-summary.json` so downstream evidence is tied to an explicit local snapshot.
 
@@ -439,13 +466,17 @@ Primary outputs:
 
 ## Direct Helper Utilities
 
-These are direct Python entrypoints under `flow-governance-review/scripts/`. They are part of the project workflow, but they are not exposed through `run-flow-governance-review.sh`.
+These are helper entrypoints under `flow-governance-review/scripts/`. Some are CLI-backed Node wrappers exposed through `run-flow-governance-review.sh`; the remaining follow-up utilities stay as direct Python entrypoints.
 
 ### Remediation batch helpers
 
-`remediate_invalid_flow_json_ordered_batch.py`
+`run-flow-governance-review.sh remediate-flows`
 
-- deterministically remediate invalid local flow rows, revalidate with `tidas_sdk.create_flow(validate=True)`, and split ready-for-MCP rows from the residual manual queue
+`run-remediate-flows.mjs`
+
+- delegate deterministic local round1 remediation to `tiangong flow remediate`
+- keep the historical invalid-flow input default and the same round1 artifact filenames under `assets/artifacts/flow-processing/remediation/round1/`
+- accept `TIANGONG_LCA_CLI_DIR` plus `--cli-dir` as local wrapper overrides
 - default outputs under `assets/artifacts/flow-processing/remediation/round1/`:
   - `flows_tidas_sdk_plus_classification_remediated_all.jsonl`
   - `flows_tidas_sdk_plus_classification_remediated_ready_for_mcp.jsonl`
@@ -561,9 +592,9 @@ These are direct Python entrypoints under `flow-governance-review/scripts/`. The
 3. Export the remaining zero-process naming scope with `export_missing_name_field_completion_pack.py`.
 4. After OpenClaw writes per-batch decisions, run `run_missing_name_completion_postprocess.py` to apply, validate, aggregate, and optionally publish the accepted patches.
 
-### Legacy invalid-flow remediation batch
+### Invalid-flow remediation batch
 
-1. Run `remediate_invalid_flow_json_ordered_batch.py` on the invalid flow pool.
+1. Run `scripts/run-flow-governance-review.sh remediate-flows` or `node scripts/run-remediate-flows.mjs` on the invalid flow pool.
 2. Sync the ready subset with `mcp_sync_remediated_flows_batch.py`.
 3. If remote validation failures remain, run `remediate_remote_validation_failed_flows_round2.py`.
 4. Re-run MCP sync only on the round-2 ready subset.
