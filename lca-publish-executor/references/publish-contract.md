@@ -25,20 +25,23 @@ Upstream builder skills may each emit different local artifacts, but OpenClaw sh
 ## Publish Behavior
 
 - `lifecyclemodels`:
-  - insert-only via MCP `Database_CRUD_Tool`
-  - existing ids are marked `skipped_existing`
+  - normalized by `tiangong publish run`
+  - executed only when the CLI publish layer is given an executor
 - `processes`:
-  - select -> update or insert fallback
+  - normalized by `tiangong publish run`
   - non-canonical projection payloads are reported as `deferred_projection_payload`
   - this prevents accidental inserts when an upstream resulting-process build output is still review-stage or incomplete, not a final `processDataSet`
 - `sources`:
-  - select -> update or insert fallback
+  - normalized by `tiangong publish run`
+  - executed only when the CLI publish layer is given an executor
 - `process_build_runs`:
-  - delegated to `process-automated-builder --publish-only`
-  - keeps flow-auto-build / process-update / flow publish logic inside its original implementation
+  - kept inside the unified CLI publish request contract
+  - commit-mode execution remains a CLI executor concern, not a skill-private subprocess concern
 - `relations`:
   - persisted only to local `relation-manifest.json`
   - no remote relation table is assumed yet
+
+If `publish.commit=true` is requested without a configured CLI executor, the CLI reports `deferred_no_executor` instead of reviving legacy MCP or Python publish code inside this skill.
 
 ## OpenClaw Boundary
 
@@ -54,4 +57,4 @@ OpenClaw should not embed per-skill publish internals such as:
 
 - how resulting-process builder bundles map to process payload arrays
 - how orchestrator bundles expose delegated `process_build_runs`
-- how `process_from_flow` publish flags are forwarded
+- how CLI executor wiring is implemented

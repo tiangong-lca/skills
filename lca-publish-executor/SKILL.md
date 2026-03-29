@@ -1,15 +1,16 @@
 ---
 name: lca-publish-executor
-description: Publish local LCA artifact bundles through the approved MCP/local publish paths, including lifecyclemodels, projected process datasets, source datasets, and delegated `process_from_flow` publish-only runs. Use when OpenClaw or another skill already produced local publish artifacts and needs one stable publish contract instead of custom per-skill glue.
+description: Normalize and execute local LCA publish requests through the unified `tiangong publish run` contract. Use when OpenClaw or another skill already produced local publish artifacts and needs one stable publish surface instead of custom per-skill glue.
 ---
 
 # LCA Publish Executor
 
 ## Overview
 - Accept one JSON request that points at `publish-bundle.json` files, direct dataset payloads, or `process_from_flow` run ids.
-- Publish lifecyclemodels/processes/sources through `Database_CRUD_Tool`, and keep resulting-process relation metadata as a local manifest until a dedicated remote relation table exists.
-- Delegate complex `process_from_flow` publish work back to `process-automated-builder`'s `--publish-only` path instead of reimplementing its flow-auto-build/process-update logic.
-- If a projected process payload is not yet a canonical `processDataSet` wrapper, mark it as deferred in `publish-report.json` instead of attempting a blind remote insert.
+- Delegate the entire request to `tiangong publish run` instead of keeping a skill-private publish runtime.
+- Keep resulting-process relation metadata as a local manifest until a dedicated remote relation table exists.
+- If a projected process payload is not yet a canonical `processDataSet` wrapper, let the CLI mark it as deferred in `publish-report.json` instead of attempting a blind remote insert.
+- Treat `publish.commit=true` as a CLI executor request boundary; if no executor is configured in the CLI layer, commit-mode items stay deferred instead of reviving skill-local MCP logic.
 
 ## When To Use
 - Use after `lifecyclemodel-recursive-orchestrator publish`.
@@ -19,7 +20,7 @@ description: Publish local LCA artifact bundles through the approved MCP/local p
 
 ## Commands
 ```bash
-python3 scripts/lca_publish_executor.py publish \
+node scripts/run-lca-publish-executor.mjs publish \
   --request assets/example-request.json \
   --out-dir /tmp/lca-publish-executor-test
 ```
@@ -38,8 +39,7 @@ python3 scripts/lca_publish_executor.py publish \
 - `collected-inputs.json`
 - `publish-report.json`
 - `relation-manifest.json`
-- `delegated-process-build-runs/*.log` for any delegated `process_from_flow` publish runs
 
 ## Notes
-- Keep MCP keys in OpenClaw `.env`; do not hardcode them in requests.
-- This skill is the publish contract layer. OpenClaw should know only how to call this request shape, not the per-skill publish internals.
+- Keep TianGong LCA runtime keys in the caller env or pass standard CLI flags; do not hardcode secrets in requests.
+- This skill is now a thin wrapper around `tiangong publish run`. OpenClaw should know only how to call this request shape, not the historical per-skill publish internals.

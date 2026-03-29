@@ -2,12 +2,12 @@
 
 ## Preferred smoke test
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-embedding-ft.sh
+TIANGONG_LCA_API_KEY="<your-api-key>" node scripts/run-embedding-ft.mjs
 ```
 
 ## Dry run (request preview)
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-embedding-ft.sh --dry-run
+TIANGONG_LCA_API_KEY="<your-api-key>" node scripts/run-embedding-ft.mjs --dry-run
 ```
 
 ## Direct CLI equivalent

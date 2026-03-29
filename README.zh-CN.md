@@ -64,4 +64,5 @@ npm i skills@latest -g
 - 本地保留 `tiangong-lca-cli` 仓库
 - 或通过 `TIANGONG_LCA_CLI_DIR` 指向该仓库
 - skill wrapper 统一委托 `bin/tiangong.js` 执行，而不是继续各自维护一套 `curl` 逻辑
-- `lifecyclemodel-resulting-process-builder` 已切到 `Node wrapper -> tiangong lifecyclemodel ...`；其 `.sh` 入口只保留兼容壳
+- 已迁到 CLI 的 skill 统一以 Node wrapper 作为 canonical 入口；遗留 `.sh` 只保留兼容壳
+- `lca-publish-executor` 也已并入同一路径，统一委托 `tiangong publish run`

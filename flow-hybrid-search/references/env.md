@@ -8,7 +8,8 @@
 
 Wrapper behavior:
 
-- the shell wrapper only resolves the CLI path and injects the example `--input` file when none is provided
+- the Node wrapper is the canonical entrypoint and only resolves the CLI path plus the default example `--input`
+- the `.sh` file is a compatibility launcher that only execs the Node wrapper
 - all other flags are the standard `tiangong search flow` flags
 - internally it forwards to `tiangong search flow`
 

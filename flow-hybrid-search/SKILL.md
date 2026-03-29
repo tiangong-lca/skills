@@ -8,16 +8,16 @@ description: Execute and troubleshoot Supabase edge function `flow_hybrid_search
 ## Run Workflow
 1. Ensure `tiangong-lca-cli` is available locally, or set `TIANGONG_LCA_CLI_DIR`.
 2. Set `TIANGONG_LCA_API_KEY`, or pass the standard CLI flag `--api-key`.
-3. Execute `scripts/run-flow-hybrid-search.sh` with standard `tiangong search flow` flags.
-4. The wrapper delegates to `tiangong search flow`.
+3. Execute `node scripts/run-flow-hybrid-search.mjs` with standard `tiangong search flow` flags.
+4. The Node wrapper delegates to `tiangong search flow`; `scripts/run-flow-hybrid-search.sh` is only a compatibility launcher.
 5. Confirm response shape, then debug with focused references.
 
 ## Commands
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-flow-hybrid-search.sh --dry-run
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-flow-hybrid-search.sh
-scripts/run-flow-hybrid-search.sh --input ./assets/example-request.json --api-key "$TIANGONG_LCA_API_KEY"
-TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli scripts/run-flow-hybrid-search.sh --dry-run --api-key "$TIANGONG_LCA_API_KEY"
+TIANGONG_LCA_API_KEY="<your-api-key>" node scripts/run-flow-hybrid-search.mjs --dry-run
+TIANGONG_LCA_API_KEY="<your-api-key>" node scripts/run-flow-hybrid-search.mjs
+node scripts/run-flow-hybrid-search.mjs --input ./assets/example-request.json --api-key "$TIANGONG_LCA_API_KEY"
+TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli node scripts/run-flow-hybrid-search.mjs --dry-run --api-key "$TIANGONG_LCA_API_KEY"
 ```
 
 ## Fast Triage

@@ -64,3 +64,5 @@ Current expectation:
 - keep `tiangong-lca-cli` available locally
 - or set `TIANGONG_LCA_CLI_DIR` to point at that repo
 - let skill wrappers delegate transport to `bin/tiangong.js` instead of keeping separate `curl` logic
+- prefer the skill-side Node wrappers as the canonical entrypoints; legacy `.sh` files are compatibility launchers only
+- `lca-publish-executor` now follows the same pattern and delegates to `tiangong publish run`
