@@ -7,11 +7,17 @@ Primary caller:
 
 Secondary caller candidates:
 - direct operator dry-run
-- future MCP-assisted local preview flow
+- direct wrapper invocation from this skill
 
 ## Invocation purpose
 
 Build a lifecycle model into one or more resulting process datasets whose exchange values are computed from model topology and allocation logic.
+
+## Active execution path
+
+- `scripts/run-lifecyclemodel-resulting-process-builder.sh build` delegates to `tiangong lifecyclemodel build-resulting-process`
+- `scripts/run-lifecyclemodel-resulting-process-builder.sh publish` delegates to `tiangong lifecyclemodel publish-resulting-process`
+- the wrapper still accepts `--request` and `--model-file` for compatibility, but the canonical build contract underneath is a CLI request file passed through `--input`
 
 ## Input contract
 
@@ -55,6 +61,7 @@ Build a lifecycle model into one or more resulting process datasets whose exchan
 ### Required outputs
 - `process-projection-bundle.json`
 - `projection-report.json`
+- `publish-bundle.json` and `publish-intent.json` after the publish-handoff step
 
 ### Bundle contents
 - `source_model`

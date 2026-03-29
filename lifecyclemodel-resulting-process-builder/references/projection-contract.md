@@ -51,6 +51,15 @@
 }
 ```
 
+## Publish handoff artifacts
+
+After the build step, `tiangong lifecyclemodel publish-resulting-process` derives:
+
+- `publish-bundle.json`
+- `publish-intent.json`
+
+Those artifacts stay local until a later approved `tiangong publish run`.
+
 ## Required metadata semantics
 
 Projected process payloads should preserve or derive:

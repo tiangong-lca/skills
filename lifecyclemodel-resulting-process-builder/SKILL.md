@@ -7,17 +7,27 @@ description: Build deterministic local resulting-process datasets from an existi
 
 Use this skill when the source of truth is already a lifecycle model `json_ordered` file and the next step is to deterministically compute the aggregated resulting process plus relation handoff artifacts, not to synthesize a process from external flow evidence.
 
+## Run Workflow
+
+1. Ensure `tiangong-lca-cli` is available locally, or set `TIANGONG_LCA_CLI_DIR`.
+2. Use `scripts/run-lifecyclemodel-resulting-process-builder.sh build ...` to delegate to `tiangong lifecyclemodel build-resulting-process`.
+3. Use `scripts/run-lifecyclemodel-resulting-process-builder.sh publish ...` to delegate to `tiangong lifecyclemodel publish-resulting-process`.
+4. Confirm the local artifacts in the run directory before any later `tiangong publish run` step.
+
+The active runtime path is `skill -> wrapper -> tiangong CLI`. Python and MCP are no longer part of the normal execution path for this skill.
+
 ## What The Implementation Does
 
 - validates `assets/request.schema.json`
 - loads a lifecycle model from `source_model.json_ordered` or `source_model.json_ordered_path`
-- resolves referenced process datasets from local process exports or optional MCP lookup
+- resolves referenced process datasets from local process exports
 - extracts process instances and graph edges from model topology
 - aggregates exchanges across included processes and cancels internal linked flows
 - derives:
   - `process-projection-bundle.json`
   - `projection-report.json`
   - `publish-bundle.json` via `publish`
+  - `publish-intent.json` via `publish`
 - emits relation payloads containing:
   - `generated_from_lifecyclemodel_id`
   - `generated_from_lifecyclemodel_version`
@@ -35,7 +45,7 @@ Always provide:
 - `projection`
 - `publish`
 
-Provide `process_sources` when local process resolution is not discoverable from the model path or when remote MCP lookup should be constrained.
+Provide `process_sources` when local process resolution is not discoverable from the model path.
 
 The source model may be provided as:
 
@@ -50,7 +60,8 @@ Referenced process datasets may be provided via:
 - `process_sources.process_json_dirs[]`
 - `process_sources.process_json_files[]`
 - auto-detected sibling directories such as `processes/` or `*-processes/` when using `--model-file`
-- optional MCP lookup driven by `TIANGONG_LCA_REMOTE_*`
+
+Canonical request files should use `process_sources.allow_remote_lookup`, but the normal skill flow is local-only and should keep it `false` unless the CLI explicitly gains remote lookup support later.
 
 ## Outputs
 
@@ -60,25 +71,30 @@ Referenced process datasets may be provided via:
 - `projection-report.json`
 - `process-projection-bundle.json`
 - `publish-bundle.json` from `publish`
+- `publish-intent.json` from `publish`
 
 ## Commands
 
 ```bash
-python3 scripts/lifecyclemodel_resulting_process_builder.py build \
+scripts/run-lifecyclemodel-resulting-process-builder.sh build \
   --request assets/example-request.json \
   --out-dir /abs/path/run-001
 
-python3 scripts/lifecyclemodel_resulting_process_builder.py build \
+scripts/run-lifecyclemodel-resulting-process-builder.sh build \
   --model-file assets/example-model.json \
+  --projection-role primary \
   --out-dir /abs/path/run-001
 
-python3 scripts/lifecyclemodel_resulting_process_builder.py publish \
+scripts/run-lifecyclemodel-resulting-process-builder.sh publish \
   --run-dir /abs/path/run-001 \
   --publish-processes \
   --publish-relations
+
+TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli \
+  scripts/run-lifecyclemodel-resulting-process-builder.sh build --json
 ```
 
-Use `--model-file` only when the builder can infer local process sources from the model location or when remote MCP lookup is available. Use `--request` to pin `process_sources.*` explicitly.
+Use `--model-file` only when local process sources can be inferred from the model location. Use `--request` to pin `process_sources.*` explicitly. The wrapper keeps `--request` and `--model-file` as compatibility flags, but the underlying CLI contract is `--input <request.json>` for build and `--run-dir <dir>` for publish.
 
 ## Separation Rule
 

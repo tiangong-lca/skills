@@ -16,8 +16,8 @@ This is strong evidence that resulting-process generation is its own domain work
 ### tiangong-lca-next process service
 `src/services/processes/api.ts` already persists `model_id` on process rows.
 
-### tiangong-lca-mcp
-`src/tools/life_cycle_model_file_tools.ts` already derives graph presentation (`json_tg`) from lifecycle model `jsonOrdered` plus referenced process rows.
+### tiangong-lca-cli
+`src/lib/lifecyclemodel-resulting-process.ts` now owns the local projection path, and `src/lib/lifecyclemodel-publish-resulting-process.ts` owns the local publish-handoff artifact generation.
 
 ## Recommended responsibility split
 
@@ -25,16 +25,18 @@ This is strong evidence that resulting-process generation is its own domain work
 - orchestration
 - dry-run planning
 - projection packaging contracts
+- thin wrappers only
 - no direct DB mutation by default
 
 ### lifecyclemodel-resulting-process-builder
+- wrapper-level compatibility for callers like `lifecyclemodel-recursive-orchestrator`
+- no business logic beyond invoking the CLI
+
+### tiangong-lca-cli
 - projection computation and packaging
 - resulting-process metadata stamping
 - relation payload generation
-
-### tiangong-lca-mcp
-- validation and graph derivation for lifecycle model file intake
-- CRUD bridge for approved insert/update operations
+- publish handoff artifact generation
 
 ### tiangong-lca-next
 - editing / preview / review UI

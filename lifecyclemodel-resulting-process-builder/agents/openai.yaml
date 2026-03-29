@@ -1,4 +1,4 @@
 interface:
   display_name: "Lifecycle Model Resulting Process Builder"
-  short_description: "Build resulting processes from lifecycle models"
-  default_prompt: "Use $lifecyclemodel-resulting-process-builder to build deterministic local resulting-process datasets from a lifecycle model json_ordered file, along with relation metadata and a publish handoff bundle."
+  short_description: "Build resulting processes via the unified CLI"
+  default_prompt: "Use $lifecyclemodel-resulting-process-builder to call the unified tiangong CLI and build deterministic local resulting-process datasets from a lifecycle model json_ordered file, then prepare relation metadata and publish handoff artifacts."

@@ -55,7 +55,7 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
         },
-        "allow_mcp_lookup": { "type": "boolean" }
+        "allow_remote_lookup": { "type": "boolean" }
       }
     },
     "publish": {

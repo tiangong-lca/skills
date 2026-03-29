@@ -53,8 +53,14 @@ Prepare:
 - projection report
 - optional preview asset references
 
-### 9. Publish handoff
+### 9. Publish handoff preparation
+Run `tiangong lifecyclemodel publish-resulting-process` to prepare:
+- `publish-bundle.json`
+- `publish-intent.json`
+
+### 10. Approved publish
 Only when explicitly approved:
+- pass the prepared bundle into `tiangong publish run`
 - write projected process rows
 - write model/resulting-process relation metadata
 - never delete existing rows

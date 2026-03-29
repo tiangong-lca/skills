@@ -20,7 +20,7 @@
     "process_json_dirs": [
       "example-processes"
     ],
-    "allow_mcp_lookup": false
+    "allow_remote_lookup": false
   },
   "publish": {
     "intent": "prepare_only",
