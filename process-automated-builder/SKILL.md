@@ -1,6 +1,6 @@
 ---
 name: process-automated-builder
-description: Execute and troubleshoot the end-to-end `process_from_flow` automation pipeline that derives ILCD `process_datasets` and `source_datasets` from a reference flow dataset, including literature retrieval, route/process splitting, exchange generation, flow matching, placeholder resolution, balance review, and publish/resume orchestration. Use when running or debugging `scripts/run-process-automated-builder.sh` or the canonical CLI `scripts/origin/process_from_flow_langgraph.py`.
+description: Execute and troubleshoot the `process_from_flow` automation chain with a CLI-first workflow. Use `tiangong process auto-build|resume-build|publish-build|batch-build` as the canonical path, and use legacy Python scripts only for transitional stages that are not yet migrated.
 ---
 
 # Process Automated Builder
@@ -10,11 +10,22 @@ description: Execute and troubleshoot the end-to-end `process_from_flow` automat
 - Run, resume, stop, inspect, and publish the workflow safely.
 - Diagnose failures in references/SI processing, matching, unit alignment, placeholder resolution, and post-build reviews.
 
-## Execution Baseline
+## Execution Baseline (CLI First)
 1. Read `references/workflow-map.md` and `references/operations-playbook.md`.
-2. Bootstrap the standalone Python environment.
-3. Run the wrapper with agent-provided flow input (`--flow-file`, `--flow-json`, or `--flow-stdin`).
-4. Inspect run artifacts and continue with `--resume` or `--publish-only` when needed.
+2. Use `tiangong process auto-build` to create local run artifacts and a deterministic run directory.
+3. Continue with `tiangong process resume-build`, `tiangong process publish-build`, or `tiangong process batch-build` as needed.
+4. Use legacy Python entrypoints only for stages that have not yet been migrated into CLI modules.
+
+## Execution Split
+- CLI-owned local handoff stages (canonical):
+  - `tiangong process auto-build`
+  - `tiangong process resume-build`
+  - `tiangong process publish-build`
+  - `tiangong process batch-build`
+- Legacy transitional stages (not canonical):
+  - `scripts/run-process-automated-builder.sh`
+  - `scripts/origin/process_from_flow_langgraph.py`
+  - Legacy MCP/OpenAI/KB/TianGong unstructured integrations used by those scripts
 
 ## Parallel Execution Contract
 - `Run-level parallel`: multiple flow inputs can run concurrently, but each run must use a distinct `run_id`.
@@ -31,7 +42,15 @@ description: Execute and troubleshoot the end-to-end `process_from_flow` automat
   - `07_main_pipeline` now parallelizes only `flow_search` requests, then applies selector and state updates in original exchange order.
   - Tune with env `LCA_FLOW_SEARCH_MAX_PARALLEL` (bounded by profile concurrency).
 
-## Commands
+## Canonical CLI Commands
+```bash
+tiangong process auto-build --help
+tiangong process resume-build --help
+tiangong process publish-build --help
+tiangong process batch-build --help
+```
+
+## Legacy Transitional Commands
 ```bash
 scripts/setup-process-automated-builder.sh
 source .venv/bin/activate
@@ -60,12 +79,12 @@ python3 scripts/origin/process_from_flow_langgraph.py workflow --flow /abs/path/
 - Shared helper copied for LangGraph CLI import path: `scripts/md/_workflow_common.py`
 
 ## Runtime Requirements
-- Use bundled runtime package `tiangong_lca_spec/` shipped with this skill.
-- Install Python dependencies via `scripts/setup-process-automated-builder.sh`.
-- Configure flow-search MCP from env: `TIANGONG_LCA_REMOTE_TRANSPORT`, `TIANGONG_LCA_REMOTE_SERVICE_NAME`, `TIANGONG_LCA_REMOTE_URL`, `TIANGONG_LCA_REMOTE_API_KEY`.
-- Configure OpenAI from env when LLM is enabled: `OPENAI_API_KEY`, optional `OPENAI_MODEL`, optional `OPENAI_BASE_URL`.
-- Configure KB MCP from env when literature retrieval is needed: `TIANGONG_KB_REMOTE_TRANSPORT`, `TIANGONG_KB_REMOTE_SERVICE_NAME`, `TIANGONG_KB_REMOTE_URL`, `TIANGONG_KB_REMOTE_API_KEY`.
-- Configure MinerU from env when SI OCR parsing is needed: `TIANGONG_MINERU_WITH_IMAGE_URL`, optional `TIANGONG_MINERU_WITH_IMAGE_API_KEY`, optional provider/model/timeout flags, optional `TIANGONG_MINERU_WITH_IMAGE_RETURN_TXT` (default `true`).
+- Canonical path: use `tiangong` CLI env contract only (`TIANGONG_LCA_*`) as documented in `tiangong-lca-cli`.
+- Legacy path: if you execute standalone Python scripts, they still require legacy runtime/env contracts:
+  - Flow search MCP: `TIANGONG_LCA_REMOTE_*`
+  - LLM: `OPENAI_*` / `LCA_OPENAI_*`
+  - KB MCP: `TIANGONG_KB_REMOTE_*`
+  - TianGong unstructured service: `TIANGONG_MINERU_WITH_IMAGE_*` (endpoint detail: `/mineru_with_images`)
 
 ## Fast Troubleshooting
 - Missing `process_datasets` or `source_datasets`: verify `stop_after` did not stop before dataset stages.
@@ -76,5 +95,5 @@ python3 scripts/origin/process_from_flow_langgraph.py workflow --flow /abs/path/
 
 ## Load References On Demand
 - `references/process-from-flow-workflow.md`: complete migrated workflow spec (core flow, orchestration flow, state, outputs, publishing, stop rules).
-- `references/workflow-map.md`: standalone skill execution map (input/output contracts and run control).
-- `references/operations-playbook.md`: operational commands for setup, run, resume, and publish.
+- `references/workflow-map.md`: CLI-first execution map with legacy transitional boundary.
+- `references/operations-playbook.md`: CLI-first runbook plus legacy fallback commands.
