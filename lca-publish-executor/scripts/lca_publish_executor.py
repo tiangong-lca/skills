@@ -16,7 +16,7 @@ from typing import Any, Mapping
 SCRIPT_PATH = Path(__file__).resolve()
 SKILL_DIR = SCRIPT_PATH.parents[1]
 REPO_ROOT = SKILL_DIR.parent
-PROCESS_AUTOMATED_BUILDER_WRAPPER = REPO_ROOT / "process-automated-builder" / "scripts" / "run-process-automated-builder.sh"
+PROCESS_AUTOMATED_BUILDER_WRAPPER = REPO_ROOT / "process-automated-builder" / "scripts" / "run-process-automated-builder.mjs"
 
 DEFAULT_OUT_DIR = REPO_ROOT / "artifacts" / "lca_publish_executor"
 DEFAULT_MAX_ATTEMPTS = 5
@@ -499,7 +499,9 @@ def delegate_process_build_runs(
         log_path = out_dir / "delegated-process-build-runs" / f"{run_id}.log"
         log_path.parent.mkdir(parents=True, exist_ok=True)
         cmd = [
+            "node",
             str(PROCESS_AUTOMATED_BUILDER_WRAPPER),
+            "legacy",
             "--mode",
             "langgraph",
             "--",

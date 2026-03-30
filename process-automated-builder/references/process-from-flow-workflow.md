@@ -8,9 +8,9 @@ This reference is a self-contained migration of the `process_from_flow` workflow
 - Outputs: `process_datasets` and `source_datasets`, plus artifacts under `artifacts/process_from_flow/<run_id>/`.
 
 ## Cross References
-- Canonical CLI entrypoint: `scripts/origin/process_from_flow_langgraph.py`.
+- Canonical skill wrapper for the migrated local handoff stages: `scripts/run-process-automated-builder.mjs`.
+- Legacy orchestration entrypoint: `scripts/origin/process_from_flow_langgraph.py`.
 - Compatibility shim: `scripts/origin/process_from_flow_workflow.py` forwards to `process_from_flow_langgraph.py workflow`.
-- Wrapper entrypoint: `scripts/run-process-automated-builder.sh` (supports `--flow-file`, `--flow-json`, `--flow-stdin`).
 
 ## Architecture and Main Flow
 ### Layer Responsibilities

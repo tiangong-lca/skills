@@ -28,7 +28,7 @@ from typing import Literal
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_ROOT = SCRIPT_DIR.parent.parent
-RUN_WRAPPER = SKILL_ROOT / "scripts" / "run-process-automated-builder.sh"
+RUN_WRAPPER = SKILL_ROOT / "scripts" / "run-process-automated-builder.mjs"
 DEFAULT_WORKERS_ENV_FILE = Path.home() / ".config" / "process-from-flow-batch" / "env"
 
 
@@ -320,7 +320,9 @@ class BatchRunner:
         # Use workflow mode for both fresh runs and retries so publish defaults
         # stay consistent and stage orchestration remains identical.
         cmd = [
+            "node",
             str(RUN_WRAPPER),
+            "legacy",
             "--python-bin",
             self.python_bin,
             "--mode",

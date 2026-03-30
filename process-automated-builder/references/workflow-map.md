@@ -1,45 +1,59 @@
-# Workflow Map (Standalone Skill Runtime)
+# Workflow Map (CLI First, Transitional Legacy Runtime)
 
 ## Goal
 - Accept an agent-provided reference flow JSON.
-- Execute end-to-end `process_from_flow` generation.
+- Execute the Node wrapper -> CLI-owned local `process_from_flow` handoff stages, and keep legacy orchestration available only as a transition path.
 - Produce ILCD `process_datasets` and `source_datasets`.
 
 ## Input Contract (Agent -> Skill)
-- Required for new runs:
+- Required for canonical new runs:
+  - `node scripts/run-process-automated-builder.mjs auto-build --input <request.json>`
+  - or compatibility flow input flags (`--flow-file`, `--flow-json`, `--flow-stdin`) that synthesize a temporary CLI request
+- Required for legacy new runs:
   - `flow` JSON payload (ILCD flowDataSet wrapper) as file path, inline JSON, or stdin.
 - Optional controls:
   - `operation`: `produce` or `treat`.
   - `run_id`, `stop_after`, publish flags, density conversion flags.
-- Runtime env for flow-search MCP:
+- Canonical current slices:
+  - `auto-build`, `resume-build`, `publish-build`, and `batch-build` are local handoff commands routed through `tiangong-lca-cli`
+  - they do not require legacy MCP/OpenAI/KB/TianGong unstructured env for the currently implemented local artifact stages
+- Legacy runtime env for flow-search MCP:
   - `TIANGONG_LCA_REMOTE_TRANSPORT`
   - `TIANGONG_LCA_REMOTE_SERVICE_NAME`
   - `TIANGONG_LCA_REMOTE_URL`
   - `TIANGONG_LCA_REMOTE_API_KEY`
-- Runtime env for LLM:
+- Legacy runtime env for LLM:
   - `OPENAI_API_KEY`
   - `OPENAI_MODEL` (optional)
   - `OPENAI_BASE_URL` (optional)
-- Runtime env for KB MCP (literature retrieval path):
+- Legacy runtime env for KB MCP (literature retrieval path):
   - `TIANGONG_KB_REMOTE_TRANSPORT`
   - `TIANGONG_KB_REMOTE_SERVICE_NAME`
   - `TIANGONG_KB_REMOTE_URL`
   - `TIANGONG_KB_REMOTE_API_KEY`
-- Runtime env for MinerU OCR (SI parsing path):
+- Legacy runtime env for TianGong unstructured service (SI parsing path):
   - `TIANGONG_MINERU_WITH_IMAGE_URL`
   - `TIANGONG_MINERU_WITH_IMAGE_API_KEY` (optional)
   - `TIANGONG_MINERU_WITH_IMAGE_TIMEOUT` (optional)
-  - `TIANGONG_MINERU_WITH_IMAGE_RETURN_TXT` (optional, default: `true`)
+  - `TIANGONG_MINERU_WITH_IMAGE_RETURN_TXT` (optional, default: `true`, endpoint detail: `/mineru_with_images`)
 
 ## Execution Layers
-1. Wrapper layer
-   - `scripts/run-process-automated-builder.sh`
-   - Normalizes flow input (`--flow-file`, `--flow-json`, `--flow-stdin`).
-   - Dispatches to `langgraph.py workflow` or `langgraph` mode.
-2. Orchestration layer
+1. Node wrapper -> CLI handoff layer (canonical)
+   - `node scripts/run-process-automated-builder.mjs auto-build`
+   - `node scripts/run-process-automated-builder.mjs resume-build`
+   - `node scripts/run-process-automated-builder.mjs publish-build`
+   - `node scripts/run-process-automated-builder.mjs batch-build`
+2. Direct CLI layer
+   - `tiangong process auto-build`
+   - `tiangong process resume-build`
+   - `tiangong process publish-build`
+   - `tiangong process batch-build`
+3. Legacy wrapper/orchestration layer (transitional only)
+   - `node scripts/run-process-automated-builder.mjs legacy ...`
+4. Legacy orchestration layer (transitional only)
    - `scripts/origin/process_from_flow_langgraph.py workflow`
-   - Stages: references -> usability -> SI download -> MinerU -> usage tagging -> resume main pipeline.
-3. Core graph layer
+   - Stages: references -> usability -> SI download -> TianGong unstructured service parsing -> usage tagging -> resume main pipeline.
+5. Core graph layer
    - `scripts/origin/process_from_flow_langgraph.py`
    - Invokes `tiangong_lca_spec.process_from_flow.ProcessFromFlowService`.
 
@@ -87,10 +101,10 @@
 - Manual fallback: only unresolved items after automatic repair are marked in `cache/method_policy_autofix_report.json` under `manual_required`.
 
 ## Control Flow
-1. New run: pass flow input, generate run_id, execute full chain.
-2. Debug run: use `--stop-after <stage>`, inspect state/logs, then resume.
-3. Resume run: use `--mode langgraph --resume --run-id <id>`; flow path is read from cached state when omitted.
-4. Publish run: use `--publish-only [--commit]` (default sequence: `flow-auto-build -> process-update -> flow publish -> process publish -> source publish`).
+1. Canonical new run: use `node scripts/run-process-automated-builder.mjs auto-build ...`.
+2. Canonical resume/publish: use `node scripts/run-process-automated-builder.mjs resume-build ...` or `publish-build ...`.
+3. Canonical batch: use `node scripts/run-process-automated-builder.mjs batch-build ...`.
+4. Legacy debug/resume/publish: use `node scripts/run-process-automated-builder.mjs legacy ...` only when a stage is not yet migrated.
 
 ## Preflight Chain Continuity Gate (P0)
 - Added between `enrich_exchange_amounts` and `match_flows`.

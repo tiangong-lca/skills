@@ -6,7 +6,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 SKILL_DIR="$(cd -- "${SCRIPT_DIR}/.." >/dev/null 2>&1 && pwd)"
-RUNNER="${SCRIPT_DIR}/run-process-automated-builder.sh"
 
 FLOW_DIR=""
 OUT_DIR=""

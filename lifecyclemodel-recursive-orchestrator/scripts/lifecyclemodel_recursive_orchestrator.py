@@ -20,7 +20,7 @@ REQUEST_SCHEMA_PATH = SKILL_DIR / "assets" / "request.schema.json"
 GRAPH_SCHEMA_PATH = SKILL_DIR / "assets" / "graph-manifest.schema.json"
 LINEAGE_SCHEMA_PATH = SKILL_DIR / "assets" / "lineage-manifest.schema.json"
 
-PROCESS_BUILDER_WRAPPER = REPO_ROOT / "process-automated-builder" / "scripts" / "run-process-automated-builder.sh"
+PROCESS_BUILDER_WRAPPER = REPO_ROOT / "process-automated-builder" / "scripts" / "run-process-automated-builder.mjs"
 LIFECYCLEMODEL_BUILDER_WRAPPER = REPO_ROOT / "lifecyclemodel-automated-builder" / "scripts" / "run-lifecyclemodel-automated-builder.sh"
 PROJECTOR_WRAPPER = REPO_ROOT / "lifecyclemodel-resulting-process-builder" / "scripts" / "run-lifecyclemodel-resulting-process-builder.mjs"
 
@@ -954,7 +954,13 @@ def require_file(path: Path, description: str) -> None:
 def build_process_builder_command(invocation: dict[str, Any], plan: dict[str, Any]) -> tuple[list[str], Path, dict[str, Any]]:
     require_file(PROCESS_BUILDER_WRAPPER, "process builder wrapper")
     config = invocation["config"]
-    command = [str(PROCESS_BUILDER_WRAPPER), "--mode", first_non_empty(config.get("mode"), "workflow") or "workflow"]
+    command = [
+        "node",
+        str(PROCESS_BUILDER_WRAPPER),
+        "legacy",
+        "--mode",
+        first_non_empty(config.get("mode"), "workflow") or "workflow",
+    ]
     flow_file = config.get("flow_file")
     flow_json = config.get("flow_json")
     if flow_file:
