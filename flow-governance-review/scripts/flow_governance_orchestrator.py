@@ -179,78 +179,35 @@ def main() -> None:
 
     if args.processes_file:
         processes_file = Path(args.processes_file).resolve()
-        scan_dir = ensure_dir(out_dir / "scan")
-        scan_cmd = [
-            sys.executable,
-            str(SCRIPT_DIR / "process_flow_ref_scan.py"),
+        regen_product_cmd = [
+            "node",
+            str(SCRIPT_DIR / "run-flow-regen-product.mjs"),
             "--processes-file",
             str(processes_file),
-            "--scope-flow-files",
-            *[str(path) for path in scope_flow_files],
             "--out-dir",
-            str(scan_dir),
-        ]
-        if effective_alias_map:
-            scan_cmd += ["--alias-map", str(effective_alias_map)]
-        _run_step("scan_process_flow_refs", scan_cmd, scan_dir, manifest)
-
-        repair_dir = ensure_dir(out_dir / "repair")
-        repair_cmd = [
-            sys.executable,
-            str(SCRIPT_DIR / "process_flow_repair.py"),
-            "--processes-file",
-            str(processes_file),
-            "--scope-flow-files",
-            *[str(path) for path in scope_flow_files],
-            "--scan-findings",
-            str(scan_dir / "scan-findings.json"),
+            str(out_dir),
             "--auto-patch-policy",
             args.auto_patch_policy,
-            "--out-dir",
-            str(repair_dir),
-        ]
-        if effective_alias_map:
-            repair_cmd += ["--alias-map", str(effective_alias_map)]
-        _run_step("plan_process_flow_repairs", repair_cmd, repair_dir, manifest)
-
-        repair_apply_dir = ensure_dir(out_dir / "repair-apply")
-        repair_apply_cmd = [
-            sys.executable,
-            str(SCRIPT_DIR / "process_flow_repair.py"),
-            "--apply",
-            "--processes-file",
-            str(processes_file),
-            "--scope-flow-files",
-            *[str(path) for path in scope_flow_files],
-            "--scan-findings",
-            str(scan_dir / "scan-findings.json"),
-            "--auto-patch-policy",
-            args.auto_patch_policy,
-            "--out-dir",
-            str(repair_apply_dir),
-        ]
-        if args.process_pool_file:
-            repair_apply_cmd += ["--process-pool-file", str(Path(args.process_pool_file).resolve())]
-        if effective_alias_map:
-            repair_apply_cmd += ["--alias-map", str(effective_alias_map)]
-        _run_step("apply_process_flow_repairs", repair_apply_cmd, repair_apply_dir, manifest)
-
-        validate_dir = ensure_dir(out_dir / "validate")
-        validate_cmd = [
-            sys.executable,
-            str(SCRIPT_DIR / "process_patch_validate.py"),
-            "--original-processes-file",
-            str(processes_file),
-            "--patched-processes-file",
-            str(repair_apply_dir / "patched-processes.json"),
-            "--scope-flow-files",
-            *[str(path) for path in scope_flow_files],
             "--tidas-mode",
             args.tidas_mode,
-            "--out-dir",
-            str(validate_dir),
+            "--apply",
         ]
-        _run_step("validate_processes", validate_cmd, validate_dir, manifest)
+        for scope_flow_file in scope_flow_files:
+            regen_product_cmd += ["--scope-flow-file", str(scope_flow_file)]
+        if args.process_pool_file:
+            regen_product_cmd += ["--process-pool-file", str(Path(args.process_pool_file).resolve())]
+        if effective_alias_map:
+            regen_product_cmd += ["--alias-map", str(effective_alias_map)]
+        _run_step("regen_product", regen_product_cmd, out_dir, manifest)
+
+        scan_dir = out_dir / "scan"
+        repair_dir = out_dir / "repair"
+        repair_apply_dir = out_dir / "repair-apply"
+        validate_dir = out_dir / "validate"
+        _record_regen_product_step(manifest, "scan_process_flow_refs", scan_dir)
+        _record_regen_product_step(manifest, "plan_process_flow_repairs", repair_dir)
+        _record_regen_product_step(manifest, "apply_process_flow_repairs", repair_apply_dir)
+        _record_regen_product_step(manifest, "validate_processes", validate_dir)
 
         manual_queue_path = repair_dir / "manual-review-queue.jsonl"
         if _count_rows(manual_queue_path) > 0:
@@ -276,6 +233,7 @@ def main() -> None:
                 "skipped because repair/manual-review-queue.jsonl is empty.",
             )
     else:
+        _record_skipped_step(manifest, "regen_product", "skipped because --processes-file was not provided.")
         for step_name in (
             "scan_process_flow_refs",
             "plan_process_flow_repairs",
@@ -398,6 +356,17 @@ def _record_skipped_step(manifest: dict[str, Any], step_name: str, reason: str) 
 
 def _record_external_input_step(manifest: dict[str, Any], step_name: str, payload: dict[str, Any]) -> None:
     manifest.setdefault("steps", []).append({"step": step_name, **payload})
+
+
+def _record_regen_product_step(manifest: dict[str, Any], step_name: str, out_dir: Path) -> None:
+    manifest.setdefault("steps", []).append(
+        {
+            "step": step_name,
+            "status": "completed_via_regen_product",
+            "source_step": "regen_product",
+            "out_dir": str(out_dir),
+        }
+    )
 
 
 def _count_rows(path: Path) -> int:

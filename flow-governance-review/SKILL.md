@@ -145,9 +145,11 @@ Use `run-governance` for the standard local governance path:
 1. review the local flow snapshot
 2. build an explicit dedup snapshot and canonical evidence
 3. build an alias map when old/new scopes are available
-4. scan and deterministically repair process references
-5. validate repaired processes
+4. run the consolidated CLI-backed `regen-product` slice when process snapshots are provided
+5. inspect the resulting repaired process and validation outputs
 6. export residual OpenClaw review packs
+
+On the standard `run-governance` path, the process-side repair chain now prefers the consolidated CLI-backed `regen-product` wrapper instead of directly stitching together the lower-level Python scan/repair/apply/validate helpers.
 
 The dedup stage is conservative: same-UUID version lineage is not treated as semantic dedup and is not auto-merged here. Cross-UUID high-similarity pairs are exported for OpenClaw semantic review instead of being merged by string similarity alone.
 

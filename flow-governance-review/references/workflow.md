@@ -123,18 +123,16 @@ Use this when you want one standard local governance run instead of composing su
 2. `flow-dedup-candidates`
 3. `export-openclaw-dedup-review-pack` when semantic duplicate pairs remain
 4. `build-flow-alias-map` when old/new scopes are provided
-5. `scan-process-flow-refs` when `--processes-file` is provided
-6. `plan-process-flow-repairs`
-7. `apply-process-flow-repairs`
-8. `validate-processes`
-9. `export-openclaw-ref-review-pack` when residual ref decisions remain
-10. `export-openclaw-text-review-pack` for the target flow scope
-11. `export-openclaw-classification-review-pack` for flows with classification or `typeOfDataSet` findings
+5. `regen-product --apply` when `--processes-file` is provided
+6. `export-openclaw-ref-review-pack` when residual ref decisions remain
+7. `export-openclaw-text-review-pack` for the target flow scope
+8. `export-openclaw-classification-review-pack` for flows with classification or `typeOfDataSet` findings
 
 Important behavior:
 
 - unless `--enable-review-llm` is passed, the orchestrator drives `review-flows` in rule-only mode
-- if `--process-pool-file` is provided, the orchestrator passes it through to deterministic process-repair apply so `repair-apply/repair-summary.json` records `process_pool_sync`
+- if `--process-pool-file` is provided, the orchestrator passes it through to `regen-product --apply` so `repair-apply/repair-summary.json` records `process_pool_sync`
+- the orchestrator still preserves the same staged `scan/`, `repair/`, `repair-apply/`, and `validate/` artifact layout after switching the standard process repair chain onto the CLI-backed wrapper
 - `governance-run-manifest.json` is the stable machine-readable run ledger and includes the actual subprocess commands, per-step status, and key outputs
 
 Primary outputs:
