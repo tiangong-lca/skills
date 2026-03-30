@@ -22,6 +22,7 @@ Do not use this skill for:
 - `review-flows`
 - `remediate-flows`
 - `publish-version`
+- `regen-product`
 - `flow-dedup-candidates`
 - `build-flow-alias-map`
 - `scan-process-flow-refs`
@@ -107,6 +108,19 @@ That means:
 - the wrapper keeps the historical `mcp-sync` artifact directory and legacy file names so downstream follow-up steps do not need a new contract
 - remote writes now use `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`, not skill-local MCP helpers or Supabase login env
 
+`regen-product` is now the canonical local product-side repair wrapper over the unified CLI:
+
+```bash
+tiangong flow regen-product --processes-file <file> --scope-flow-file <file> --out-dir <dir> --apply
+```
+
+That means:
+
+- the canonical runtime is `Node wrapper -> tiangong CLI`
+- the wrapper stays local-first and does not add skill-local REST or MCP transport
+- the wrapper can default to the skill's retained `process_pool.jsonl`, resolved flow pool, and `remediation/regen-product/` artifact root when explicit paths are omitted
+- pass `--apply` when you want patched-process and validation artifacts in addition to scan/repair planning
+
 For OpenClaw, prefer the unified entrypoint:
 
 ```bash
@@ -155,13 +169,18 @@ Canonical CLI-backed flow-governance entrypoints:
 - `scripts/run-remediate-flows.mjs`
 - `scripts/run-flow-governance-review.sh publish-version`
 - `scripts/run-publish-version.mjs`
+- `scripts/run-flow-governance-review.sh regen-product`
+- `scripts/run-flow-regen-product.mjs`
 
 Remaining direct follow-up helpers:
 
 - `scripts/mcp_sync_remediated_flows_batch.py`
 - `scripts/remediate_remote_validation_failed_flows_round2.py`
+- `scripts/process_flow_ref_scan.py`
+- `scripts/process_flow_repair.py`
+- `scripts/process_patch_validate.py`
 
-The round1 remediation and first publish-version path are now CLI-backed. The remaining follow-up helper above still depends on the `process-automated-builder` runtime, `tiangong_lca_spec`, and `tidas_sdk`. `mcp_sync_remediated_flows_batch.py` is now retained only as a deprecated legacy helper, not the canonical entrypoint.
+The round1 remediation, first publish-version path, and consolidated local product-regeneration wrapper are now CLI-backed. The remaining direct helpers above still depend on the `process-automated-builder` runtime, `tiangong_lca_spec`, and `tidas_sdk`. `mcp_sync_remediated_flows_batch.py` is now retained only as a deprecated legacy helper, not the canonical entrypoint.
 
 For the full command matrix, auxiliary naming-completion utilities, and recommended sequencing, read `references/workflow.md`.
 

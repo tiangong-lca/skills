@@ -29,7 +29,7 @@ This skill intentionally keeps a narrow boundary:
 - The shell wrapper resolves Python in this order: `FLOW_GOVERNANCE_PYTHON_BIN`, `PAB_PYTHON_BIN`, `process-automated-builder/.venv/bin/python`, then `python3`.
 - Main commands are local-first. Live fetches or remote writes are opt-in and depend on env described in `references/env.md`.
 - Some direct helper scripts import `tiangong_lca_spec` or `tidas_sdk`; run them with the `process-automated-builder` venv when in doubt.
-- Not every script in this skill is a shell subcommand. `get-flow`, `list-flows`, `review-flows`, `remediate-flows`, and `publish-version` are CLI-backed wrappers; auxiliary naming-completion and later remediation workflows remain direct Python entrypoints under `flow-governance-review/scripts/`.
+- Not every script in this skill is a shell subcommand. `get-flow`, `list-flows`, `review-flows`, `remediate-flows`, `publish-version`, and `regen-product` are CLI-backed wrappers; auxiliary naming-completion and later remediation workflows remain direct Python entrypoints under `flow-governance-review/scripts/`.
 - Do not invoke deleted compatibility wrappers under `process-automated-builder/scripts/`. The supported helper locations are the canonical scripts under `flow-governance-review/scripts/`.
 
 ## Artifact Layout
@@ -234,6 +234,47 @@ Primary outputs:
 - `flows_tidas_sdk_plus_classification_mcp_success_list.json`
 - `flows_tidas_sdk_plus_classification_mcp_sync_report.json`
 
+### `regen-product`
+
+Run the unified CLI-backed local product-side repair chain from this skill. The compatibility path is:
+
+```bash
+scripts/run-flow-governance-review.sh regen-product ...
+```
+
+which now resolves to:
+
+```bash
+node scripts/run-flow-regen-product.mjs ...
+```
+
+and finally:
+
+```bash
+tiangong flow regen-product ...
+```
+
+Defaults:
+
+- processes file: `assets/artifacts/flow-processing/datasets/process_pool.jsonl`
+- scope flow file: `assets/artifacts/flow-processing/datasets/flows_tidas_sdk_plus_classification_round2_sdk018_all_final_resolved.jsonl`
+- output directory: `assets/artifacts/flow-processing/remediation/regen-product/`
+
+Compatibility notes:
+
+- `--scope-flow-files` and `--catalog-flow-files` are accepted as wrapper-only compatibility aliases and are forwarded as repeated CLI `--scope-flow-file` / `--catalog-flow-file` flags
+- pass `--apply` when you want patched-process and validation artifacts in addition to scan/repair planning
+- the wrapper stays local-first and does not add any skill-local REST or MCP transport
+
+Primary outputs:
+
+- `scan/scan-summary.json`
+- `repair/repair-summary.json`
+- `repair/manual-review-queue.jsonl`
+- optional `repair-apply/patched-processes.json` when `--apply` is passed
+- optional `validate/validation-report.json` when `--apply` is passed
+- `flow-regen-product-report.json`
+
 When `--rows-file` is used, the engine materializes `review-input/flows/*.json` plus `review-input/materialization-summary.json` so downstream evidence is tied to an explicit local snapshot.
 
 Compatibility notes:
@@ -338,6 +379,8 @@ Primary outputs:
 
 Classify every process exchange reference against the current flow scope and optional alias map.
 
+Prefer `regen-product` when you want one canonical CLI-backed entrypoint for the full local product regeneration slice. Keep `scan-process-flow-refs` only for lower-level helper use.
+
 Primary outputs:
 
 - `emergy-excluded-processes.json`
@@ -348,6 +391,8 @@ Primary outputs:
 ### `plan-process-flow-repairs`
 
 Generate a deterministic repair plan from process rows, scope flows, alias map, and optional scan findings.
+
+Prefer `regen-product` when you want one canonical CLI-backed entrypoint for scan plus repair planning. Keep `plan-process-flow-repairs` only for lower-level helper use.
 
 The auto-patch boundary is explicit:
 
@@ -366,6 +411,8 @@ Primary outputs:
 
 Apply only the deterministic subset of the repair plan and emit patch evidence per process.
 
+Prefer `regen-product --apply` when you want one canonical CLI-backed entrypoint for scan, repair apply, and local validation. Keep `apply-process-flow-repairs` only for lower-level helper use.
+
 When `--process-pool-file` is provided, the patched process rows are also merged back into that pool and `repair-summary.json` records `process_pool_sync`.
 
 Primary outputs:
@@ -383,6 +430,8 @@ Primary outputs:
 ### `validate-processes`
 
 Verify that only allowed flow-reference paths changed, that quantitative references stayed stable, and optionally run TIDAS validation.
+
+Prefer `regen-product --apply` when you want the validation step attached to the same canonical CLI-backed repair run. Keep `validate-processes` only for lower-level helper use.
 
 Primary outputs:
 
@@ -690,9 +739,10 @@ Deprecated legacy helper:
 
 1. Run `scripts/run-flow-governance-review.sh remediate-flows` or `node scripts/run-remediate-flows.mjs` on the invalid flow pool.
 2. Publish the ready subset with `scripts/run-flow-governance-review.sh publish-version` or `node scripts/run-publish-version.mjs`.
-3. If remote validation failures remain, run `remediate_remote_validation_failed_flows_round2.py`.
-4. Re-run `publish-version` only on the round-2 ready subset.
-5. Use the residual manual queue prompts only for the rows that still fail after the deterministic passes.
+3. When the accepted flow changes require process-side reference regeneration, run `scripts/run-flow-governance-review.sh regen-product --apply` or `node scripts/run-flow-regen-product.mjs --apply`.
+4. If remote validation failures remain, run `remediate_remote_validation_failed_flows_round2.py`.
+5. Re-run `publish-version` only on the round-2 ready subset.
+6. Use the residual manual queue prompts only for the rows that still fail after the deterministic passes.
 
 ### Publish after review
 

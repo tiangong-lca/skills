@@ -6,7 +6,7 @@ Prefer local JSON or JSONL inputs. In local mode, no remote credentials are requ
 
 `--process-pool-file` is also local-first: it is just a JSON or JSONL working pool of exact-version process rows and does not require any remote credential by itself.
 
-`get-flow`, `list-flows`, `review-flows`, `remediate-flows`, and `publish-version` now run through unified CLI wrappers. The shared local wrapper/runtime input is:
+`get-flow`, `list-flows`, `review-flows`, `remediate-flows`, `publish-version`, and `regen-product` now run through unified CLI wrappers. The shared local wrapper/runtime input is:
 
 - `TIANGONG_LCA_CLI_DIR`: optional override for the local `tiangong-lca-cli` checkout
 
@@ -33,6 +33,13 @@ Additional `publish-version` notes:
 
 - the canonical `publish-version` wrapper now calls `tiangong flow publish-version`
 - the wrapper preserves the historical `mcp-sync` artifact directory and legacy file names, but the runtime is direct REST through the unified CLI
+
+Additional `regen-product` notes:
+
+- the canonical `regen-product` wrapper now calls `tiangong flow regen-product`
+- the wrapper stays local-first and does not require any remote env
+- the wrapper can default to the retained local `process_pool.jsonl`, resolved flow pool, and `remediation/regen-product/` artifact root when explicit paths are omitted
+- pass `--apply` when you want patched-process and validation artifacts in addition to scan/repair planning
 
 ## Optional Live Inputs
 
@@ -83,3 +90,4 @@ Notes:
 - These scripts read the current process environment only; they do not load `.env` files themselves. If you run them through OpenClaw, make sure the runner has already sourced the intended env file, typically `~/.openclaw/.env` unless you explicitly want another env source.
 - These commands do not require `OPENAI_API_KEY`. `review-flows` uses `TIANGONG_LCA_LLM_*` only when `--enable-llm` is explicitly requested; otherwise it stays rule-only. `remediate-flows` is deterministic and does not use any LLM env.
 - `publish-version` does remote writes through the CLI-owned REST path and does not require any `OPENAI_*`, `SUPABASE_*`, or MCP env.
+- `regen-product` is deterministic local execution only; it does not require `OPENAI_*`, `TIANGONG_LCA_LLM_*`, `SUPABASE_*`, or MCP env.

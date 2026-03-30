@@ -28,6 +28,7 @@ Commands:
   review-flows
   remediate-flows
   publish-version
+  regen-product
   flow-dedup-candidates
   build-flow-alias-map
   scan-process-flow-refs
@@ -78,6 +79,9 @@ case "${command}" in
     ;;
   publish-version)
     exec node "${SCRIPT_DIR}/run-publish-version.mjs" "$@"
+    ;;
+  regen-product)
+    exec node "${SCRIPT_DIR}/run-flow-regen-product.mjs" "$@"
     ;;
   flow-dedup-candidates)
     exec "${PYTHON_BIN}" "${SCRIPT_DIR}/flow_dedup_candidates.py" "$@"
