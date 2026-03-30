@@ -15,9 +15,9 @@ Build a lifecycle model into one or more resulting process datasets whose exchan
 
 ## Active execution path
 
-- `scripts/run-lifecyclemodel-resulting-process-builder.sh build` delegates to `tiangong lifecyclemodel build-resulting-process`
-- `scripts/run-lifecyclemodel-resulting-process-builder.sh publish` delegates to `tiangong lifecyclemodel publish-resulting-process`
-- the wrapper still accepts `--request` and `--model-file` for compatibility, but the canonical build contract underneath is a CLI request file passed through `--input`
+- `node scripts/run-lifecyclemodel-resulting-process-builder.mjs build` delegates to `tiangong lifecyclemodel build-resulting-process`
+- `node scripts/run-lifecyclemodel-resulting-process-builder.mjs publish` delegates to `tiangong lifecyclemodel publish-resulting-process`
+- the Node wrapper still accepts `--request` and `--model-file` for compatibility, but the canonical build contract underneath is a CLI request file passed through `--input`
 
 ## Input contract
 

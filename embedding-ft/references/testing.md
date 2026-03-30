@@ -2,17 +2,26 @@
 
 ## Preferred smoke test
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-embedding-ft.sh
+TIANGONG_LCA_API_BASE_URL="https://example.supabase.co/functions/v1" \
+TIANGONG_LCA_API_KEY="<your-api-key>" \
+node scripts/run-embedding-ft.mjs
 ```
 
 ## Dry run (request preview)
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-embedding-ft.sh --dry-run
+TIANGONG_LCA_API_BASE_URL="https://example.supabase.co/functions/v1" \
+TIANGONG_LCA_API_KEY="<your-api-key>" \
+node scripts/run-embedding-ft.mjs --dry-run
 ```
 
 ## Direct CLI equivalent
 ```bash
-node "${TIANGONG_LCA_CLI_DIR:-../tiangong-lca-cli}/bin/tiangong.js" admin embedding-run --input ./assets/example-jobs.json --api-key "$TIANGONG_LCA_API_KEY" --dry-run
+node "${TIANGONG_LCA_CLI_DIR:-../tiangong-lca-cli}/bin/tiangong.js" \
+  admin embedding-run \
+  --input ./assets/example-jobs.json \
+  --base-url "https://example.supabase.co/functions/v1" \
+  --api-key "$TIANGONG_LCA_API_KEY" \
+  --dry-run
 ```
 
 ## Checklist

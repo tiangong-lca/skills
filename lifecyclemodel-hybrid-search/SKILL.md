@@ -7,17 +7,31 @@ description: Execute and troubleshoot Supabase edge function `lifecyclemodel_hyb
 
 ## Run Workflow
 1. Ensure `tiangong-lca-cli` is available locally, or set `TIANGONG_LCA_CLI_DIR`.
-2. Set `TIANGONG_LCA_API_KEY`, or pass the standard CLI flag `--api-key`.
-3. Execute `scripts/run-lifecyclemodel-hybrid-search.sh` with standard `tiangong search lifecyclemodel` flags.
+2. Set `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`, or pass `--base-url` and `--api-key`.
+3. Execute `node scripts/run-lifecyclemodel-hybrid-search.mjs` with standard `tiangong search lifecyclemodel` flags.
 4. The wrapper delegates to `tiangong search lifecyclemodel`.
 5. Confirm response shape, then debug with focused references.
 
 ## Commands
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-lifecyclemodel-hybrid-search.sh --dry-run
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-lifecyclemodel-hybrid-search.sh
-scripts/run-lifecyclemodel-hybrid-search.sh --input ./assets/example-request.json --api-key "$TIANGONG_LCA_API_KEY"
-TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli scripts/run-lifecyclemodel-hybrid-search.sh --dry-run --api-key "$TIANGONG_LCA_API_KEY"
+TIANGONG_LCA_API_BASE_URL="https://example.supabase.co/functions/v1" \
+TIANGONG_LCA_API_KEY="<your-api-key>" \
+node scripts/run-lifecyclemodel-hybrid-search.mjs --dry-run
+
+TIANGONG_LCA_API_BASE_URL="https://example.supabase.co/functions/v1" \
+TIANGONG_LCA_API_KEY="<your-api-key>" \
+node scripts/run-lifecyclemodel-hybrid-search.mjs
+
+node scripts/run-lifecyclemodel-hybrid-search.mjs \
+  --input ./assets/example-request.json \
+  --base-url "https://example.supabase.co/functions/v1" \
+  --api-key "$TIANGONG_LCA_API_KEY"
+
+TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli \
+node scripts/run-lifecyclemodel-hybrid-search.mjs \
+  --dry-run \
+  --base-url "https://example.supabase.co/functions/v1" \
+  --api-key "$TIANGONG_LCA_API_KEY"
 ```
 
 ## Fast Triage

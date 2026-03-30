@@ -22,7 +22,7 @@ LINEAGE_SCHEMA_PATH = SKILL_DIR / "assets" / "lineage-manifest.schema.json"
 
 PROCESS_BUILDER_WRAPPER = REPO_ROOT / "process-automated-builder" / "scripts" / "run-process-automated-builder.sh"
 LIFECYCLEMODEL_BUILDER_WRAPPER = REPO_ROOT / "lifecyclemodel-automated-builder" / "scripts" / "run-lifecyclemodel-automated-builder.sh"
-PROJECTOR_WRAPPER = REPO_ROOT / "lifecyclemodel-resulting-process-builder" / "scripts" / "run-lifecyclemodel-resulting-process-builder.sh"
+PROJECTOR_WRAPPER = REPO_ROOT / "lifecyclemodel-resulting-process-builder" / "scripts" / "run-lifecyclemodel-resulting-process-builder.mjs"
 
 
 def now_iso() -> str:
@@ -1082,7 +1082,7 @@ def build_projector_command(
     require_file(PROJECTOR_WRAPPER, "resulting process builder wrapper")
     config = invocation["config"]
     artifact_dir = Path(invocation["artifact_dir"]).resolve()
-    command = [str(PROJECTOR_WRAPPER), first_non_empty(config.get("command"), "build") or "build"]
+    command = ["node", str(PROJECTOR_WRAPPER), first_non_empty(config.get("command"), "build") or "build"]
     request = first_non_empty(config.get("request"))
     if request:
         require_file(Path(request), "projector request")

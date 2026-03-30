@@ -7,17 +7,31 @@ description: Execute and troubleshoot Supabase edge function `embedding_ft` that
 
 ## Run Workflow
 1. Ensure `tiangong-lca-cli` is available locally, or set `TIANGONG_LCA_CLI_DIR`.
-2. Set `TIANGONG_LCA_API_KEY`, or pass the standard CLI flag `--api-key`.
-3. Execute `scripts/run-embedding-ft.sh` with standard `tiangong admin embedding-run` flags.
+2. Set `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`, or pass `--base-url` and `--api-key`.
+3. Execute `node scripts/run-embedding-ft.mjs` with standard `tiangong admin embedding-run` flags.
 4. The wrapper delegates to `tiangong admin embedding-run`.
 5. Inspect `completedJobs` and `failedJobs`, then triage via references.
 
 ## Commands
 ```bash
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-embedding-ft.sh --dry-run
-TIANGONG_LCA_API_KEY="<your-api-key>" scripts/run-embedding-ft.sh
-scripts/run-embedding-ft.sh --input ./assets/example-jobs.json --api-key "$TIANGONG_LCA_API_KEY"
-TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli scripts/run-embedding-ft.sh --dry-run --api-key "$TIANGONG_LCA_API_KEY"
+TIANGONG_LCA_API_BASE_URL="https://example.supabase.co/functions/v1" \
+TIANGONG_LCA_API_KEY="<your-api-key>" \
+node scripts/run-embedding-ft.mjs --dry-run
+
+TIANGONG_LCA_API_BASE_URL="https://example.supabase.co/functions/v1" \
+TIANGONG_LCA_API_KEY="<your-api-key>" \
+node scripts/run-embedding-ft.mjs
+
+node scripts/run-embedding-ft.mjs \
+  --input ./assets/example-jobs.json \
+  --base-url "https://example.supabase.co/functions/v1" \
+  --api-key "$TIANGONG_LCA_API_KEY"
+
+TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli \
+node scripts/run-embedding-ft.mjs \
+  --dry-run \
+  --base-url "https://example.supabase.co/functions/v1" \
+  --api-key "$TIANGONG_LCA_API_KEY"
 ```
 
 ## Fast Triage

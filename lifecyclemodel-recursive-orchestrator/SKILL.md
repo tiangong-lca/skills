@@ -55,7 +55,7 @@ Use extra `nodes` only for additional dependencies or subsystems beyond the root
 
 - `process_builder` calls `process-automated-builder/scripts/run-process-automated-builder.sh`
 - `submodel_builder` calls `lifecyclemodel-automated-builder/scripts/run-lifecyclemodel-automated-builder.sh`
-- `projector` calls `lifecyclemodel-resulting-process-builder/scripts/run-lifecyclemodel-resulting-process-builder.sh`
+- `projector` calls `node lifecyclemodel-resulting-process-builder/scripts/run-lifecyclemodel-resulting-process-builder.mjs ...`
 
 The orchestrator does not reimplement those skills. It owns request normalization, node resolution, invocation ordering, and final manifests.
 
