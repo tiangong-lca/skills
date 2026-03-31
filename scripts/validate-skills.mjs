@@ -247,7 +247,7 @@ function assertSkillFrontmatter(skillDir) {
   }
 
   const text = readFileSync(skillFile, 'utf8');
-  const frontmatterMatch = text.match(/^---\n([\s\S]*?)\n---/u);
+  const frontmatterMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---/u);
   if (!frontmatterMatch) {
     fail(`SKILL.md in ${path.relative(repoRoot, skillDir)} must start with YAML frontmatter.`);
   }
