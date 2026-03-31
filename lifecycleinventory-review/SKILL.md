@@ -1,24 +1,23 @@
 ---
 name: lifecycleinventory-review
-description: "Review process-level lifecycle inventory outputs from local process_from_flow runs. Use when auditing process dataset batches under a run root; `lifecyclemodel` remains reserved."
+description: "Review process-level or lifecyclemodel-level lifecycle inventory outputs from local TianGong build runs. Use when auditing process_from_flow batches or lifecyclemodel build artifacts through the unified CLI."
 ---
 
 # lifecycleinventory-review
 
-当前只保留 process dataset review。
+当前保留 process 和 lifecyclemodel 两个 CLI-backed review profile。
 
 ## Profiles
-- `process`（默认）：当前可用，通过统一 CLI 执行 process_from_flow 产物复审。
-- `lifecyclemodel`：预留（not implemented yet）。
+- `process`（默认）：通过统一 CLI 执行 process_from_flow 产物复审。
+- `lifecyclemodel`：通过统一 CLI 执行 lifecyclemodel build run 复审。
 
 ## 统一入口
 使用 `node scripts/run-review.mjs`，通过 `--profile` 选择子能力。
 
 运行模型：
 
-- canonical path 为 `skill -> Node .mjs wrapper -> tiangong review process`
-- process profile 不再走 skill 私有 Python/OpenAI 入口
-- `lifecyclemodel` profile 继续明确保留为未实现
+- canonical path 为 `skill -> Node .mjs wrapper -> tiangong review process | review lifecyclemodel`
+- 两个 profile 都不再走 skill 私有 Python / OpenAI 入口
 - 没有 shell 兼容壳
 
 ### 默认 profile
@@ -35,6 +34,18 @@ description: "Review process-level lifecycle inventory outputs from local proces
   - `review_summary_v2_1.json`
   - `process-review-report.json`
 
+## lifecyclemodel profile
+使用 `tiangong review lifecyclemodel` 执行 lifecyclemodel 维度复审：
+- 输入：`--run-dir --out-dir [--start-ts] [--end-ts] [--logic-version]`
+- 输出：
+  - `model_summaries.jsonl`
+  - `findings.jsonl`
+  - `lifecyclemodel_review_summary.json`
+  - `lifecyclemodel_review_zh.md`
+  - `lifecyclemodel_review_en.md`
+  - `lifecyclemodel_review_timing.md`
+  - `lifecyclemodel_review_report.json`
+
 ## 运行示例
 ```bash
 node scripts/run-review.mjs \
@@ -44,9 +55,13 @@ node scripts/run-review.mjs \
   --out-dir /home/huimin/.openclaw/workspace/review \
   --start-ts 2026-02-22T16:01:51+00:00 \
   --end-ts 2026-02-22T16:21:40+00:00
+
+node scripts/run-review.mjs \
+  --profile lifecyclemodel \
+  --run-dir /path/to/artifacts/lifecyclemodel_auto_build/<run_id> \
+  --out-dir /home/huimin/.openclaw/workspace/lifecyclemodel-review
 ```
 
 ## 后续扩展
 - flow review 已完全移出本 skill，由 `flow-governance-review` 单独承担。
-- `profiles/lifecyclemodel`：沉淀 lifecycle model 维度复审规则与 CLI 子命令。
-当前 `lifecyclemodel` profile 调用会返回 “not implemented yet”。
+- `profiles/lifecyclemodel`：沉淀 lifecycle model 维度复审规则与 CLI 输出约定。

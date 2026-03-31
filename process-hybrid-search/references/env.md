@@ -8,7 +8,7 @@
 
 Wrapper behavior:
 
-- the shell wrapper only resolves the CLI path and injects the example `--input` file when none is provided
+- the Node `.mjs` wrapper only resolves the CLI path and injects the example `--input` file when none is provided
 - all other flags are the standard `tiangong search process` flags
 - internally it forwards to `tiangong search process`
 

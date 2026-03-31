@@ -26,11 +26,12 @@ Wrapper options:
 
 Profiles:
   process                  Delegate to tiangong review process
-  lifecyclemodel           Reserved; not implemented yet
+  lifecyclemodel           Delegate to tiangong review lifecyclemodel
 
 Examples:
   node scripts/run-review.mjs --profile process --run-root /path/to/artifacts/process_from_flow/<run_id> --run-id <run_id> --out-dir /abs/path/review
   node scripts/run-review.mjs --profile process --run-root /path/to/artifacts/process_from_flow/<run_id> --run-id <run_id> --out-dir /abs/path/review --enable-llm
+  node scripts/run-review.mjs --profile lifecyclemodel --run-dir /path/to/artifacts/lifecyclemodel_auto_build/<run_id> --out-dir /abs/path/lifecyclemodel-review
 `.trim();
 }
 
@@ -108,10 +109,20 @@ function normalizeArgs(rawArgs) {
 function main() {
   const { cliDir, profile, args } = normalizeArgs(process.argv.slice(2));
 
-  if (args.length === 0 || args.includes('-h') || args.includes('--help')) {
-    if (profile === 'process' && args.length > 0) {
+  if (args.length === 0) {
+    console.log(renderHelp());
+    process.exit(0);
+  }
+
+  if (args.includes('-h') || args.includes('--help')) {
+    if (profile === 'process') {
       const cliBin = resolveCliBin(cliDir);
       process.exit(runCommand(process.execPath, [cliBin, 'review', 'process', ...args]));
+    }
+
+    if (profile === 'lifecyclemodel') {
+      const cliBin = resolveCliBin(cliDir);
+      process.exit(runCommand(process.execPath, [cliBin, 'review', 'lifecyclemodel', ...args]));
     }
 
     console.log(renderHelp());
@@ -124,9 +135,8 @@ function main() {
   }
 
   if (profile === 'lifecyclemodel') {
-    fail(
-      "Profile 'lifecyclemodel' is not implemented yet. The canonical process path is `tiangong review process`.",
-    );
+    const cliBin = resolveCliBin(cliDir);
+    process.exit(runCommand(process.execPath, [cliBin, 'review', 'lifecyclemodel', ...args]));
   }
 
   fail(`Unknown profile: ${profile}`);

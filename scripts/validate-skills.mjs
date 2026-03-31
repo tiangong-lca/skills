@@ -1,0 +1,318 @@
+#!/usr/bin/env node
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(scriptDir, '..');
+const defaultCliDir = path.join(path.dirname(repoRoot), 'tiangong-lca-cli');
+
+const defaultSkillNames = [
+  'process-hybrid-search',
+  'flow-hybrid-search',
+  'lifecyclemodel-hybrid-search',
+  'embedding-ft',
+  'process-automated-builder',
+  'lifecyclemodel-automated-builder',
+  'lifecyclemodel-resulting-process-builder',
+  'lifecycleinventory-review',
+  'flow-governance-review',
+  'lifecyclemodel-recursive-orchestrator',
+  'lca-publish-executor',
+];
+
+const docGuards = [
+  {
+    file: 'process-hybrid-search/references/env.md',
+    pattern: /shell wrapper/iu,
+    message: 'Use Node `.mjs` wrapper wording in process-hybrid-search env docs.',
+  },
+  {
+    file: 'flow-hybrid-search/references/env.md',
+    pattern: /shell wrapper/iu,
+    message: 'Use Node `.mjs` wrapper wording in flow-hybrid-search env docs.',
+  },
+  {
+    file: 'lifecyclemodel-hybrid-search/references/env.md',
+    pattern: /shell wrapper/iu,
+    message: 'Use Node `.mjs` wrapper wording in lifecyclemodel-hybrid-search env docs.',
+  },
+  {
+    file: 'embedding-ft/references/env.md',
+    pattern: /shell wrapper/iu,
+    message: 'Use Node `.mjs` wrapper wording in embedding-ft env docs.',
+  },
+  {
+    file: 'lifecycleinventory-review/SKILL.md',
+    pattern: /not implemented yet/iu,
+    message: 'lifecycleinventory-review should not advertise lifecyclemodel as unimplemented.',
+  },
+  {
+    file: 'lifecycleinventory-review/scripts/run-review.mjs',
+    pattern: /not implemented yet/iu,
+    message: 'run-review.mjs should delegate lifecyclemodel review to the CLI.',
+  },
+  {
+    file: 'lifecycleinventory-review/profiles/lifecyclemodel/README.md',
+    pattern: /run_lifecyclemodel_review\.py/u,
+    message: 'lifecyclemodel profile docs should not reference a future Python review script.',
+  },
+  {
+    file: 'lifecycleinventory-review/profiles/lifecyclemodel/README.md',
+    pattern: /not implemented yet/iu,
+    message: 'lifecyclemodel profile docs should describe the implemented CLI path.',
+  },
+  {
+    file: 'AGENTS.md',
+    pattern: /quick_validate\.py/u,
+    message: 'AGENTS.md should point at node scripts/validate-skills.mjs instead of quick_validate.py.',
+  },
+];
+
+const targetedSmokeChecks = [
+  {
+    skill: 'lifecycleinventory-review',
+    script: 'lifecycleinventory-review/scripts/run-review.mjs',
+    args: ['--profile', 'lifecyclemodel', '--help'],
+    description: 'lifecyclemodel review profile help',
+  },
+];
+
+function fail(message) {
+  throw new Error(message);
+}
+
+function parseArgs(rawArgs) {
+  let cliDir = process.env.TIANGONG_LCA_CLI_DIR?.trim() || defaultCliDir;
+  const targets = [];
+
+  for (let index = 0; index < rawArgs.length; index += 1) {
+    const arg = rawArgs[index];
+
+    if (arg === '--cli-dir') {
+      if (index + 1 >= rawArgs.length) {
+        fail('--cli-dir requires a value.');
+      }
+      cliDir = rawArgs[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--cli-dir=')) {
+      cliDir = arg.slice('--cli-dir='.length);
+      continue;
+    }
+
+    if (arg === '-h' || arg === '--help') {
+      printHelp();
+      process.exit(0);
+    }
+
+    targets.push(arg);
+  }
+
+  return {
+    cliDir,
+    targets,
+  };
+}
+
+function printHelp() {
+  console.log(`Usage:
+  node scripts/validate-skills.mjs [--cli-dir <dir>] [skill-path ...]
+
+Examples:
+  node scripts/validate-skills.mjs
+  node scripts/validate-skills.mjs lifecycleinventory-review process-hybrid-search
+  node scripts/validate-skills.mjs --cli-dir ../tiangong-lca-cli lifecycleinventory-review
+
+What this validates:
+  - SKILL.md frontmatter presence
+  - agents/openai.yaml interface keys
+  - Node syntax for skill wrapper .mjs files
+  - wrapper --help smoke checks through the TianGong CLI
+  - targeted doc guards that prevent stale shell/Python migration wording
+`.trim());
+}
+
+function run(command, args, options = {}) {
+  const result = spawnSync(command, args, {
+    stdio: 'pipe',
+    encoding: 'utf8',
+    ...options,
+  });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  if (typeof result.status === 'number' && result.status !== 0) {
+    const stderr = result.stderr?.trim() || result.stdout?.trim() || `exit code ${result.status}`;
+    fail(`${command} ${args.join(' ')} failed: ${stderr}`);
+  }
+}
+
+function ensureCliBuild(cliDir) {
+  const cliBin = path.join(cliDir, 'bin', 'tiangong.js');
+  const cliDist = path.join(cliDir, 'dist', 'src', 'main.js');
+  if (!existsSync(cliBin)) {
+    fail(`Cannot find TianGong CLI at ${cliBin}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`);
+  }
+  if (!existsSync(cliDist)) {
+    fail(`TianGong CLI is missing built artifacts at ${cliDist}. Run npm run build in tiangong-lca-cli first.`);
+  }
+}
+
+function normalizeSkillTarget(target) {
+  const directPath = path.isAbsolute(target) ? target : path.join(repoRoot, target);
+  if (existsSync(directPath) && statSync(directPath).isDirectory()) {
+    return directPath;
+  }
+
+  const namedPath = path.join(repoRoot, target);
+  if (existsSync(namedPath) && statSync(namedPath).isDirectory()) {
+    return namedPath;
+  }
+
+  fail(`Skill path not found: ${target}`);
+}
+
+function collectWrapperScripts(skillDir) {
+  const scriptsDir = path.join(skillDir, 'scripts');
+  if (!existsSync(scriptsDir)) {
+    return [];
+  }
+
+  return readdirSync(scriptsDir)
+    .filter((entry) => entry.endsWith('.mjs'))
+    .sort()
+    .map((entry) => path.join(scriptsDir, entry));
+}
+
+function assertSkillFrontmatter(skillDir) {
+  const skillFile = path.join(skillDir, 'SKILL.md');
+  if (!existsSync(skillFile)) {
+    fail(`Missing SKILL.md in ${path.relative(repoRoot, skillDir)}`);
+  }
+
+  const text = readFileSync(skillFile, 'utf8');
+  const frontmatterMatch = text.match(/^---\n([\s\S]*?)\n---/u);
+  if (!frontmatterMatch) {
+    fail(`SKILL.md in ${path.relative(repoRoot, skillDir)} must start with YAML frontmatter.`);
+  }
+  if (!/^\s*name:\s*.+$/mu.test(frontmatterMatch[1])) {
+    fail(`SKILL.md in ${path.relative(repoRoot, skillDir)} is missing a frontmatter name.`);
+  }
+  if (!/^\s*description:\s*.+$/mu.test(frontmatterMatch[1])) {
+    fail(`SKILL.md in ${path.relative(repoRoot, skillDir)} is missing a frontmatter description.`);
+  }
+}
+
+function assertAgentMetadata(skillDir) {
+  const agentFile = path.join(skillDir, 'agents', 'openai.yaml');
+  if (!existsSync(agentFile)) {
+    fail(`Missing agents/openai.yaml in ${path.relative(repoRoot, skillDir)}`);
+  }
+
+  const text = readFileSync(agentFile, 'utf8');
+  for (const key of ['interface:', 'display_name:', 'short_description:', 'default_prompt:']) {
+    if (!text.includes(key)) {
+      fail(`${path.relative(repoRoot, agentFile)} is missing required key ${key}`);
+    }
+  }
+}
+
+function runNodeChecks(scriptFiles) {
+  scriptFiles.forEach((scriptFile) => {
+    run(process.execPath, ['--check', scriptFile], {
+      cwd: repoRoot,
+    });
+  });
+}
+
+function runHelpSmoke(scriptFiles, cliDir) {
+  scriptFiles.forEach((scriptFile) => {
+    run(process.execPath, [scriptFile, '--help'], {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        TIANGONG_LCA_CLI_DIR: cliDir,
+      },
+    });
+  });
+}
+
+function runTargetedSmokeChecks(skillDirs, cliDir) {
+  let count = 0;
+  const selectedSkills = new Set(skillDirs.map((skillDir) => path.basename(skillDir)));
+
+  targetedSmokeChecks.forEach((check) => {
+    if (!selectedSkills.has(check.skill)) {
+      return;
+    }
+
+    const scriptFile = path.join(repoRoot, check.script);
+    if (!existsSync(scriptFile)) {
+      fail(`Targeted smoke script is missing for ${check.description}: ${check.script}`);
+    }
+
+    run(process.execPath, [scriptFile, ...check.args], {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        TIANGONG_LCA_CLI_DIR: cliDir,
+      },
+    });
+    count += 1;
+  });
+
+  return count;
+}
+
+function runDocGuards() {
+  docGuards.forEach((guard) => {
+    const filePath = path.join(repoRoot, guard.file);
+    if (!existsSync(filePath)) {
+      fail(`Guarded file is missing: ${guard.file}`);
+    }
+    const text = readFileSync(filePath, 'utf8');
+    if (guard.pattern.test(text)) {
+      fail(`${guard.message} (${guard.file})`);
+    }
+  });
+}
+
+function main() {
+  const { cliDir, targets } = parseArgs(process.argv.slice(2));
+  ensureCliBuild(cliDir);
+  runDocGuards();
+
+  const skillDirs = (targets.length ? targets : defaultSkillNames)
+    .map((target) => normalizeSkillTarget(target))
+    .sort((left, right) => left.localeCompare(right));
+
+  let scriptCount = 0;
+  skillDirs.forEach((skillDir) => {
+    assertSkillFrontmatter(skillDir);
+    assertAgentMetadata(skillDir);
+    const scriptFiles = collectWrapperScripts(skillDir);
+    scriptCount += scriptFiles.length;
+    runNodeChecks(scriptFiles);
+    runHelpSmoke(scriptFiles, cliDir);
+  });
+  const targetedSmokeCount = runTargetedSmokeChecks(skillDirs, cliDir);
+
+  console.log(
+    `Validated ${skillDirs.length} skill directories, ${scriptCount} wrapper scripts, ${targetedSmokeCount} targeted smokes, and ${docGuards.length} doc guards.`,
+  );
+}
+
+try {
+  main();
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`Validation failed: ${message}`);
+  process.exit(1);
+}

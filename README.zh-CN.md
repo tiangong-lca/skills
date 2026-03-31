@@ -55,6 +55,17 @@ npm i skills@latest -g
   npx skills update
   ```
 
+## 校验
+- 本地校验 CLI-backed wrapper 与迁移文档守卫:
+  ```bash
+  node scripts/validate-skills.mjs
+  ```
+- 只校验本次变更的 skill:
+  ```bash
+  node scripts/validate-skills.mjs lifecycleinventory-review process-hybrid-search
+  ```
+- CI 会在 `.github/workflows/validate-skills.yml` 中 checkout 并构建 `tiangong-lca-cli`，然后运行同一套校验脚本。
+
 ## 执行说明
 
 本仓库中的 skills 已经收敛到统一的 `tiangong` CLI。

@@ -1,8 +1,25 @@
-# lifecyclemodel profile (planned)
+# lifecyclemodel profile
 
-Status: **not implemented yet**.
+Status: **implemented**.
 
-Next step suggestion:
-1. Define model-level review scope and required inputs.
-2. Implement `profiles/lifecyclemodel/scripts/run_lifecyclemodel_review.py`.
-3. Route `--profile lifecyclemodel` in `scripts/run-review.mjs` or a dedicated `tiangong review lifecyclemodel` CLI subcommand.
+Canonical path:
+1. Run `node scripts/run-review.mjs --profile lifecyclemodel`.
+2. The wrapper delegates directly to `tiangong review lifecyclemodel`.
+
+Required inputs:
+- `--run-dir <dir>`
+- `--out-dir <dir>`
+
+Optional inputs:
+- `--start-ts <iso>`
+- `--end-ts <iso>`
+- `--logic-version <name>`
+
+Review artifacts:
+- `model_summaries.jsonl`
+- `findings.jsonl`
+- `lifecyclemodel_review_summary.json`
+- `lifecyclemodel_review_zh.md`
+- `lifecyclemodel_review_en.md`
+- `lifecyclemodel_review_timing.md`
+- `lifecyclemodel_review_report.json`

@@ -1,0 +1,38 @@
+name: validate-skills
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout skills
+        uses: actions/checkout@v4
+
+      - name: Checkout tiangong-lca-cli
+        uses: actions/checkout@v4
+        with:
+          repository: tiangong-lca/tiangong-cli
+          path: .ci/tiangong-lca-cli
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: .ci/tiangong-lca-cli/package-lock.json
+
+      - name: Install and build CLI
+        working-directory: .ci/tiangong-lca-cli
+        run: |
+          npm ci
+          npm run build
+
+      - name: Validate skills
+        env:
+          TIANGONG_LCA_CLI_DIR: ${{ github.workspace }}/.ci/tiangong-lca-cli
+        run: node scripts/validate-skills.mjs

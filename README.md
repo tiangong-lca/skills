@@ -55,6 +55,17 @@ npm i skills@latest -g
   npx skills update
   ```
 
+## Validation
+- Validate the canonical CLI-backed wrappers and migration doc guards locally:
+  ```bash
+  node scripts/validate-skills.mjs
+  ```
+- Validate only the skills you changed:
+  ```bash
+  node scripts/validate-skills.mjs lifecycleinventory-review process-hybrid-search
+  ```
+- CI runs the same validation script in `.github/workflows/validate-skills.yml` after checking out and building `tiangong-lca-cli`.
+
 ## Execution note
 
 Skills in this repository are expected to be thin wrappers over the unified `tiangong` CLI.

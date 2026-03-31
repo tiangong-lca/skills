@@ -18,7 +18,7 @@
 3. 新 skill 优先使用 `init_skill.py` 初始化目录与模板。
 4. 按规范填写/更新 `SKILL.md` 与资源文件。
 5. 生成或更新 `agents/openai.yaml`（使用官方脚本与 `--interface` 参数）。
-6. 运行 `quick_validate.py <skill-path>`，修复后直到通过。
+6. 运行 `node scripts/validate-skills.mjs <skill-path>`，修复后直到通过。
 
 ## Skill 文件规范
 
@@ -32,6 +32,6 @@
 
 ## 交付前检查
 
-1. 校验通过：`quick_validate.py` 返回通过结果。
+1. 校验通过：`node scripts/validate-skills.mjs <skill-path>` 返回通过结果。
 2. 若新增脚本：至少运行一次代表性测试，确认可执行与输出合理。
 3. 变更说明中明确列出：新增/修改的 skill 文件与校验结果。
