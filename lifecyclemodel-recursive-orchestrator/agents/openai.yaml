@@ -1,4 +1,4 @@
 interface:
   display_name: "Lifecycle Model Recursive Orchestrator"
   short_description: "Plan recursive model/process build runs"
-  default_prompt: "Use $lifecyclemodel-recursive-orchestrator to validate a recursive LCA assembly request, run the required downstream builders locally, and prepare graph, lineage, and publish-bundle artifacts."
+  default_prompt: "Use $lifecyclemodel-recursive-orchestrator to call tiangong lifecyclemodel orchestrate for recursive plan, execute, and publish-handoff runs."

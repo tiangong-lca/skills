@@ -1,15 +1,4 @@
 interface:
   display_name: "Lifecycle Model Automated Builder"
-  short_description: "Auto-build lifecycle models from process records"
-  default_prompt: "Use $lifecyclemodel-automated-builder to discover candidate processes, assemble TIDAS lifecycle model JSON, validate it, and keep all remote access read-only unless I explicitly allow writes."
-
-dependencies:
-  tools:
-    - type: "mcp"
-      value: "TianGong_LCA_Remote"
-      description: "Read-only TianGong LCA MCP access for discovery, search, and later gated lifecyclemodel CRUD."
-      transport: "streamable_http"
-      url: "https://lcamcp.tiangong.earth/mcp"
-
-policy:
-  allow_implicit_invocation: true
+  short_description: "Assemble local lifecyclemodels from process runs"
+  default_prompt: "Use $lifecyclemodel-automated-builder to assemble, validate, or publish-build local lifecyclemodel json_ordered artifacts from existing process build runs through the TianGong CLI."

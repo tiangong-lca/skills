@@ -1,4 +1,4 @@
 interface:
   display_name: "Process Automated Builder"
   short_description: "Run process-from-flow with a CLI-first workflow"
-  default_prompt: "Use $process-automated-builder to run the native Node .mjs wrapper to CLI-owned process-from-flow local handoff stages (auto-build, resume-build, publish-build, batch-build). Treat standalone Python/LangGraph/MCP/OpenAI/KB/TianGong unstructured paths as transitional legacy only."
+  default_prompt: "Use $process-automated-builder to run the native Node .mjs wrapper for the CLI-owned process-from-flow local workflow stages: auto-build, resume-build, publish-build, and batch-build."

@@ -1,4 +1,4 @@
 interface:
   display_name: "Flow Governance Review"
   short_description: "Govern flow naming, classification, refs, and publish"
-  default_prompt: "Use $flow-governance-review to run the local-first governance workflow from a flow UUID or local snapshots, then apply review decisions and publish only changed rows."
+  default_prompt: "Use $flow-governance-review to run the CLI-backed local-first governance slices for flow review, remediation, process-flow repair, and reviewed-row publish handoff."

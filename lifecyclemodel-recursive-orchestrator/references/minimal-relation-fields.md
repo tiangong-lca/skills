@@ -1,4 +1,4 @@
-# Minimal Relation Fields Across lca-skills / tiangong-lca-next / tiangong-lca-mcp
+# Minimal Relation Fields Across lca-skills / tiangong-lca-next / downstream publish layers
 
 ## Why this file exists
 
@@ -113,7 +113,7 @@ But should conceptually map them toward:
 - `model_id` -> compatibility alias for `generated_from_lifecyclemodel_id`
 - `json_tg.submodels` -> derived projection summary list
 
-### 3. tiangong-lca-mcp
+### 3. downstream publish layer
 
 Should accept payload bundles containing:
 
@@ -121,7 +121,7 @@ Should accept payload bundles containing:
 - projected process `json_ordered`
 - relation payload array
 
-MCP should derive `json_tg` for lifecycle models, but should not be the only keeper of model/process lineage.
+The publish layer may derive `json_tg` for lifecycle models, but it should not be the only keeper of model/process lineage.
 
 ---
 
@@ -165,4 +165,4 @@ If only one thing is standardized next, standardize this tuple first:
 - `projection_role`
 - `projection_signature`
 
-That tuple is the minimum durable bridge between recursive orchestration, projected resulting processes, MCP intake, and Next UI behavior.
+That tuple is the minimum durable bridge between recursive orchestration, projected resulting processes, downstream publish intake, and Next UI behavior.

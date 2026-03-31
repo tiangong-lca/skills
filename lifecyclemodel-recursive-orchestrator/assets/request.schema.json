@@ -33,7 +33,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "mode": { "type": "string", "enum": ["workflow", "langgraph"] },
         "flow_file": { "type": "string", "minLength": 1 },
         "flow_json": {
           "anyOf": [
@@ -41,14 +40,7 @@
             { "type": "object" }
           ]
         },
-        "run_id": { "type": "string", "minLength": 1 },
-        "python_bin": { "type": "string", "minLength": 1 },
-        "publish": { "type": "boolean" },
-        "commit": { "type": "boolean" },
-        "forward_args": {
-          "type": "array",
-          "items": { "type": "string", "minLength": 1 }
-        }
+        "run_id": { "type": "string", "minLength": 1 }
       }
     },
     "submodelBuilder": {

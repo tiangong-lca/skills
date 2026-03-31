@@ -56,4 +56,4 @@ This skill does not emit:
 - `rule_verification`
 - generated resulting-process artifacts
 
-If the user later approves writes, the downstream MCP layer owns any platform-specific derivation from the native `json_ordered` payload.
+If the user later approves writes, the downstream publish layer owns any platform-specific derivation from the native `json_ordered` payload.

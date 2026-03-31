@@ -1,6 +1,6 @@
 # Invocation Contracts
 
-## 1. Orchestrator -> process-automated-builder
+## 1. Orchestrator -> process auto-build slice
 
 Use only when a required node lacks a suitable process and must be synthesized from a reference flow or equivalent external evidence.
 
@@ -11,12 +11,13 @@ Use only when a required node lacks a suitable process and must be synthesized f
 - requested run mode (`dry-run` | `execute`)
 
 ### Expected output contract
-- produced process dataset payload(s)
+- prepared local run artifact path
+- produced process dataset payload(s) when present under the run
 - run artifact path
 - unresolved issues / placeholders
 - publish eligibility flag
 
-## 2. Orchestrator -> lifecyclemodel-automated-builder
+## 2. Orchestrator -> lifecyclemodel auto-build slice
 
 Use when a coherent set of process nodes should be assembled into a lifecycle model.
 
@@ -29,11 +30,12 @@ Use when a coherent set of process nodes should be assembled into a lifecycle mo
 
 ### Expected output contract
 - lifecycle model `json_ordered`
-- validation summary
+- local assembly report
 - referenceToResultingProcess contract presence
 - local artifact path
+- optional downstream `validate-build` / `publish-build` follow-up note when the orchestration plan stops at local model assembly
 
-## 3. Orchestrator -> lifecyclemodel-resulting-process-builder
+## 3. Orchestrator -> lifecyclemodel build-resulting-process slice
 
 Use when a lifecycle model must emit one or more resulting process datasets whose exchanges come from model topology and allocation math.
 
@@ -56,7 +58,7 @@ Use when a lifecycle model must emit one or more resulting process datasets whos
 - projection report
 - optional graph/screenshot asset references
 
-## 4. Projector -> MCP / publish layer
+## 4. Projector -> publish layer
 
 For approved writes only.
 
@@ -73,3 +75,8 @@ For approved writes only.
 ## Key rule
 
 Do not route ordinary model-derived resulting-process projection through `process-automated-builder`. That path is reserved for process synthesis, not model projection.
+
+Also:
+
+- do not reintroduce Python wrapper-specific config here
+- the supported `process_builder` request surface is limited to `flow_file`, `flow_json`, and `run_id`

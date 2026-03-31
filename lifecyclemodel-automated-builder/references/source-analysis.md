@@ -2,7 +2,7 @@
 
 ## TianGong App Behavior
 
-Reference repo: `/home/huimin/projects/tiangong-lca-next`
+Reference repo: `tiangong-lca-next`
 
 - `src/services/lifeCycleModels/util.ts`
   - `genLifeCycleModelJsonOrdered` converts graph nodes and edges into native lifecycle model data.
@@ -16,27 +16,21 @@ Reference repo: `/home/huimin/projects/tiangong-lca-next`
 
 ## TIDAS SDK
 
-Reference repo: `/home/huimin/projects/tidas-sdk`
+Reference repo: `tidas-sdk`
 
 - `createLifeCycleModel(data?, config?)` provides strict validation.
 - The SDK is the native schema gate for the `json_ordered` artifact this skill emits.
 
 ## TIDAS Tools
 
-Reference repo: `/home/huimin/projects/tidas-tools`
+Reference repo: `tidas-tools`
 
 - `validate.py` checks lifecycle model classification hierarchy.
 - Classification still has to pass even if the JSON passes strict `tidas-sdk` validation.
 
-## TianGong MCP
+## Downstream Publish Boundary
 
-Reference repo: `/home/huimin/projects/tiangong-lca-mcp`
+Implication:
 
-- `src/tools/db_crud.ts`
-  - `Database_CRUD_Tool` now accepts `jsonOrdered` for lifecyclemodels and delegates platform-specific preparation to `prepareLifecycleModelFile(...)`.
-  - Lifecyclemodel `select` is intentionally sanitized to `id`, `version`, and `json_ordered`.
-- `src/tools/life_cycle_model_file_tools.ts`
-  - Provides the downstream native-model preparation logic used by MCP before write.
-- Implication:
-  - This skill should stop at native `json_ordered`.
-  - If a remote write is approved later, the MCP layer is the correct place to derive `json_tg` and related platform fields.
+- this skill should stop at native `json_ordered`
+- if a remote write is approved later, the downstream publish layer is the correct place to derive any platform-specific fields such as `json_tg`

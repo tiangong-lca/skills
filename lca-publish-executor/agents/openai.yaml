@@ -1,4 +1,4 @@
 interface:
   display_name: "LCA Publish Executor"
   short_description: "Publish LCA artifact bundles"
-  default_prompt: "Use $lca-publish-executor to publish lifecyclemodel/process/source artifact bundles or process-from-flow runs through the approved local publish path."
+  default_prompt: "Use $lca-publish-executor to forward lifecyclemodel/process/source publish bundles into the unified tiangong publish run contract."

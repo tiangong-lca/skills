@@ -22,11 +22,11 @@
     ],
     "existing_lifecyclemodel_candidates": [
       {
-        "id": "lm-battery-pack-legacy",
+        "id": "lm-battery-pack-pinned",
         "version": "00.00.004",
-        "name": "Legacy battery pack model",
+        "name": "Pinned battery pack model",
         "score": 0.72,
-        "reason": "A pinned legacy submodel exists but the request wants a fresh local build."
+        "reason": "A pinned submodel exists, but the request wants a fresh local build."
       }
     ],
     "submodel_builder": {

@@ -2,7 +2,12 @@
 
 ## Objective
 
-Provide a planner/executor layer that can recursively assemble LCA systems by combining existing processes, generated processes, existing lifecycle models, and newly assembled submodels.
+Provide a planner/executor layer that can recursively assemble LCA systems by combining existing processes, CLI-prepared process builds, existing lifecycle models, and newly assembled submodels.
+
+Public entrypoint:
+
+- `node scripts/run-lifecyclemodel-recursive-orchestrator.mjs <plan|execute|publish> ...`
+- canonical command: `tiangong lifecyclemodel orchestrate <plan|execute|publish> ...`
 
 ## Stages
 
@@ -16,12 +21,14 @@ Normalize the request into:
 - publish intent
 
 ### 2. Discovery
-Query for:
-- existing account processes
-- eligible public processes
+Normalize the request-time candidate sets for:
+
+- existing processes
 - existing lifecycle models
-- resulting processes projected from lifecycle models
+- existing resulting processes
 - previously generated lineage manifests if available
+
+This skill does not perform its own remote search. Candidate discovery must happen before the orchestrator runs or be materialized into the request.
 
 ### 3. Candidate scoring
 For each required node, score candidates by:
@@ -44,8 +51,9 @@ The planner should emit a dry-run plan first.
 
 ### 5. Materialization
 If allowed:
-- call `process-automated-builder` for missing process nodes
-- call `lifecyclemodel-automated-builder` for submodel assembly
+- execute the native process-builder slice used by `tiangong process auto-build`
+- execute the native lifecyclemodel-builder slice used by `tiangong lifecyclemodel auto-build`
+- execute the native projector slice used by `tiangong lifecyclemodel build-resulting-process` when projection is requested
 
 ### 6. Reconciliation
 Re-read newly materialized outputs and resolve:
@@ -67,6 +75,8 @@ Only when explicitly requested:
 - persist resulting-process relation metadata
 - save manifests alongside build artifacts
 
+This step prepares local handoff artifacts only. Commit execution belongs to downstream CLI publish flow.
+
 ## Policy knobs
 
 - `mode`: `collapsed` | `expanded` | `hybrid`
@@ -81,3 +91,9 @@ Only when explicitly requested:
 ## Why dry-run first
 
 Recursive assembly can explode combinatorially and hide dependency mistakes. Dry-run planning keeps the orchestration layer inspectable before downstream builders spend time or publish anything.
+
+## Request-surface guardrails
+
+- `process_builder` only supports `flow_file`, `flow_json`, and `run_id`
+- removed legacy fields such as `process_builder.mode=langgraph` and `process_builder.python_bin` are outside the supported path
+- if a new builder control is truly needed, add it first as a native CLI capability instead of smuggling it back through skill-local runtime

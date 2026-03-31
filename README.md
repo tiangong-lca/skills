@@ -57,11 +57,12 @@ npm i skills@latest -g
 
 ## Execution note
 
-Thin remote skills are being migrated to the unified `tiangong` CLI.
+Skills in this repository are expected to be thin wrappers over the unified `tiangong` CLI.
 
-Current expectation:
+Current rules:
 
 - keep `tiangong-lca-cli` available locally
 - or set `TIANGONG_LCA_CLI_DIR` to point at that repo
-- let thin CLI-backed skills use cross-platform Node wrappers as the canonical entrypoint
-- for newly migrated or refactored thin skills, use the native `.mjs` wrapper directly and do not keep a shell compatibility shim
+- use native cross-platform Node `.mjs` wrappers as the canonical entrypoint
+- do not keep business Python runtimes, shell shims, MCP transports, or private env parsers inside skills
+- if a capability is missing, add a native `tiangong <noun> <verb>` command first, then update the skill to call it

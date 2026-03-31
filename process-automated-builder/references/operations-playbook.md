@@ -1,6 +1,7 @@
-# Operations Playbook (CLI First, Legacy Transitional)
+# Operations Playbook
 
-## 1) Canonical Path: CLI Commands
+## Canonical Commands
+
 ```bash
 node process-automated-builder/scripts/run-process-automated-builder.mjs auto-build --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs resume-build --help
@@ -8,179 +9,93 @@ node process-automated-builder/scripts/run-process-automated-builder.mjs publish
 node process-automated-builder/scripts/run-process-automated-builder.mjs batch-build --help
 ```
 
-Current canonical scope:
-- Use `node process-automated-builder/scripts/run-process-automated-builder.mjs auto-build ...` as the default entrypoint for one local process build handoff run.
-- Use `node process-automated-builder/scripts/run-process-automated-builder.mjs resume-build ...` to continue an interrupted local run.
-- Use `node process-automated-builder/scripts/run-process-automated-builder.mjs publish-build ...` to prepare the local publish handoff path.
-- Use `node process-automated-builder/scripts/run-process-automated-builder.mjs batch-build ...` for deterministic multi-item manifests.
-- These current CLI-backed local handoff slices do not require `TIANGONG_LCA_REMOTE_*`, `OPENAI_*`, `TIANGONG_KB_REMOTE_*`, or `TIANGONG_MINERU_WITH_IMAGE_*`.
+## Start One Run
 
-## 2) Transitional Path: Bootstrap Legacy Runtime
 ```bash
-process-automated-builder/scripts/setup-process-automated-builder.sh
-source process-automated-builder/.venv/bin/activate
-```
-
-## 3) Transitional Path: Run End-to-End Legacy Workflow
-```bash
-export TIANGONG_LCA_REMOTE_TRANSPORT="streamable_http"
-export TIANGONG_LCA_REMOTE_SERVICE_NAME="TianGong_LCA_Remote"
-export TIANGONG_LCA_REMOTE_URL="https://lcamcp.tiangong.earth/mcp"
-export TIANGONG_LCA_REMOTE_API_KEY="<your-api-key>"
-export OPENAI_API_KEY="<your-openai-api-key>"
-export OPENAI_MODEL="gpt-5"
-
-node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
-  --mode workflow \
-  --flow-file /abs/path/to/reference-flow.json \
-  -- --operation produce
-
-# canonical direct entrypoint
-python3 process-automated-builder/scripts/origin/process_from_flow_langgraph.py \
-  workflow \
-  --flow /abs/path/to/reference-flow.json \
-  --operation produce
-```
-
-## 4) Transitional Path: Run with Inline JSON
-```bash
-node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
-  --mode workflow \
-  --flow-json '{"flowDataSet": {...}}' \
-  -- --operation produce
-```
-
-## 5) Transitional Path: Batch Parallel Run
-```bash
-process-automated-builder/scripts/run-process-automated-builder-parallel.sh \
-  --flow-dir /abs/path/to/flow-dir \
-  --out-dir /abs/path/to/batch-out \
-  --workers 3 \
+node process-automated-builder/scripts/run-process-automated-builder.mjs auto-build \
+  --flow-file /abs/path/reference-flow.json \
   --operation produce \
-  --python-bin process-automated-builder/.venv/bin/python
+  --json
 ```
 
-Notes:
-- Uses persistent `batch_state.json` and per-attempt logs in `batch_logs/`.
-- Avoids prior xargs/env leakage that could write logs to `/<file>.log` and trigger permission-denied false failures.
-- Supports auto-resume on interrupted sessions.
+Equivalent request-file form:
 
-## 6) Transitional Path: Stage Debugging
 ```bash
-node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
-  --mode langgraph \
-  --flow-file /abs/path/to/reference-flow.json \
-  -- --stop-after matches --operation produce
+node process-automated-builder/scripts/run-process-automated-builder.mjs auto-build \
+  --input /abs/path/process-auto-build.request.json \
+  --json
 ```
 
-## 7) Transitional Path: Resume Existing Run
+What this does today:
+
+- normalizes the request
+- creates one deterministic run root
+- writes stage directories and manifests
+- writes the initial state and handoff summary
+
+## Resume One Existing Run
+
 ```bash
-node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
-  --mode langgraph \
-  -- --resume --run-id <run_id>
+node process-automated-builder/scripts/run-process-automated-builder.mjs resume-build \
+  --run-id <run_id> \
+  --json
 ```
 
-## 8) Transitional Path: Publish Existing Run
+Use this when a caller wants:
+
+- fresh resume metadata
+- a stable resume history record
+- a quick consistency check over state, handoff summary, and run manifest
+
+## Prepare One Publish Bundle
+
 ```bash
-node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
-  --mode langgraph \
-  -- --publish-only --run-id <run_id> --commit
+node process-automated-builder/scripts/run-process-automated-builder.mjs publish-build \
+  --run-id <run_id> \
+  --json
 ```
 
-Optional debug switches during publish:
-- `--skip-flow-auto-build`
-- `--skip-process-update`
+Use this when:
 
-## 8b) Transitional Path: Run flow-auto-build Only
+- the run already contains local process/source datasets
+- the next step should be unified publish handoff
+- downstream publish should go through `tiangong publish run`, not a skill-private path
+
+## Prepare A Batch
+
 ```bash
-node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
-  --mode langgraph \
-  -- flow-auto-build --run-id <run_id>
+node process-automated-builder/scripts/run-process-automated-builder.mjs batch-build \
+  --input /abs/path/process-batch.request.json \
+  --json
 ```
 
-## 8c) Transitional Path: Run process-update Only
-```bash
-node process-automated-builder/scripts/run-process-automated-builder.mjs legacy \
-  --mode langgraph \
-  -- process-update --run-id <run_id>
-```
+Batch mode fans out deterministic local runs and records their reports in one batch ledger.
 
-## 9) Transitional Path: Background Persistent Run (systemd user service)
-```bash
-# install service + default env template
-process-automated-builder/scripts/systemd/install-process-from-flow-batch-service.sh
+## Required Env
 
-# edit runtime settings
-$EDITOR ~/.config/process-from-flow-batch/env
+- `TIANGONG_LCA_CLI_DIR` only when the wrapper cannot discover the local CLI checkout automatically
 
-# start and enable auto-restart
-systemctl --user daemon-reload
-systemctl --user enable --now process-from-flow-batch.service
-
-# monitor
-systemctl --user status process-from-flow-batch.service
-journalctl --user -u process-from-flow-batch.service -f
-```
-
-Notes:
-- Service runs batch runner with `--watch` and keeps polling `FLOW_DIR` for newly added `*.json`.
-- Service also loads `~/.openclaw/.env` by default for API/MCP credentials.
-- Install script renders `~/.config/process-from-flow-batch/run-service.sh` with the current checkout path and detected Python executable; rerun it after moving the repo or changing interpreters.
-- Service is configured with `Restart=always`; if runner is externally killed, it relaunches and continues from `STATE_PATH`.
-- Default `STALL_TIMEOUT_SECONDS` in env example is set to `1800` to reduce false positives on long stage-7 runs.
-
-## 9a) Transitional Path: One-Command Submit to Daemon Queue
-```bash
-process-automated-builder/scripts/systemd/submit-process-from-flow.sh \
-  --flow-file /abs/path/to/reference-flow.json
-
-# or inline
-process-automated-builder/scripts/systemd/submit-process-from-flow.sh \
-  --flow-json '{"flowDataSet": {...}}'
-```
-
-Notes:
-- The submit script writes a uniquely named JSON into `FLOW_DIR`.
-- By default it also starts/enables `process-from-flow-batch.service`.
-
-## Runtime Notes
-- Canonical mode no longer uses MCP as the CLI transport. Preferred replacements are direct edge-function REST or direct Supabase JS CRUD through `tiangong-lca-cli`.
-- There is no shell compatibility shim for the canonical entrypoint; call `node .../run-process-automated-builder.mjs` directly.
-- New runs require flow input; no default flow file is used.
-- Resume mode can omit `--flow` and read it from cached state.
-- `flow-auto-build` and `process-update` subcommands also do not require `--flow`.
-- Flow-search MCP configuration is read from `TIANGONG_LCA_REMOTE_*` env vars.
-- OpenAI configuration is read from `OPENAI_*` (or `LCA_OPENAI_*`) env vars.
-- Literature MCP (`TianGong_KB_Remote`) can be configured by `TIANGONG_KB_REMOTE_*` env vars.
-- TianGong unstructured service can be configured by `TIANGONG_MINERU_WITH_IMAGE_*` env vars (`TIANGONG_MINERU_WITH_IMAGE_RETURN_TXT` defaults to `true`; endpoint detail is `/mineru_with_images`).
-- `--publish` and `--commit` may invoke remote CRUD services; use dry-run first.
-- `--publish` / `--publish-only` now execute one sequence: `flow-auto-build -> process-update -> flow publish -> process publish -> source publish`.
-- Method-policy auto-repair is enabled by default in flow-auto-build/process-update/publish paths; see `cache/method_policy_autofix_report.json` for deterministic fixes, retry attempts, and any `manual_required` residue.
-- LLM cost report is enabled by default in CLI runs; output path is `cache/llm_cost_report.json`.
-- OpenClaw-friendly summary is written to `cache/agent_handoff_summary.json`; prefer that before loading full state or logs.
-- Disable cost report with `--no-cost-report`; override prices with `--cost-input-price-per-1m` / `--cost-output-price-per-1m` or env `TIANGONG_PFF_COST_INPUT_PRICE_PER_1M` / `TIANGONG_PFF_COST_OUTPUT_PRICE_PER_1M`.
-
-## Parallel Orchestration Rules
-- Run-level parallel (recommended):
-  - Start multiple runs in parallel with different `run_id`s (or let each run auto-generate one).
-- In-run parallel (restricted):
-  - Respect barrier order: `01 -> 02 -> 03` serial, `04` fan-out allowed, `05 -> 06 -> 07` serial.
-  - Main pipeline only parallelizes `flow_search` requests; writeback remains ordered.
-- Single-writer rule:
-  - Never run multiple state-writing scripts concurrently for the same `run_id`.
-  - This includes `process_from_flow_reference_usability.py`, `process_from_flow_download_si.py`, `process_from_flow_reference_usage_tagging.py`, and `process_from_flow_langgraph.py`.
-  - State writes are guarded by `process_from_flow_state.json.lock`; lock timeout can be tuned by `TIANGONG_PFF_STATE_LOCK_TIMEOUT_SECONDS`.
-
-## Flow Search Concurrency
-- Tune with `LCA_FLOW_SEARCH_MAX_PARALLEL` (default `1`).
-- Effective workers are capped by workflow profile concurrency (`LCA_MAX_CONCURRENCY` / profile).
+The canonical commands above do not require any legacy provider, transport, or OCR env stack.
 
 ## Failure Triage
-- Missing deps/import errors:
-  - Re-run setup script and ensure the venv is active.
-- Missing flow errors:
-  - Provide `--flow-file`, `--flow-json`, or `--flow-stdin` for new runs.
-- Placeholder-heavy outputs:
-  - Run through Step 6 and inspect `cache/placeholder_report.json`.
-- Long runtime:
-  - Check `cache/workflow_timing_report.json`; Step 4 matching is usually dominant.
+
+- Missing CLI checkout:
+  - set `TIANGONG_LCA_CLI_DIR`
+  - or pass `--cli-dir`
+- Missing flow input:
+  - provide `--input`
+  - or one of `--flow-file`, `--flow-json`, `--flow-stdin`
+- Reused run id:
+  - choose a different `run_id`
+  - or let the CLI generate one
+- Publish handoff missing datasets:
+  - inspect `exports/processes/`, `exports/sources/`, `cache/process_from_flow_state.json`
+- Parallel writer conflict:
+  - do not run two writers on the same `run_id`
+
+## Explicit Non-Goals
+
+- no hidden Python runtime
+- no shell daemon or systemd layer
+- no skill-private transport or publish implementation
+- no reintroduction of LangGraph, MCP, or direct provider env parsing inside this skill

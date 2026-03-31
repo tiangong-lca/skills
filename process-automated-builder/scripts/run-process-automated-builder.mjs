@@ -12,7 +12,6 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const skillDir = path.resolve(scriptDir, '..');
 const workspaceRoot = path.resolve(skillDir, '..', '..');
 const defaultCliDir = path.join(workspaceRoot, 'tiangong-lca-cli');
-const legacyTargetScript = path.join(scriptDir, 'origin', 'process_from_flow_langgraph.py');
 const canonicalSubcommands = new Set(['auto-build', 'resume-build', 'publish-build', 'batch-build']);
 
 function fail(message) {
@@ -22,7 +21,6 @@ function fail(message) {
 function renderHelp() {
   return `Usage:
   node scripts/run-process-automated-builder.mjs <auto-build|resume-build|publish-build|batch-build> [options]
-  node scripts/run-process-automated-builder.mjs legacy [legacy-wrapper-options] [-- python-args]
 
 Wrapper options:
   --cli-dir <dir>           Override the tiangong-lca-cli repository path
@@ -40,8 +38,8 @@ auto-build compatibility options:
   --flow-stdin              Build a temporary CLI request from stdin flow JSON
   --operation <mode>        produce | treat (default: produce)
 
-Legacy path:
-  - use the explicit 'legacy' subcommand for standalone Python/LangGraph modes
+Notes:
+  - the wrapper is now CLI-only; it no longer exposes Python / LangGraph fallback modes
   - there is no shell compatibility shim; call this .mjs entrypoint directly
 
 Examples:
@@ -49,7 +47,6 @@ Examples:
   node scripts/run-process-automated-builder.mjs resume-build --run-id <run_id> --json
   node scripts/run-process-automated-builder.mjs publish-build --run-id <run_id> --json
   node scripts/run-process-automated-builder.mjs batch-build --input /abs/path/batch-request.json --json
-  node scripts/run-process-automated-builder.mjs legacy --mode workflow --flow-file /abs/path/reference-flow.json -- --operation produce
 `.trim();
 }
 
@@ -59,26 +56,6 @@ function resolveCliBin(cliDir) {
     fail(`Cannot find TianGong CLI at ${cliBin}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`);
   }
   return cliBin;
-}
-
-function resolveDefaultPython() {
-  const explicit = process.env.PAB_PYTHON_BIN?.trim();
-  if (explicit) {
-    return explicit;
-  }
-
-  const candidates =
-    process.platform === 'win32'
-      ? [path.join(skillDir, '.venv', 'Scripts', 'python.exe')]
-      : [path.join(skillDir, '.venv', 'bin', 'python')];
-
-  for (const candidate of candidates) {
-    if (existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
-  return process.platform === 'win32' ? 'python' : 'python3';
 }
 
 function runCommand(command, args, options = {}) {
@@ -377,184 +354,6 @@ function runCanonicalInputCommand(cliBin, subcommand, args) {
   return runCommand(process.execPath, [cliBin, 'process', subcommand, ...forwardArgs]);
 }
 
-function runLegacyMode(args) {
-  let mode = 'workflow';
-  let flowFile = '';
-  let flowJson = '';
-  let flowFromStdin = false;
-  let pythonBin = resolveDefaultPython();
-  let showHelp = false;
-  const forwardArgs = [];
-
-  for (let index = 0; index < args.length; index += 1) {
-    const arg = args[index];
-
-    switch (arg) {
-      case '--mode':
-        if (index + 1 >= args.length) {
-          fail('--mode requires a value');
-        }
-        mode = args[index + 1];
-        index += 1;
-        break;
-      case '--flow-file':
-        if (index + 1 >= args.length) {
-          fail('--flow-file requires a value');
-        }
-        flowFile = args[index + 1];
-        index += 1;
-        break;
-      case '--flow-json':
-        if (index + 1 >= args.length) {
-          fail('--flow-json requires a value');
-        }
-        flowJson = args[index + 1];
-        index += 1;
-        break;
-      case '--flow-stdin':
-        flowFromStdin = true;
-        break;
-      case '--python-bin':
-        if (index + 1 >= args.length) {
-          fail('--python-bin requires a value');
-        }
-        pythonBin = args[index + 1];
-        index += 1;
-        break;
-      case '-h':
-      case '--help':
-        showHelp = true;
-        break;
-      case '--':
-        forwardArgs.push(...args.slice(index + 1));
-        index = args.length;
-        break;
-      default:
-        if (arg.startsWith('--mode=')) {
-          mode = arg.slice('--mode='.length);
-          break;
-        }
-        if (arg.startsWith('--flow-file=')) {
-          flowFile = arg.slice('--flow-file='.length);
-          break;
-        }
-        if (arg.startsWith('--flow-json=')) {
-          flowJson = arg.slice('--flow-json='.length);
-          break;
-        }
-        if (arg.startsWith('--python-bin=')) {
-          pythonBin = arg.slice('--python-bin='.length);
-          break;
-        }
-        forwardArgs.push(arg);
-        break;
-    }
-  }
-
-  if (showHelp) {
-    console.error(renderHelp());
-    return 0;
-  }
-
-  if (mode !== 'workflow' && mode !== 'langgraph') {
-    fail(`Invalid --mode: ${mode}`);
-  }
-  if (flowFile && flowJson) {
-    fail('--flow-file and --flow-json are mutually exclusive.');
-  }
-  if (flowFile && flowFromStdin) {
-    fail('--flow-file and --flow-stdin are mutually exclusive.');
-  }
-  if (flowJson && flowFromStdin) {
-    fail('--flow-json and --flow-stdin are mutually exclusive.');
-  }
-
-  const tempDirs = [];
-
-  try {
-    if (flowJson || flowFromStdin) {
-      const flowPayload = flowJson ?? readFileSync(0, 'utf8');
-      const tempFlow = writeTempJsonFile(
-        'tg-pab-legacy-flow-',
-        parseJsonText(flowPayload, flowJson ? '--flow-json' : 'stdin'),
-      );
-      tempDirs.push(tempFlow.tempDir);
-      flowFile = tempFlow.filePath;
-    }
-
-    if (flowFile && !existsSync(flowFile)) {
-      fail(`Flow file not found: ${flowFile}`);
-    }
-    if (hasFlag('--flow', forwardArgs) && flowFile) {
-      fail('Do not pass --flow in forwarded args when using wrapper flow input options.');
-    }
-
-    let requireFlow = true;
-    let langgraphSubcommand = '';
-    const forwardedHasFlow = hasFlag('--flow', forwardArgs);
-
-    if (mode === 'workflow') {
-      langgraphSubcommand = 'workflow';
-    } else {
-      if (forwardArgs.length > 0) {
-        const firstArg = forwardArgs[0];
-        if (firstArg === 'flow-auto-build' || firstArg === 'process-update') {
-          langgraphSubcommand = firstArg;
-          requireFlow = false;
-        }
-      }
-      if (
-        hasFlag('--resume', forwardArgs) ||
-        hasFlag('--publish-only', forwardArgs) ||
-        hasFlag('--cleanup-only', forwardArgs)
-      ) {
-        requireFlow = false;
-      }
-    }
-
-    if (requireFlow && !flowFile && !forwardedHasFlow) {
-      fail('Missing flow input. Use --flow-file/--flow-json/--flow-stdin (or forward --flow).');
-    }
-    if (langgraphSubcommand && langgraphSubcommand !== 'workflow' && flowFile) {
-      fail(
-        `Flow input is not used for langgraph subcommands (${langgraphSubcommand}); remove --flow-file/--flow-json/--flow-stdin.`,
-      );
-    }
-
-    const flowArg =
-      !langgraphSubcommand || langgraphSubcommand === 'workflow'
-        ? flowFile
-          ? ['--flow', flowFile]
-          : []
-        : [];
-
-    const env = {
-      ...process.env,
-      PYTHONPATH: process.env.PYTHONPATH
-        ? `${skillDir}${path.delimiter}${process.env.PYTHONPATH}`
-        : skillDir,
-    };
-
-    if (langgraphSubcommand === 'workflow') {
-      return runCommand(pythonBin, [legacyTargetScript, langgraphSubcommand, ...flowArg, ...forwardArgs], {
-        env,
-      });
-    }
-    if (langgraphSubcommand) {
-      return runCommand(pythonBin, [legacyTargetScript, ...forwardArgs], {
-        env,
-      });
-    }
-    return runCommand(pythonBin, [legacyTargetScript, ...flowArg, ...forwardArgs], {
-      env,
-    });
-  } finally {
-    for (const tempDir of tempDirs) {
-      rmSync(tempDir, { recursive: true, force: true });
-    }
-  }
-}
-
 function main() {
   const { cliDir, args } = normalizeTopLevelArgs(process.argv.slice(2));
 
@@ -569,11 +368,10 @@ function main() {
     console.error(renderHelp());
     return 0;
   }
-  if (subcommand === 'legacy') {
-    return runLegacyMode(args.slice(1));
-  }
   if (!canonicalSubcommands.has(subcommand)) {
-    fail(`Unknown subcommand: ${subcommand}`);
+    fail(
+      `Unknown subcommand: ${subcommand}. The legacy Python workflow was removed; use only the documented process CLI commands.`,
+    );
   }
 
   const cliBin = resolveCliBin(cliDir);
