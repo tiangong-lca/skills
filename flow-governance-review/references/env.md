@@ -8,7 +8,9 @@ Prefer local JSON or JSONL inputs. In local mode, no remote credentials are requ
 
 ## Wrapper Resolution
 
-Set `TIANGONG_LCA_CLI_DIR` only when the wrapper cannot locate the local `tiangong-lca-cli` checkout automatically.
+Wrappers run the published CLI by default through `npx -y @tiangong-lca/cli@latest`.
+
+Set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir` only when you need a local CLI working tree for dev/CI.
 
 ## Optional CLI Read / Commit Inputs
 
@@ -16,22 +18,36 @@ Commands that read or write through the TianGong LCA API use the CLI's canonical
 
 - `TIANGONG_LCA_API_BASE_URL`
 - `TIANGONG_LCA_API_KEY`
+- `TIANGONG_LCA_SUPABASE_PUBLISHABLE_KEY`
 - `TIANGONG_LCA_REGION` (optional)
 
 Typical commands in this skill that may need those env values:
 
 - `flow-get`
 - `flow-list`
+- `materialize-db-flows`
 - `publish-version --commit`
 - `publish-reviewed-data --commit`
+
+Local-only commands that do not require remote credentials by themselves:
+
+- `review-flows`
+- `materialize-approved-decisions`
+- `remediate-flows`
+- `build-flow-alias-map`
+- `scan-process-flow-refs`
+- `plan-process-flow-repairs`
+- `apply-process-flow-repairs`
+- `regen-product`
+- `validate-processes`
 
 ## Optional CLI LLM Inputs
 
 Only `review-flows` can optionally enable the CLI LLM path. When using `--enable-llm`, set the CLI's canonical LLM env:
 
-- `TIANGONG_LCA_LLM_BASE_URL`
-- `TIANGONG_LCA_LLM_API_KEY`
-- `TIANGONG_LCA_LLM_MODEL` (optional override also exists as a CLI flag)
+- `TIANGONG_LCA_REVIEW_LLM_BASE_URL`
+- `TIANGONG_LCA_REVIEW_LLM_API_KEY`
+- `TIANGONG_LCA_REVIEW_LLM_MODEL` (optional override also exists as a CLI flag)
 
 ## Notes
 

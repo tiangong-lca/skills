@@ -34,7 +34,8 @@ For a batch manifest:
 
 1. Skill wrapper
    - native Node `.mjs`
-   - resolves `TIANGONG_LCA_CLI_DIR`
+   - launches `npx -y @tiangong-lca/cli@latest` by default
+   - resolves `TIANGONG_LCA_CLI_DIR` only when a local override is requested
    - forwards arguments to `tiangong`
 2. CLI implementation
    - owns request normalization

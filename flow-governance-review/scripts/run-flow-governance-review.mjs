@@ -1,21 +1,19 @@
 #!/usr/bin/env node
-import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import path from "node:path";
 import process from "node:process";
-import { fileURLToPath } from "node:url";
+import {
+  normalizeCliRuntimeArgs,
+  publishedCliCommand,
+  runTiangongCommand,
+} from "../../scripts/lib/cli-launcher.mjs";
 
 class UsageError extends Error {}
-
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const skillDir = path.resolve(scriptDir, "..");
-const workspaceRoot = path.resolve(skillDir, "..", "..");
-const defaultCliDir = path.join(workspaceRoot, "tiangong-lca-cli");
 
 const cliBackedCommands = new Map([
   ["review-flows", ["review", "flow"]],
   ["flow-get", ["flow", "get"]],
   ["flow-list", ["flow", "list"]],
+  ["materialize-db-flows", ["flow", "fetch-rows"]],
+  ["materialize-approved-decisions", ["flow", "materialize-decisions"]],
   ["remediate-flows", ["flow", "remediate"]],
   ["publish-version", ["flow", "publish-version"]],
   ["publish-reviewed-data", ["flow", "publish-reviewed-data"]],
@@ -52,12 +50,14 @@ function renderHelp() {
   node scripts/run-flow-governance-review.mjs <command> [args...]
 
 Wrapper options:
-  --cli-dir <dir>           Override the tiangong-lca-cli repository path
+  --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 CLI-backed commands:
   review-flows              Delegate to tiangong review flow
   flow-get                  Delegate to tiangong flow get
   flow-list                 Delegate to tiangong flow list
+  materialize-db-flows      Delegate real-DB flow ref materialization to tiangong flow fetch-rows
+  materialize-approved-decisions Delegate approved merge decisions to tiangong flow materialize-decisions
   remediate-flows           Delegate to tiangong flow remediate
   publish-version           Delegate to tiangong flow publish-version
   publish-reviewed-data     Delegate reviewed flow/process local publish preparation to tiangong flow publish-reviewed-data
@@ -69,12 +69,17 @@ CLI-backed commands:
   validate-processes        Delegate to tiangong flow validate-processes
 
 Notes:
+  - default runtime is ${publishedCliCommand}
   - no shell compatibility shim is kept; call this .mjs entrypoint directly
   - the wrapper is now CLI-only; it no longer exposes any Python fallback path
   - publish-reviewed-data now uses the CLI for both local preparation and commit-time process publish
+  - materialize-db-flows is the canonical bridge from real DB refs to local review-input rows
+  - materialize-approved-decisions is the canonical bridge from approved merge decisions to canonical-map / rewrite-plan / seed artifacts
   - removed OpenClaw / governance orchestration commands must be reintroduced as native tiangong subcommands before use
 
 Examples:
+  node scripts/run-flow-governance-review.mjs materialize-db-flows --refs-file /abs/path/flow-refs.json --out-dir /abs/path/materialized --fail-on-missing
+  node scripts/run-flow-governance-review.mjs materialize-approved-decisions --decision-file /abs/path/approved-decisions.json --flow-rows-file /abs/path/materialized/review-input-rows.jsonl --out-dir /abs/path/decision-artifacts
   node scripts/run-flow-governance-review.mjs review-flows --rows-file /abs/path/flows.jsonl --out-dir /abs/path/review
   node scripts/run-flow-governance-review.mjs remediate-flows --input-file /abs/path/invalid-flows.jsonl --out-dir /abs/path/remediation
   node scripts/run-flow-governance-review.mjs publish-version --input-file /abs/path/ready-flows.jsonl --out-dir /abs/path/publish --dry-run
@@ -87,78 +92,18 @@ Examples:
 `.trim();
 }
 
-function resolveCliBin(cliDir) {
-  const cliBin = path.join(cliDir, "bin", "tiangong.js");
-  if (!existsSync(cliBin)) {
-    fail(
-      `Cannot find TianGong CLI at ${cliBin}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`,
-    );
-  }
-  return cliBin;
-}
-
-function runCommand(command, args) {
-  const result = spawnSync(command, args, {
-    stdio: "inherit",
-  });
-
-  if (result.error) {
-    throw new Error(`Failed to execute ${command}: ${result.error.message}`);
-  }
-  if (typeof result.status === "number") {
-    return result.status;
-  }
-  if (result.signal) {
-    throw new Error(`${command} terminated with signal ${result.signal}.`);
-  }
-  return 1;
-}
-
-function normalizeTopLevelArgs(rawArgs) {
-  let cliDir = process.env.TIANGONG_LCA_CLI_DIR?.trim() || defaultCliDir;
-  const args = [];
-
-  for (let index = 0; index < rawArgs.length; index += 1) {
-    const arg = rawArgs[index];
-
-    if (arg === "--cli-dir") {
-      if (index + 1 >= rawArgs.length) {
-        fail("--cli-dir requires a value");
-      }
-      cliDir = rawArgs[index + 1];
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith("--cli-dir=")) {
-      cliDir = arg.slice("--cli-dir=".length);
-      continue;
-    }
-
-    args.push(arg);
-  }
-
-  return {
-    cliDir,
-    args,
-  };
-}
-
 function runCliBackedCommand(command, cliDir, forwardedArgs) {
   const cliSubcommand = cliBackedCommands.get(command);
   if (!cliSubcommand) {
     fail(`Unsupported CLI-backed command: ${command}`);
   }
-  const cliBin = resolveCliBin(cliDir);
-  return runCommand(process.execPath, [
-    cliBin,
-    ...cliSubcommand,
-    ...forwardedArgs,
-  ]);
+  return runTiangongCommand([...cliSubcommand, ...forwardedArgs], {
+    cliDir,
+  });
 }
 
 function main() {
-  const { cliDir, args } = normalizeTopLevelArgs(process.argv.slice(2));
+  const { cliDir, args } = normalizeCliRuntimeArgs(process.argv.slice(2));
   const command = args[0];
   const forwardedArgs = args.slice(1);
 

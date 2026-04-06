@@ -60,6 +60,11 @@ npm i skills@latest -g
   ```bash
   node scripts/validate-skills.mjs
   ```
+- Validate against an unpublished local CLI working tree:
+  ```bash
+  TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli \
+  node scripts/validate-skills.mjs
+  ```
 - Validate only the skills you changed:
   ```bash
   node scripts/validate-skills.mjs lifecycleinventory-review process-hybrid-search
@@ -72,8 +77,8 @@ Skills in this repository are expected to be thin wrappers over the unified `tia
 
 Current rules:
 
-- keep `tiangong-lca-cli` available locally
-- or set `TIANGONG_LCA_CLI_DIR` to point at that repo
+- wrappers run the published CLI by default through `npx -y @tiangong-lca/cli@latest`
+- use `--cli-dir` or `TIANGONG_LCA_CLI_DIR` only to force a local CLI working tree during dev/CI
 - use native cross-platform Node `.mjs` wrappers as the canonical entrypoint
 - do not keep business Python runtimes, shell shims, MCP transports, or private env parsers inside skills
 - if a capability is missing, add a native `tiangong <noun> <verb>` command first, then update the skill to call it

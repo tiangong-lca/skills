@@ -45,12 +45,13 @@ node scripts/run-process-automated-builder.mjs batch-build --input /abs/path/bat
 ```
 
 ## Runtime Requirements
-- Set `TIANGONG_LCA_CLI_DIR` when the wrapper cannot infer the local `tiangong-lca-cli` checkout.
+- The wrapper runs the published CLI by default through `npx -y @tiangong-lca/cli@latest`.
+- Set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir` only when you need a local CLI working tree for dev/CI.
 - The current canonical commands are local artifact commands. They do not require any legacy provider, transport, or OCR env stack.
 - If a future native CLI command needs additional env, document it in `tiangong-lca-cli` first and keep this skill as a thin caller only.
 
 ## Fast Troubleshooting
-- Missing CLI checkout: set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir`.
+- Local CLI override issues: set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir` only when you intentionally need an unpublished working tree.
 - Missing `--input` / `--flow-file`: new runs need one explicit request or reference-flow input.
 - Run-level conflicts: do not reuse the same `run_id` across concurrent writers.
 - Publish handoff issues: inspect `stage_outputs/10_publish/` and `cache/agent_handoff_summary.json` before touching downstream publish flow.

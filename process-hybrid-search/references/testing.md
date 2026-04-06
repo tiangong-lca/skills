@@ -16,13 +16,15 @@ node scripts/run-process-hybrid-search.mjs --dry-run
 
 ## Direct CLI equivalent
 ```bash
-node "${TIANGONG_LCA_CLI_DIR:-../tiangong-lca-cli}/bin/tiangong.js" \
+npx -y @tiangong-lca/cli@latest \
   search process \
   --input ./assets/example-request.json \
   --base-url "https://example.supabase.co/functions/v1" \
   --api-key "$TIANGONG_LCA_API_KEY" \
   --dry-run
 ```
+
+Use `TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli node scripts/run-process-hybrid-search.mjs ...` only when validating an unpublished local CLI working tree.
 
 ## Checklist
 - 200 response contains `data` (array, possibly empty).

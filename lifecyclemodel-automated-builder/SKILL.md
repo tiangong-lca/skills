@@ -74,7 +74,7 @@ node lifecyclemodel-automated-builder/scripts/run-lifecyclemodel-automated-build
 ```
 
 ## Fast Triage
-- Missing CLI checkout: set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir`.
+- Local CLI override issues: set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir` only when you intentionally need an unpublished working tree.
 - Missing `local_runs[]`: the current canonical slice only accepts local process-build runs.
 - Validation/publish follow-up: use the dedicated CLI subcommands against one existing auto-build run; they stay local-only and do not perform remote writes.
 - Validation failures on required model fields: inspect `references/model-contract.md`.

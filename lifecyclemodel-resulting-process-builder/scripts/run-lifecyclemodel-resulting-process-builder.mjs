@@ -1,15 +1,17 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import {
+  normalizeCliRuntimeArgs,
+  publishedCliCommand,
+  runTiangongCommand,
+} from '../../scripts/lib/cli-launcher.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const skillDir = path.resolve(scriptDir, '..');
-const workspaceRoot = path.resolve(skillDir, '..', '..');
-const defaultCliDir = path.join(workspaceRoot, 'tiangong-lca-cli');
 const defaultInputFile = path.join(skillDir, 'assets', 'example-request.json');
 const tempPaths = [];
 
@@ -43,28 +45,19 @@ Wrapper compatibility options for build:
   --projection-role <mode>  primary | all (maps to projection.mode)
 
 Wrapper options:
-  --cli-dir <dir>           Override the tiangong-lca-cli repository path
+  --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 Canonical CLI commands:
   tiangong lifecyclemodel build-resulting-process --input <file>
-  tiangong lifecyclemodel publish-resulting-process --run-dir <dir>`);
+  tiangong lifecyclemodel publish-resulting-process --run-dir <dir>
+
+Runtime:
+  default                  ${publishedCliCommand}
+  local override           --cli-dir /path/to/tiangong-lca-cli or TIANGONG_LCA_CLI_DIR`);
 }
 
-function runCli(cliBin, cliArgs) {
-  const result = spawnSync(process.execPath, [cliBin, ...cliArgs], {
-    stdio: 'inherit',
-  });
-
-  if (result.error) {
-    fail(`Failed to execute TianGong CLI: ${result.error.message}`);
-  }
-  if (typeof result.status === 'number') {
-    process.exit(result.status);
-  }
-  if (result.signal) {
-    fail(`TianGong CLI terminated with signal ${result.signal}.`);
-  }
-  process.exit(1);
+function runCli(cliDir, cliArgs) {
+  process.exit(runTiangongCommand(cliArgs, { cliDir }));
 }
 
 function writeModelRequest(modelFile, projectionRole) {
@@ -93,7 +86,7 @@ function writeModelRequest(modelFile, projectionRole) {
   return requestFile;
 }
 
-function runBuild(cliBin, args) {
+function runBuild(cliDir, args) {
   let projectionRole = 'primary';
   let inputPath = '';
   let modelFile = '';
@@ -151,7 +144,7 @@ function runBuild(cliBin, args) {
   }
 
   if (showHelp) {
-    runCli(cliBin, ['lifecyclemodel', 'build-resulting-process', '--help']);
+    runCli(cliDir, ['lifecyclemodel', 'build-resulting-process', '--help']);
   }
 
   if (inputPath && modelFile) {
@@ -164,7 +157,7 @@ function runBuild(cliBin, args) {
     inputPath = defaultInputFile;
   }
 
-  runCli(cliBin, [
+  runCli(cliDir, [
     'lifecyclemodel',
     'build-resulting-process',
     '--input',
@@ -173,7 +166,7 @@ function runBuild(cliBin, args) {
   ]);
 }
 
-function runPublish(cliBin, args) {
+function runPublish(cliDir, args) {
   let showHelp = false;
   const forwardArgs = [];
 
@@ -186,37 +179,13 @@ function runPublish(cliBin, args) {
   });
 
   if (showHelp) {
-    runCli(cliBin, ['lifecyclemodel', 'publish-resulting-process', '--help']);
+    runCli(cliDir, ['lifecyclemodel', 'publish-resulting-process', '--help']);
   }
 
-  runCli(cliBin, ['lifecyclemodel', 'publish-resulting-process', ...forwardArgs]);
+  runCli(cliDir, ['lifecyclemodel', 'publish-resulting-process', ...forwardArgs]);
 }
 
-let cliDir = process.env.TIANGONG_LCA_CLI_DIR?.trim() || defaultCliDir;
-const filteredArgs = [];
-
-for (let index = 2; index < process.argv.length; index += 1) {
-  const arg = process.argv[index];
-
-  if (arg === '--cli-dir') {
-    if (index + 1 >= process.argv.length) {
-      fail('--cli-dir requires a value');
-    }
-    cliDir = process.argv[index + 1];
-    index += 1;
-    continue;
-  }
-  if (arg.startsWith('--cli-dir=')) {
-    cliDir = arg.slice('--cli-dir='.length);
-    continue;
-  }
-  filteredArgs.push(arg);
-}
-
-const cliBin = path.join(cliDir, 'bin', 'tiangong.js');
-if (!existsSync(cliBin)) {
-  fail(`Cannot find TianGong CLI at ${cliBin}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`);
-}
+const { cliDir, args: filteredArgs } = normalizeCliRuntimeArgs(process.argv.slice(2));
 
 const subcommand = filteredArgs[0];
 if (!subcommand || subcommand === 'help' || subcommand === '-h' || subcommand === '--help') {
@@ -228,10 +197,10 @@ switch (subcommand) {
   case 'build':
   case 'prepare':
   case 'project':
-    runBuild(cliBin, filteredArgs.slice(1));
+    runBuild(cliDir, filteredArgs.slice(1));
     break;
   case 'publish':
-    runPublish(cliBin, filteredArgs.slice(1));
+    runPublish(cliDir, filteredArgs.slice(1));
     break;
   default:
     fail(`Unknown subcommand: ${subcommand}`);

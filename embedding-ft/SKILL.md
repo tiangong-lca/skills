@@ -6,7 +6,7 @@ description: Execute and troubleshoot Supabase edge function `embedding_ft` that
 # Embedding FT
 
 ## Run Workflow
-1. Ensure `tiangong-lca-cli` is available locally, or set `TIANGONG_LCA_CLI_DIR`.
+1. By default the wrapper runs the published CLI through `npx -y @tiangong-lca/cli@latest`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
 2. Set `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`, or pass `--base-url` and `--api-key`.
 3. Execute `node scripts/run-embedding-ft.mjs` with standard `tiangong admin embedding-run` flags.
 4. The wrapper delegates to `tiangong admin embedding-run`.
@@ -27,6 +27,7 @@ node scripts/run-embedding-ft.mjs \
   --base-url "https://example.supabase.co/functions/v1" \
   --api-key "$TIANGONG_LCA_API_KEY"
 
+# Force a local CLI working tree during dev/CI
 TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli \
 node scripts/run-embedding-ft.mjs \
   --dry-run \

@@ -9,7 +9,7 @@ Use this skill when the source of truth is already a lifecycle model `json_order
 
 ## Run Workflow
 
-1. Ensure `tiangong-lca-cli` is available locally, or set `TIANGONG_LCA_CLI_DIR`.
+1. By default the wrapper runs the published CLI through `npx -y @tiangong-lca/cli@latest`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
 2. Use `node scripts/run-lifecyclemodel-resulting-process-builder.mjs build ...` to delegate to `tiangong lifecyclemodel build-resulting-process`.
 3. Use `node scripts/run-lifecyclemodel-resulting-process-builder.mjs publish ...` to delegate to `tiangong lifecyclemodel publish-resulting-process`.
 4. Confirm the local artifacts in the run directory before any later `tiangong publish run` step.
@@ -90,6 +90,7 @@ node scripts/run-lifecyclemodel-resulting-process-builder.mjs publish \
   --publish-processes \
   --publish-relations
 
+# Force a local CLI working tree during dev/CI
 TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli \
   node scripts/run-lifecyclemodel-resulting-process-builder.mjs build --json
 ```

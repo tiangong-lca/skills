@@ -1,17 +1,16 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import {
+  normalizeCliRuntimeArgs,
+  publishedCliCommand,
+  runTiangongCommand,
+} from '../../scripts/lib/cli-launcher.mjs';
 
 class UsageError extends Error {}
 
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const skillDir = path.resolve(scriptDir, '..');
-const workspaceRoot = path.resolve(skillDir, '..', '..');
-const defaultCliDir = path.join(workspaceRoot, 'tiangong-lca-cli');
 const canonicalSubcommands = new Set(['auto-build', 'resume-build', 'publish-build', 'batch-build']);
 
 function fail(message) {
@@ -23,7 +22,7 @@ function renderHelp() {
   node scripts/run-process-automated-builder.mjs <auto-build|resume-build|publish-build|batch-build> [options]
 
 Wrapper options:
-  --cli-dir <dir>           Override the tiangong-lca-cli repository path
+  --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 Canonical commands:
   auto-build                Delegate to tiangong process auto-build
@@ -38,6 +37,10 @@ auto-build compatibility options:
   --flow-stdin              Build a temporary CLI request from stdin flow JSON
   --operation <mode>        produce | treat (default: produce)
 
+Runtime:
+  default                  ${publishedCliCommand}
+  local override           --cli-dir /path/to/tiangong-lca-cli or TIANGONG_LCA_CLI_DIR
+
 Notes:
   - the wrapper is now CLI-only; it no longer exposes Python / LangGraph fallback modes
   - there is no shell compatibility shim; call this .mjs entrypoint directly
@@ -48,32 +51,6 @@ Examples:
   node scripts/run-process-automated-builder.mjs publish-build --run-id <run_id> --json
   node scripts/run-process-automated-builder.mjs batch-build --input /abs/path/batch-request.json --json
 `.trim();
-}
-
-function resolveCliBin(cliDir) {
-  const cliBin = path.join(cliDir, 'bin', 'tiangong.js');
-  if (!existsSync(cliBin)) {
-    fail(`Cannot find TianGong CLI at ${cliBin}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`);
-  }
-  return cliBin;
-}
-
-function runCommand(command, args, options = {}) {
-  const result = spawnSync(command, args, {
-    stdio: 'inherit',
-    ...options,
-  });
-
-  if (result.error) {
-    throw new Error(`Failed to execute ${command}: ${result.error.message}`);
-  }
-  if (typeof result.status === 'number') {
-    return result.status;
-  }
-  if (result.signal) {
-    throw new Error(`${command} terminated with signal ${result.signal}.`);
-  }
-  return 1;
 }
 
 function parseJsonText(rawText, sourceLabel) {
@@ -92,36 +69,6 @@ function writeTempJsonFile(prefix, value) {
   return {
     tempDir,
     filePath,
-  };
-}
-
-function normalizeTopLevelArgs(rawArgs) {
-  let cliDir = process.env.TIANGONG_LCA_CLI_DIR?.trim() || defaultCliDir;
-  const args = [];
-
-  for (let index = 0; index < rawArgs.length; index += 1) {
-    const arg = rawArgs[index];
-
-    if (arg === '--cli-dir') {
-      if (index + 1 >= rawArgs.length) {
-        fail('--cli-dir requires a value');
-      }
-      cliDir = rawArgs[index + 1];
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--cli-dir=')) {
-      cliDir = arg.slice('--cli-dir='.length);
-      continue;
-    }
-
-    args.push(arg);
-  }
-
-  return {
-    cliDir,
-    args,
   };
 }
 
@@ -193,7 +140,7 @@ function normalizeCliInputArgs(args) {
   };
 }
 
-function runCanonicalAutoBuild(cliBin, args) {
+function runCanonicalAutoBuild(cliDir, args) {
   let inputPath = null;
   let flowFile = null;
   let flowJson = null;
@@ -282,7 +229,7 @@ function runCanonicalAutoBuild(cliBin, args) {
     }
 
     if (showHelp) {
-      return runCommand(process.execPath, [cliBin, 'process', 'auto-build', '--help']);
+      return runTiangongCommand(['process', 'auto-build', '--help'], { cliDir });
     }
 
     const inputSourceCount = [inputPath ? 1 : 0, flowFile ? 1 : 0, flowJson ? 1 : 0, flowFromStdin ? 1 : 0].reduce(
@@ -334,14 +281,9 @@ function runCanonicalAutoBuild(cliBin, args) {
       inputPath = tempRequest.filePath;
     }
 
-    return runCommand(process.execPath, [
-      cliBin,
-      'process',
-      'auto-build',
-      '--input',
-      inputPath,
-      ...forwardArgs,
-    ]);
+    return runTiangongCommand(['process', 'auto-build', '--input', inputPath, ...forwardArgs], {
+      cliDir,
+    });
   } finally {
     for (const tempDir of tempDirs) {
       rmSync(tempDir, { recursive: true, force: true });
@@ -349,13 +291,13 @@ function runCanonicalAutoBuild(cliBin, args) {
   }
 }
 
-function runCanonicalInputCommand(cliBin, subcommand, args) {
+function runCanonicalInputCommand(cliDir, subcommand, args) {
   const { forwardArgs } = normalizeCliInputArgs(args);
-  return runCommand(process.execPath, [cliBin, 'process', subcommand, ...forwardArgs]);
+  return runTiangongCommand(['process', subcommand, ...forwardArgs], { cliDir });
 }
 
 function main() {
-  const { cliDir, args } = normalizeTopLevelArgs(process.argv.slice(2));
+  const { cliDir, args } = normalizeCliRuntimeArgs(process.argv.slice(2));
 
   if (args.length === 0) {
     console.error(renderHelp());
@@ -374,18 +316,17 @@ function main() {
     );
   }
 
-  const cliBin = resolveCliBin(cliDir);
   const commandArgs = args.slice(1);
 
   switch (subcommand) {
     case 'auto-build':
-      return runCanonicalAutoBuild(cliBin, commandArgs);
+      return runCanonicalAutoBuild(cliDir, commandArgs);
     case 'resume-build':
-      return runCommand(process.execPath, [cliBin, 'process', 'resume-build', ...commandArgs]);
+      return runTiangongCommand(['process', 'resume-build', ...commandArgs], { cliDir });
     case 'publish-build':
-      return runCommand(process.execPath, [cliBin, 'process', 'publish-build', ...commandArgs]);
+      return runTiangongCommand(['process', 'publish-build', ...commandArgs], { cliDir });
     case 'batch-build':
-      return runCanonicalInputCommand(cliBin, 'batch-build', commandArgs);
+      return runCanonicalInputCommand(cliDir, 'batch-build', commandArgs);
     default:
       fail(`Unknown subcommand: ${subcommand}`);
   }
@@ -398,10 +339,10 @@ try {
     console.error(`Error: ${error.message}`);
     process.exitCode = 2;
   } else if (error instanceof Error) {
-    console.error(error.message);
+    console.error(`Error: ${error.message}`);
     process.exitCode = 1;
   } else {
-    console.error(String(error));
+    console.error(`Error: ${String(error)}`);
     process.exitCode = 1;
   }
 }

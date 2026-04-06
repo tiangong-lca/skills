@@ -16,13 +16,15 @@ node scripts/run-embedding-ft.mjs --dry-run
 
 ## Direct CLI equivalent
 ```bash
-node "${TIANGONG_LCA_CLI_DIR:-../tiangong-lca-cli}/bin/tiangong.js" \
+npx -y @tiangong-lca/cli@latest \
   admin embedding-run \
   --input ./assets/example-jobs.json \
   --base-url "https://example.supabase.co/functions/v1" \
   --api-key "$TIANGONG_LCA_API_KEY" \
   --dry-run
 ```
+
+Use `TIANGONG_LCA_CLI_DIR=/path/to/tiangong-lca-cli node scripts/run-embedding-ft.mjs ...` only when validating an unpublished local CLI working tree.
 
 ## Checklist
 - Response contains `completedJobs` and `failedJobs`.

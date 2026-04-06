@@ -8,7 +8,8 @@ This skill exposes only the CLI-backed governance slices that still exist in the
 
 - Entry point: `node scripts/run-flow-governance-review.mjs <command> ...`
 - Wrapper role:
-  - resolve `TIANGONG_LCA_CLI_DIR`
+  - launch `npx -y @tiangong-lca/cli@latest` by default
+  - honor `TIANGONG_LCA_CLI_DIR` / `--cli-dir` only as a local dev/CI override
   - forward arguments to `tiangong`
   - expose no Python fallback path
 - Command ownership:
@@ -28,6 +29,8 @@ Supported commands:
 - `review-flows`
 - `flow-get`
 - `flow-list`
+- `materialize-db-flows`
+- `materialize-approved-decisions`
 - `remediate-flows`
 - `publish-version`
 - `publish-reviewed-data`
@@ -58,6 +61,16 @@ If any of these workflows is required again, add a native `tiangong` command fir
 
 ### Review And Publish Flows
 
+When the task must bind to real DB flow rows:
+
+1. `materialize-db-flows`
+2. `review-flows`
+3. `materialize-approved-decisions`
+4. `remediate-flows`
+5. `publish-version` or `publish-reviewed-data`
+
+When the task is already grounded on an existing local reviewed-row snapshot:
+
 1. `review-flows`
 2. `remediate-flows`
 3. `publish-version` or `publish-reviewed-data`
@@ -83,6 +96,18 @@ If any of these workflows is required again, add a native `tiangong` command fir
   - `llm_findings.jsonl`
   - `findings.jsonl`
   - `flow_review_summary.json`
+- `materialize-db-flows`
+  - `resolved-flow-rows.jsonl`
+  - `review-input-rows.jsonl`
+  - `fetch-summary.json`
+  - `missing-flow-refs.jsonl`
+  - `ambiguous-flow-refs.jsonl`
+- `materialize-approved-decisions`
+  - `flow-dedup-canonical-map.json`
+  - `flow-dedup-rewrite-plan.json`
+  - `manual-semantic-merge-seed.current.json`
+  - `decision-summary.json`
+  - `blocked-clusters.json`
 - `publish-version`
   - publish report emitted by the CLI
 - `publish-reviewed-data`
@@ -121,4 +146,6 @@ Do not reintroduce these artifacts under `docs/`.
 
 - Keep local JSON/JSONL payloads as the system of record.
 - Use explicit CLI read/commit commands for remote interaction.
+- If the task requires real DB binding, materialize DB rows first and do not substitute synthetic rows.
+- If merge decisions were approved, materialize them through `materialize-approved-decisions` before alias or process-repair planning.
 - Do not add helper scripts, private env parsing, or hidden transport logic back into this skill.

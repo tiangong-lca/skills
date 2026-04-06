@@ -1,16 +1,12 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import {
+  normalizeCliRuntimeArgs,
+  publishedCliCommand,
+  runTiangongCommand,
+} from '../../scripts/lib/cli-launcher.mjs';
 
 class UsageError extends Error {}
-
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const skillDir = path.resolve(scriptDir, '..');
-const workspaceRoot = path.resolve(skillDir, '..', '..');
-const defaultCliDir = path.join(workspaceRoot, 'tiangong-lca-cli');
 
 function fail(message) {
   throw new UsageError(message);
@@ -22,11 +18,15 @@ function renderHelp() {
 
 Wrapper options:
   --profile <name>         process | lifecyclemodel (default: process)
-  --cli-dir <dir>          Override the tiangong-lca-cli repository path
+  --cli-dir <dir>          Override the published CLI and use a local tiangong-lca-cli repository path
 
 Profiles:
   process                  Delegate to tiangong review process
   lifecyclemodel           Delegate to tiangong review lifecyclemodel
+
+Runtime:
+  default                  ${publishedCliCommand}
+  local override           --cli-dir /path/to/tiangong-lca-cli or TIANGONG_LCA_CLI_DIR
 
 Examples:
   node scripts/run-review.mjs --profile process --run-root /path/to/artifacts/process_from_flow/<run_id> --run-id <run_id> --out-dir /abs/path/review
@@ -35,58 +35,18 @@ Examples:
 `.trim();
 }
 
-function resolveCliBin(cliDir) {
-  const cliBin = path.join(cliDir, 'bin', 'tiangong.js');
-  if (!existsSync(cliBin)) {
-    fail(`Cannot find TianGong CLI at ${cliBin}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`);
-  }
-  return cliBin;
-}
-
-function runCommand(command, args) {
-  const result = spawnSync(command, args, {
-    stdio: 'inherit',
-  });
-
-  if (result.error) {
-    throw new Error(`Failed to execute ${command}: ${result.error.message}`);
-  }
-  if (typeof result.status === 'number') {
-    return result.status;
-  }
-  if (result.signal) {
-    throw new Error(`${command} terminated with signal ${result.signal}.`);
-  }
-  return 1;
-}
-
 function normalizeArgs(rawArgs) {
-  let cliDir = process.env.TIANGONG_LCA_CLI_DIR?.trim() || defaultCliDir;
+  const { cliDir, args } = normalizeCliRuntimeArgs(rawArgs);
   let profile = 'process';
-  const args = [];
+  const forwardedArgs = [];
 
-  for (let index = 0; index < rawArgs.length; index += 1) {
-    const arg = rawArgs[index];
-
-    if (arg === '--cli-dir') {
-      if (index + 1 >= rawArgs.length) {
-        fail('--cli-dir requires a value');
-      }
-      cliDir = rawArgs[index + 1];
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--cli-dir=')) {
-      cliDir = arg.slice('--cli-dir='.length);
-      continue;
-    }
-
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
     if (arg === '--profile') {
-      if (index + 1 >= rawArgs.length) {
+      if (index + 1 >= args.length) {
         fail('--profile requires a value');
       }
-      profile = rawArgs[index + 1];
+      profile = args[index + 1];
       index += 1;
       continue;
     }
@@ -96,13 +56,13 @@ function normalizeArgs(rawArgs) {
       continue;
     }
 
-    args.push(arg);
+    forwardedArgs.push(arg);
   }
 
   return {
     cliDir,
     profile,
-    args,
+    args: forwardedArgs,
   };
 }
 
@@ -116,13 +76,11 @@ function main() {
 
   if (args.includes('-h') || args.includes('--help')) {
     if (profile === 'process') {
-      const cliBin = resolveCliBin(cliDir);
-      process.exit(runCommand(process.execPath, [cliBin, 'review', 'process', ...args]));
+      process.exit(runTiangongCommand(['review', 'process', ...args], { cliDir }));
     }
 
     if (profile === 'lifecyclemodel') {
-      const cliBin = resolveCliBin(cliDir);
-      process.exit(runCommand(process.execPath, [cliBin, 'review', 'lifecyclemodel', ...args]));
+      process.exit(runTiangongCommand(['review', 'lifecyclemodel', ...args], { cliDir }));
     }
 
     console.log(renderHelp());
@@ -130,13 +88,11 @@ function main() {
   }
 
   if (profile === 'process') {
-    const cliBin = resolveCliBin(cliDir);
-    process.exit(runCommand(process.execPath, [cliBin, 'review', 'process', ...args]));
+    process.exit(runTiangongCommand(['review', 'process', ...args], { cliDir }));
   }
 
   if (profile === 'lifecyclemodel') {
-    const cliBin = resolveCliBin(cliDir);
-    process.exit(runCommand(process.execPath, [cliBin, 'review', 'lifecyclemodel', ...args]));
+    process.exit(runTiangongCommand(['review', 'lifecyclemodel', ...args], { cliDir }));
   }
 
   fail(`Unknown profile: ${profile}`);

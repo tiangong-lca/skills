@@ -4,10 +4,15 @@ import path from 'node:path';
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  normalizeCliRuntimeArgs,
+  publishedCliCommand,
+  withCliRuntimeEnv,
+} from './lib/cli-launcher.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..');
-const defaultCliDir = path.join(path.dirname(repoRoot), 'tiangong-lca-cli');
+const localCliDir = path.join(path.dirname(repoRoot), 'tiangong-lca-cli');
 
 const defaultSkillNames = [
   'process-hybrid-search',
@@ -122,6 +127,24 @@ const docGuards = [
 
 const targetedSmokeChecks = [
   {
+    skill: 'flow-governance-review',
+    script: 'flow-governance-review/scripts/run-flow-governance-review.mjs',
+    args: ['materialize-db-flows', '--help'],
+    description: 'flow-governance-review materialize-db-flows help',
+  },
+  {
+    skill: 'flow-governance-review',
+    script: 'flow-governance-review/scripts/run-flow-governance-review.mjs',
+    args: ['materialize-approved-decisions', '--help'],
+    description: 'flow-governance-review materialize-approved-decisions help',
+  },
+  {
+    skill: 'flow-governance-review',
+    script: 'flow-governance-review/scripts/run-flow-governance-review-fixture.mjs',
+    args: [],
+    description: 'flow-governance-review end-to-end fixture',
+  },
+  {
     skill: 'lifecycleinventory-review',
     script: 'lifecycleinventory-review/scripts/run-review.mjs',
     args: ['--profile', 'lifecyclemodel', '--help'],
@@ -134,37 +157,17 @@ function fail(message) {
 }
 
 function parseArgs(rawArgs) {
-  let cliDir = process.env.TIANGONG_LCA_CLI_DIR?.trim() || defaultCliDir;
-  const targets = [];
+  const defaultCliDir = existsSync(localCliDir) ? localCliDir : null;
+  const { cliDir, args } = normalizeCliRuntimeArgs(rawArgs, { defaultCliDir });
 
-  for (let index = 0; index < rawArgs.length; index += 1) {
-    const arg = rawArgs[index];
-
-    if (arg === '--cli-dir') {
-      if (index + 1 >= rawArgs.length) {
-        fail('--cli-dir requires a value.');
-      }
-      cliDir = rawArgs[index + 1];
-      index += 1;
-      continue;
-    }
-
-    if (arg.startsWith('--cli-dir=')) {
-      cliDir = arg.slice('--cli-dir='.length);
-      continue;
-    }
-
-    if (arg === '-h' || arg === '--help') {
-      printHelp();
-      process.exit(0);
-    }
-
-    targets.push(arg);
+  if (args.includes('-h') || args.includes('--help')) {
+    printHelp();
+    process.exit(0);
   }
 
   return {
     cliDir,
-    targets,
+    targets: args,
   };
 }
 
@@ -183,6 +186,11 @@ What this validates:
   - Node syntax for skill wrapper .mjs files
   - wrapper --help smoke checks through the TianGong CLI
   - targeted doc guards that prevent stale shell/Python migration wording
+
+CLI runtime:
+  - default local repo validation uses ../tiangong-lca-cli when present
+  - otherwise wrappers fall back to ${publishedCliCommand}
+  - use --cli-dir or TIANGONG_LCA_CLI_DIR to force a local working tree
 `.trim());
 }
 
@@ -204,6 +212,9 @@ function run(command, args, options = {}) {
 }
 
 function ensureCliBuild(cliDir) {
+  if (!cliDir) {
+    return;
+  }
   const cliBin = path.join(cliDir, 'bin', 'tiangong.js');
   const cliDist = path.join(cliDir, 'dist', 'src', 'main.js');
   if (!existsSync(cliBin)) {
@@ -285,10 +296,7 @@ function runHelpSmoke(scriptFiles, cliDir) {
   scriptFiles.forEach((scriptFile) => {
     run(process.execPath, [scriptFile, '--help'], {
       cwd: repoRoot,
-      env: {
-        ...process.env,
-        TIANGONG_LCA_CLI_DIR: cliDir,
-      },
+      env: withCliRuntimeEnv(process.env, cliDir),
     });
   });
 }
@@ -309,10 +317,7 @@ function runTargetedSmokeChecks(skillDirs, cliDir) {
 
     run(process.execPath, [scriptFile, ...check.args], {
       cwd: repoRoot,
-      env: {
-        ...process.env,
-        TIANGONG_LCA_CLI_DIR: cliDir,
-      },
+      env: withCliRuntimeEnv(process.env, cliDir),
     });
     count += 1;
   });

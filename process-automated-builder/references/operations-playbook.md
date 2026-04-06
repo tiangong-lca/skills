@@ -73,13 +73,14 @@ Batch mode fans out deterministic local runs and records their reports in one ba
 
 ## Required Env
 
-- `TIANGONG_LCA_CLI_DIR` only when the wrapper cannot discover the local CLI checkout automatically
+- Wrappers use `npx -y @tiangong-lca/cli@latest` by default.
+- Set `TIANGONG_LCA_CLI_DIR` only when you need a local CLI working tree for dev/CI.
 
 The canonical commands above do not require any legacy provider, transport, or OCR env stack.
 
 ## Failure Triage
 
-- Missing CLI checkout:
+- Local CLI override issues:
   - set `TIANGONG_LCA_CLI_DIR`
   - or pass `--cli-dir`
 - Missing flow input:
