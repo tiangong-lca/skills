@@ -17,16 +17,16 @@ jobs:
           - windows-latest
     steps:
       - name: Checkout skills
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Checkout tiangong-lca-cli
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: tiangong-lca/tiangong-cli
           path: .ci/tiangong-lca-cli
 
       - name: Setup Node 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: npm
