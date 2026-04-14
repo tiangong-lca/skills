@@ -77,8 +77,10 @@ npm i skills@latest -g
 
 当前约定：
 
-- skill wrapper 默认通过 `npx -y @tiangong-lca/cli@latest` 执行已发布 CLI
-- 仅在本地开发或 CI 联调未发布改动时，才使用 `--cli-dir` / `TIANGONG_LCA_CLI_DIR` 强制指向本地 CLI working tree
+- skill wrapper 会优先自动发现本地 sibling CLI checkout：`../tiangong-lca-cli` 或 `../tiangong-cli`
+- 如果没有可用的本地 sibling checkout，则回退到已发布 CLI：`npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`
+- 在本地开发或 CI 联调时，也可以使用 `--cli-dir` / `TIANGONG_LCA_CLI_DIR` 强制指向特定的本地 CLI working tree
+- 对远端 process review snapshot，优先使用 `tiangong process list --json` 再配合 `review process --rows-file ...`，不再鼓励 case-local bridge 脚本
 - 对新迁移和后续重构的 skill，wrapper 入口优先直接使用原生 Node `.mjs`，不再新增 shell 兼容壳
 - skills 内部不再保留业务 Python、MCP transport、私有 env parsing 或 shell shim
 - 若能力缺失，先在 `tiangong-lca-cli` 中新增原生 `tiangong <noun> <verb>` 命令，再让 skill 调用它

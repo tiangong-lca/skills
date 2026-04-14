@@ -5,6 +5,7 @@ import process from 'node:process';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
+  defaultLocalCliDirCandidates,
   normalizeCliRuntimeArgs,
   publishedCliCommand,
   withCliRuntimeEnv,
@@ -12,7 +13,7 @@ import {
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..');
-const localCliDir = path.join(path.dirname(repoRoot), 'tiangong-lca-cli');
+const localCliDirCandidates = defaultLocalCliDirCandidates(repoRoot);
 
 const defaultSkillNames = [
   'process-hybrid-search',
@@ -125,6 +126,31 @@ const docGuards = [
   },
 ];
 
+const requiredDocPatterns = [
+  {
+    file: 'lifecycleinventory-review/SKILL.md',
+    pattern: /--rows-file/u,
+    message:
+      'lifecycleinventory-review should document the native --rows-file process review path.',
+  },
+  {
+    file: 'lifecycleinventory-review/scripts/run-review.mjs',
+    pattern: /--rows-file/u,
+    message: 'run-review.mjs help should include a rows-file process review example.',
+  },
+  {
+    file: 'README.md',
+    pattern: /process list --json/u,
+    message: 'README.md should mention the native process list -> review process rows-file path.',
+  },
+  {
+    file: 'README.zh-CN.md',
+    pattern: /process list --json/u,
+    message:
+      'README.zh-CN.md should mention the native process list -> review process rows-file path.',
+  },
+];
+
 const targetedSmokeChecks = [
   {
     skill: 'flow-governance-review',
@@ -147,6 +173,12 @@ const targetedSmokeChecks = [
   {
     skill: 'lifecycleinventory-review',
     script: 'lifecycleinventory-review/scripts/run-review.mjs',
+    args: ['--profile', 'process', '--help'],
+    description: 'process review profile help',
+  },
+  {
+    skill: 'lifecycleinventory-review',
+    script: 'lifecycleinventory-review/scripts/run-review.mjs',
     args: ['--profile', 'lifecyclemodel', '--help'],
     description: 'lifecyclemodel review profile help',
   },
@@ -157,8 +189,7 @@ function fail(message) {
 }
 
 function parseArgs(rawArgs) {
-  const defaultCliDir = existsSync(localCliDir) ? localCliDir : null;
-  const { cliDir, args } = normalizeCliRuntimeArgs(rawArgs, { defaultCliDir });
+  const { cliDir, args } = normalizeCliRuntimeArgs(rawArgs, { repoRoot });
 
   if (args.includes('-h') || args.includes('--help')) {
     printHelp();
@@ -179,6 +210,7 @@ Examples:
   node scripts/validate-skills.mjs
   node scripts/validate-skills.mjs lifecycleinventory-review process-hybrid-search
   node scripts/validate-skills.mjs --cli-dir ../tiangong-lca-cli lifecycleinventory-review
+  node scripts/validate-skills.mjs --cli-dir ../tiangong-cli lifecycleinventory-review
 
 What this validates:
   - SKILL.md frontmatter presence
@@ -188,7 +220,9 @@ What this validates:
   - targeted doc guards that prevent stale shell/Python migration wording
 
 CLI runtime:
-  - default local repo validation uses ../tiangong-lca-cli when present
+  - default local repo validation uses the first sibling repo that exists:
+    - ../tiangong-lca-cli
+    - ../tiangong-cli
   - otherwise wrappers fall back to ${publishedCliCommand}
   - use --cli-dir or TIANGONG_LCA_CLI_DIR to force a local working tree
 `.trim());
@@ -211,8 +245,8 @@ function run(command, args, options = {}) {
   }
 }
 
-function ensureCliBuild(cliDir) {
-  if (!cliDir) {
+function ensureCliBuild(cliDir, required) {
+  if (!cliDir || !required) {
     return;
   }
   const cliBin = path.join(cliDir, 'bin', 'tiangong.js');
@@ -249,6 +283,10 @@ function collectWrapperScripts(skillDir) {
     .filter((entry) => entry.endsWith('.mjs'))
     .sort()
     .map((entry) => path.join(scriptsDir, entry));
+}
+
+function scriptUsesCliLauncher(scriptFile) {
+  return readFileSync(scriptFile, 'utf8').includes('cli-launcher.mjs');
 }
 
 function assertSkillFrontmatter(skillDir) {
@@ -338,20 +376,43 @@ function runDocGuards() {
   });
 }
 
+function runRequiredDocPatterns() {
+  requiredDocPatterns.forEach((guard) => {
+    const filePath = path.join(repoRoot, guard.file);
+    if (!existsSync(filePath)) {
+      fail(`Required-doc file is missing: ${guard.file}`);
+    }
+    const text = readFileSync(filePath, 'utf8');
+    if (!guard.pattern.test(text)) {
+      fail(`${guard.message} (${guard.file})`);
+    }
+  });
+}
+
 function main() {
   const { cliDir, targets } = parseArgs(process.argv.slice(2));
-  ensureCliBuild(cliDir);
   runDocGuards();
+  runRequiredDocPatterns();
 
   const skillDirs = (targets.length ? targets : defaultSkillNames)
     .map((target) => normalizeSkillTarget(target))
     .sort((left, right) => left.localeCompare(right));
+  const skillPlans = skillDirs.map((skillDir) => ({
+    skillDir,
+    scriptFiles: collectWrapperScripts(skillDir),
+  }));
+  const needsCliRuntime =
+    skillPlans.some(({ scriptFiles }) => scriptFiles.some((scriptFile) => scriptUsesCliLauncher(scriptFile))) ||
+    targetedSmokeChecks.some((check) =>
+      skillPlans.some(({ skillDir }) => path.basename(skillDir) === check.skill),
+    );
+
+  ensureCliBuild(cliDir, needsCliRuntime);
 
   let scriptCount = 0;
-  skillDirs.forEach((skillDir) => {
+  skillPlans.forEach(({ skillDir, scriptFiles }) => {
     assertSkillFrontmatter(skillDir);
     assertAgentMetadata(skillDir);
-    const scriptFiles = collectWrapperScripts(skillDir);
     scriptCount += scriptFiles.length;
     runNodeChecks(scriptFiles);
     runHelpSmoke(scriptFiles, cliDir);
@@ -359,7 +420,7 @@ function main() {
   const targetedSmokeCount = runTargetedSmokeChecks(skillDirs, cliDir);
 
   console.log(
-    `Validated ${skillDirs.length} skill directories, ${scriptCount} wrapper scripts, ${targetedSmokeCount} targeted smokes, and ${docGuards.length} doc guards.`,
+    `Validated ${skillDirs.length} skill directories, ${scriptCount} wrapper scripts, ${targetedSmokeCount} targeted smokes, ${docGuards.length} negative doc guards, and ${requiredDocPatterns.length} required doc patterns.`,
   );
 }
 

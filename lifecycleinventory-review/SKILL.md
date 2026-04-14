@@ -25,8 +25,11 @@ description: "Review process-level or lifecyclemodel-level lifecycle inventory o
 
 ## process profile
 使用 `tiangong review process` 执行 process 维度复审：
-- 输入：`--run-root --run-id --out-dir [--start-ts] [--end-ts] [--logic-version] [--enable-llm] [--llm-model] [--llm-max-processes]`
+- 输入：`(--rows-file | --run-root) --out-dir [--run-id] [--start-ts] [--end-ts] [--logic-version] [--enable-llm] [--llm-model] [--llm-max-processes]`
+- 远端 snapshot 路径：先用 `tiangong process list --json` 生成 process rows snapshot，再把该 JSON 报告或原始 rows JSON/JSONL 直接传给 `--rows-file`
 - 输出：
+  - `review-input-summary.json`
+  - `review-input/materialization-summary.json`（仅 `--rows-file` 模式）
   - `one_flow_rerun_timing.md`
   - `one_flow_rerun_review_v2_1_zh.md`
   - `one_flow_rerun_review_v2_1_en.md`
@@ -48,18 +51,28 @@ description: "Review process-level or lifecyclemodel-level lifecycle inventory o
 
 ## 运行示例
 ```bash
+tiangong process list \
+  --state-code 100 \
+  --limit 20 \
+  --json > /abs/path/process-list-report.json
+
+node scripts/run-review.mjs \
+  --profile process \
+  --rows-file /abs/path/process-list-report.json \
+  --out-dir /abs/path/review
+
 node scripts/run-review.mjs \
   --profile process \
   --run-root /path/to/artifacts/process_from_flow/<run_id> \
   --run-id <run_id> \
-  --out-dir /home/huimin/.openclaw/workspace/review \
+  --out-dir /abs/path/review \
   --start-ts 2026-02-22T16:01:51+00:00 \
   --end-ts 2026-02-22T16:21:40+00:00
 
 node scripts/run-review.mjs \
   --profile lifecyclemodel \
   --run-dir /path/to/artifacts/lifecyclemodel_auto_build/<run_id> \
-  --out-dir /home/huimin/.openclaw/workspace/lifecyclemodel-review
+  --out-dir /abs/path/lifecyclemodel-review
 ```
 
 ## 后续扩展

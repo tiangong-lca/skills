@@ -77,8 +77,10 @@ Skills in this repository are expected to be thin wrappers over the unified `tia
 
 Current rules:
 
-- wrappers run the published CLI by default through `npx -y @tiangong-lca/cli@latest`
-- use `--cli-dir` or `TIANGONG_LCA_CLI_DIR` only to force a local CLI working tree during dev/CI
+- wrappers auto-discover a local sibling CLI checkout first when `../tiangong-lca-cli` or `../tiangong-cli` exists
+- otherwise wrappers fall back to the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`
+- use `--cli-dir` or `TIANGONG_LCA_CLI_DIR` to force a specific local CLI working tree during dev/CI
+- for remote process review snapshots, prefer `tiangong process list --json` followed by `review process --rows-file ...` instead of case-local bridge scripts
 - use native cross-platform Node `.mjs` wrappers as the canonical entrypoint
 - do not keep business Python runtimes, shell shims, MCP transports, or private env parsers inside skills
 - if a capability is missing, add a native `tiangong <noun> <verb>` command first, then update the skill to call it

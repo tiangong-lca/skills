@@ -21,7 +21,7 @@ Wrapper options:
   --cli-dir <dir>          Override the published CLI and use a local tiangong-lca-cli repository path
 
 Profiles:
-  process                  Delegate to tiangong review process
+  process                  Delegate to tiangong review process for either --rows-file or --run-root input
   lifecyclemodel           Delegate to tiangong review lifecyclemodel
 
 Runtime:
@@ -29,6 +29,7 @@ Runtime:
   local override           --cli-dir /path/to/tiangong-lca-cli or TIANGONG_LCA_CLI_DIR
 
 Examples:
+  node scripts/run-review.mjs --profile process --rows-file /abs/path/process-list-report.json --out-dir /abs/path/review
   node scripts/run-review.mjs --profile process --run-root /path/to/artifacts/process_from_flow/<run_id> --run-id <run_id> --out-dir /abs/path/review
   node scripts/run-review.mjs --profile process --run-root /path/to/artifacts/process_from_flow/<run_id> --run-id <run_id> --out-dir /abs/path/review --enable-llm
   node scripts/run-review.mjs --profile lifecyclemodel --run-dir /path/to/artifacts/lifecyclemodel_auto_build/<run_id> --out-dir /abs/path/lifecyclemodel-review
