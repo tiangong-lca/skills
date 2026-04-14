@@ -16,7 +16,7 @@ node scripts/run-flow-hybrid-search.mjs --dry-run
 
 ## Direct CLI equivalent
 ```bash
-npx -y @tiangong-lca/cli@latest \
+npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong \
   search flow \
   --input ./assets/example-request.json \
   --base-url "https://example.supabase.co/functions/v1" \

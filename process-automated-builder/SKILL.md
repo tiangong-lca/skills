@@ -45,7 +45,7 @@ node scripts/run-process-automated-builder.mjs batch-build --input /abs/path/bat
 ```
 
 ## Runtime Requirements
-- The wrapper runs the published CLI by default through `npx -y @tiangong-lca/cli@latest`.
+- The wrapper runs the published CLI by default through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`.
 - Set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir` only when you need a local CLI working tree for dev/CI.
 - The current canonical commands are local artifact commands. They do not require any legacy provider, transport, or OCR env stack.
 - If a future native CLI command needs additional env, document it in `tiangong-lca-cli` first and keep this skill as a thin caller only.

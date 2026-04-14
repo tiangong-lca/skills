@@ -8,7 +8,7 @@ This skill exposes only the CLI-backed governance slices that still exist in the
 
 - Entry point: `node scripts/run-flow-governance-review.mjs <command> ...`
 - Wrapper role:
-  - launch `npx -y @tiangong-lca/cli@latest` by default
+  - launch `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong` by default
   - honor `TIANGONG_LCA_CLI_DIR` / `--cli-dir` only as a local dev/CI override
   - forward arguments to `tiangong`
   - expose no Python fallback path

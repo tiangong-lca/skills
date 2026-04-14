@@ -73,7 +73,7 @@ Batch mode fans out deterministic local runs and records their reports in one ba
 
 ## Required Env
 
-- Wrappers use `npx -y @tiangong-lca/cli@latest` by default.
+- Wrappers use `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong` by default.
 - Set `TIANGONG_LCA_CLI_DIR` only when you need a local CLI working tree for dev/CI.
 
 The canonical commands above do not require any legacy provider, transport, or OCR env stack.

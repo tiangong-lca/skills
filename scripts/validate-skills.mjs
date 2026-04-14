@@ -40,6 +40,7 @@ const historicalValidatePyCurrentPathPattern = new RegExp(
   String.raw`validate` + String.raw`\.py` + String.raw` checks`,
   'iu',
 );
+const legacyPublishedCliInvocationPattern = /npx -y @tiangong-lca\/cli@latest/u;
 
 const docGuards = [
   {
@@ -148,6 +149,14 @@ const requiredDocPatterns = [
     pattern: /process list --json/u,
     message:
       'README.zh-CN.md should mention the native process list -> review process rows-file path.',
+  },
+];
+
+const repoWideDocGuards = [
+  {
+    pattern: legacyPublishedCliInvocationPattern,
+    message:
+      'Skill docs should use the canonical published CLI invocation from cli-launcher.mjs instead of the legacy npx shorthand.',
   },
 ];
 
@@ -389,9 +398,46 @@ function runRequiredDocPatterns() {
   });
 }
 
+function collectRepoDocFiles(rootDir) {
+  const entries = readdirSync(rootDir, { withFileTypes: true });
+  const files = [];
+
+  entries.forEach((entry) => {
+    if (entry.name === '.git' || entry.name === 'node_modules') {
+      return;
+    }
+
+    const fullPath = path.join(rootDir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...collectRepoDocFiles(fullPath));
+      return;
+    }
+
+    if (entry.isFile() && entry.name.endsWith('.md')) {
+      files.push(fullPath);
+    }
+  });
+
+  return files;
+}
+
+function runRepoWideDocGuards() {
+  const docFiles = collectRepoDocFiles(repoRoot);
+
+  repoWideDocGuards.forEach((guard) => {
+    docFiles.forEach((filePath) => {
+      const text = readFileSync(filePath, 'utf8');
+      if (guard.pattern.test(text)) {
+        fail(`${guard.message} (${path.relative(repoRoot, filePath)})`);
+      }
+    });
+  });
+}
+
 function main() {
   const { cliDir, targets } = parseArgs(process.argv.slice(2));
   runDocGuards();
+  runRepoWideDocGuards();
   runRequiredDocPatterns();
 
   const skillDirs = (targets.length ? targets : defaultSkillNames)
@@ -420,7 +466,7 @@ function main() {
   const targetedSmokeCount = runTargetedSmokeChecks(skillDirs, cliDir);
 
   console.log(
-    `Validated ${skillDirs.length} skill directories, ${scriptCount} wrapper scripts, ${targetedSmokeCount} targeted smokes, ${docGuards.length} negative doc guards, and ${requiredDocPatterns.length} required doc patterns.`,
+    `Validated ${skillDirs.length} skill directories, ${scriptCount} wrapper scripts, ${targetedSmokeCount} targeted smokes, ${docGuards.length} negative doc guards, ${repoWideDocGuards.length} repo-wide doc guards, and ${requiredDocPatterns.length} required doc patterns.`,
   );
 }
 

@@ -6,7 +6,7 @@ description: Execute and troubleshoot Supabase edge function `lifecyclemodel_hyb
 # Lifecycle Model Hybrid Search
 
 ## Run Workflow
-1. By default the wrapper runs the published CLI through `npx -y @tiangong-lca/cli@latest`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
+1. By default the wrapper runs the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
 2. Set `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`, or pass `--base-url` and `--api-key`.
 3. Execute `node scripts/run-lifecyclemodel-hybrid-search.mjs` with standard `tiangong search lifecyclemodel` flags.
 4. The wrapper delegates to `tiangong search lifecyclemodel`.
