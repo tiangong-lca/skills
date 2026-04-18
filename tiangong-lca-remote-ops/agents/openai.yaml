@@ -1,0 +1,4 @@
+interface:
+  display_name: "TianGong LCA Remote Ops"
+  short_description: "Run CLI-backed remote TianGong process maintenance"
+  default_prompt: "Use $tiangong-lca-remote-ops to refresh current-user process references or verify frozen process rows through the TianGong CLI."
