@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "lastReviewedAt": "2026-04-18",
+  "lastReviewedCommit": "8a3f25207be167e315acc6fbbccb421a41077f79",
+  "repo": {
+    "id": "skills",
+    "path": "tiangong-lca-skills",
+    "canonicalRepo": "tiangong-lca/skills",
+    "purpose": "Checked-in TianGong skill packages and CLI-backed agent workflow wrappers.",
+    "entryDoc": "AGENTS.md",
+    "docImpactDoc": "ai/doc-impact.yaml",
+    "readmeDoc": "README.md",
+    "defaultBranch": "main",
+    "dailyTrunk": "main",
+    "routinePrBase": "main",
+    "branchModel": "M1",
+    "workspaceIntegrationRequired": true,
+    "rootIntegrationRule": "lca-workspace/main may bump merged main-branch skill snapshots when the workspace intends to ship the updated skill set.",
+    "trackedBy": {
+      "workspaceParentIssue": "https://github.com/tiangong-lca/workspace/issues/73",
+      "repoIssue": "https://github.com/tiangong-lca/skills/issues/47"
+    },
+    "sourceOfTruth": {
+      "stableManualEditPaths": [
+        {
+          "path": "*/SKILL.md",
+          "role": "canonical skill instructions and trigger contract"
+        },
+        {
+          "path": "*/agents/openai.yaml",
+          "role": "canonical wrapper contract used by the skills CLI"
+        },
+        {
+          "path": "*/scripts/**",
+          "role": "skill-local helper scripts when a skill needs executable support files"
+        },
+        {
+          "path": "*/references/**",
+          "role": "skill-local reference material that the skill intentionally ships"
+        },
+        {
+          "path": "*/assets/**",
+          "role": "skill-local assets bundled with the skill"
+        },
+        {
+          "path": "scripts/validate-skills.mjs",
+          "role": "repo-level validation contract for wrappers and migration guards"
+        },
+        {
+          "path": "test/**",
+          "role": "repo-level validation coverage for launcher and packaging rules"
+        }
+      ],
+      "nonOwnerBoundaries": [
+        {
+          "repo": "tiangong-lca-cli",
+          "doesNotOwn": [
+            "the native public command surface",
+            "new low-level command semantics",
+            "core REST or auth client behavior"
+          ]
+        },
+        {
+          "repo": "lca-workspace",
+          "doesNotOwn": [
+            "root integration state",
+            "submodule pointer updates"
+          ]
+        }
+      ]
+    },
+    "taskHotspots": [
+      {
+        "topic": "skill instruction and wrapper alignment",
+        "paths": [
+          "*/SKILL.md",
+          "*/agents/openai.yaml"
+        ]
+      },
+      {
+        "topic": "repo-level packaging and validation rules",
+        "paths": [
+          "scripts/validate-skills.mjs",
+          "test/**",
+          "README.md",
+          "README.zh-CN.md"
+        ]
+      }
+    ],
+    "validation": {
+      "baselineLocalCommands": [
+        "node scripts/validate-skills.mjs"
+      ],
+      "notes": [
+        "Pass one or more skill directories to validate only the touched skills.",
+        "If a wrapper contract changes, validate the touched skills in the same working session.",
+        "AI-doc changes should still run the root warning-only ai-doc-lint."
+      ]
+    }
+  }
+}

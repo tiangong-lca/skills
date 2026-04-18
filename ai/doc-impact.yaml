@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "lastReviewedAt": "2026-04-18",
+  "lastReviewedCommit": "8a3f25207be167e315acc6fbbccb421a41077f79",
+  "rules": [
+    {
+      "id": "skills-bootstrap-contract",
+      "scope": "repo",
+      "repo": "skills",
+      "triggers": [
+        {
+          "path": "AGENTS.md",
+          "kind": "doc-contract"
+        },
+        {
+          "path": "README.md",
+          "kind": "doc-entry"
+        },
+        {
+          "path": "README.zh-CN.md",
+          "kind": "doc-entry"
+        },
+        {
+          "path": "ai/**",
+          "kind": "doc-ai-layer"
+        }
+      ],
+      "requiredDocs": [
+        {
+          "path": "AGENTS.md",
+          "mode": "review_or_update"
+        },
+        {
+          "path": "ai/repo.yaml",
+          "mode": "review_or_update"
+        },
+        {
+          "path": "ai/doc-impact.yaml",
+          "mode": "review_or_update"
+        }
+      ],
+      "reason": "Entry guidance, repo facts, and review-trigger rules must stay aligned."
+    },
+    {
+      "id": "skills-wrapper-contract",
+      "scope": "repo",
+      "repo": "skills",
+      "triggers": [
+        {
+          "path": "*/SKILL.md",
+          "kind": "skill-contract"
+        },
+        {
+          "path": "*/agents/openai.yaml",
+          "kind": "wrapper-contract"
+        },
+        {
+          "path": "*/scripts/**",
+          "kind": "skill-script"
+        },
+        {
+          "path": "*/references/**",
+          "kind": "skill-reference"
+        },
+        {
+          "path": "*/assets/**",
+          "kind": "skill-asset"
+        }
+      ],
+      "requiredDocs": [
+        {
+          "path": "AGENTS.md",
+          "mode": "review_or_update"
+        },
+        {
+          "path": "ai/repo.yaml",
+          "mode": "review_or_update"
+        },
+        {
+          "path": "ai/doc-impact.yaml",
+          "mode": "review_or_update"
+        }
+      ],
+      "reason": "Skill packages are the repo's source of truth and should refresh the AI contract when their instruction or wrapper behavior changes."
+    },
+    {
+      "id": "skills-validation-contract",
+      "scope": "repo",
+      "repo": "skills",
+      "triggers": [
+        {
+          "path": "scripts/validate-skills.mjs",
+          "kind": "validation-script"
+        },
+        {
+          "path": "test/**",
+          "kind": "repo-test"
+        },
+        {
+          "path": ".github/workflows/**",
+          "kind": "ci"
+        }
+      ],
+      "requiredDocs": [
+        {
+          "path": "AGENTS.md",
+          "mode": "review_or_update"
+        },
+        {
+          "path": "ai/repo.yaml",
+          "mode": "review_or_update"
+        },
+        {
+          "path": "ai/doc-impact.yaml",
+          "mode": "review_or_update"
+        }
+      ],
+      "reason": "Validation or CI changes alter the minimum proof expected for future skill work."
+    }
+  ]
+}

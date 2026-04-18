@@ -1,37 +1,100 @@
-# AGENTS.md
+---
+title: skills AI Working Guide
+docType: contract
+scope: repo
+status: active
+authoritative: true
+owner: skills
+language: en
+whenToUse:
+  - when a task may add, remove, rename, or restructure a checked-in TianGong skill
+  - when deciding whether work belongs in this repository, in tiangong-lca-cli, or in a product/runtime repo
+  - when routing from the workspace root into the skills repository
+whenToUpdate:
+  - when skill packaging rules or validation flow change
+  - when repo ownership or CLI boundary rules change
+  - when the repo-local AI bootstrap docs under ai/ change
+checkPaths:
+  - AGENTS.md
+  - README.md
+  - README.zh-CN.md
+  - ai/**/*.yaml
+  - */SKILL.md
+  - */agents/openai.yaml
+  - */scripts/**
+  - */references/**
+  - */assets/**
+  - scripts/validate-skills.mjs
+  - test/**
+  - .github/workflows/**
+lastReviewedAt: 2026-04-18
+lastReviewedCommit: 8a3f25207be167e315acc6fbbccb421a41077f79
+related:
+  - ai/repo.yaml
+  - ai/doc-impact.yaml
+  - README.md
+  - README.zh-CN.md
+  - scripts/validate-skills.mjs
+---
 
-适用范围：本仓库根目录及全部子目录。
+# AGENTS.md — skills AI Working Guide
 
-## 强制规则：使用 Codex 创建或更新 Skill
+`tiangong-lca-skills` owns checked-in skill wrappers and skill packaging metadata for TianGong agent workflows. Start here when the task may change `SKILL.md`, `agents/openai.yaml`, validation rules, or the thin wrappers that connect skills to the unified CLI.
 
-1. 必须参考 Codex 内置 `skill-creator` 指南并按其要求执行。
-2. 默认参考路径：
-   - `/root/.codex/skills/.system/skill-creator/SKILL.md`
-   - 若运行环境不同，使用等价的 `$CODEX_HOME/skills/.system/skill-creator/SKILL.md`
-3. 当任务是“新建 skill / 修改 skill / 规范化 skill”时，优先触发并遵循 `skill-creator` 流程。
-4. 如本文件与 `skill-creator` 细则存在冲突，以 `skill-creator` 为准。
+## AI Load Order
 
-## Skill 实施流程（必须遵守）
+Load docs in this order:
 
-1. 明确 skill 的触发场景与典型用例。
-2. 规划可复用资源（`scripts/`、`references/`、`assets/`）。
-3. 新 skill 直接按 `skill-creator` 规范手工创建目录与模板；不要假设仓库里存在额外的 Python 初始化脚本。
-4. 按规范填写/更新 `SKILL.md` 与资源文件。
-5. 生成或更新真实存在的 `agents/openai.yaml`，并确保它满足仓库校验要求。
-6. 运行 `node scripts/validate-skills.mjs <skill-path>`，修复后直到通过。
+1. `AGENTS.md`
+2. `ai/repo.yaml`
+3. `ai/doc-impact.yaml`
+4. `README.md` only when you need install or distribution context
+5. the target skill's `SKILL.md`
+6. `scripts/validate-skills.mjs` only when validation behavior itself is part of the task
 
-## Skill 文件规范
+Do not start by inferring behavior from chat history or one skill directory alone.
 
-1. Skill 目录名仅使用小写字母、数字、连字符（hyphen-case），且应小于 64 字符。
-2. 每个 skill 至少包含 `SKILL.md`。
-3. `SKILL.md` 的 YAML frontmatter 仅允许：
-   - `name`
-   - `description`
-4. `description` 必须写清楚“做什么 + 何时使用（触发条件）”。
-5. 仅在确有必要时创建 `scripts/`、`references/`、`assets/`，避免冗余文件。
+## Repo Ownership
 
-## 交付前检查
+This repo owns:
 
-1. 校验通过：`node scripts/validate-skills.mjs <skill-path>` 返回通过结果。
-2. 若新增脚本：至少运行一次代表性测试，确认可执行与输出合理。
-3. 变更说明中明确列出：新增/修改的 skill 文件与校验结果。
+- `*/SKILL.md` for checked-in skill instructions
+- `*/agents/openai.yaml` for the canonical CLI-backed wrapper contract
+- skill-local `scripts/**`, `references/**`, and `assets/**` when they are part of one skill package
+- `scripts/validate-skills.mjs` and repo validation tests
+- `README.md` and `README.zh-CN.md` for install and usage guidance
+
+This repo does not own:
+
+- the public CLI command surface
+- product runtime business logic
+- workspace integration state after merge
+
+Route those tasks to:
+
+- `tiangong-lca-cli` for new native `tiangong <noun> <verb>` commands
+- the owning product/runtime repo for business logic or API changes
+- `lca-workspace` for root integration after merge
+
+## Runtime Facts
+
+- This repo is distribution-oriented; each skill should stay a thin wrapper over the unified `tiangong` CLI
+- If a capability is missing, add it to `tiangong-lca-cli` first, then update the skill wrapper here
+- The canonical local validation command is `node scripts/validate-skills.mjs`
+- You may pass one or more skill paths to validate only the touched skills
+
+## Hard Boundaries
+
+- Do not add private business runtimes, MCP transports, or unrelated orchestration layers inside a skill when the behavior should live in the CLI or an owning repo
+- Do not leave a changed `SKILL.md` without updating the paired `agents/openai.yaml` when the invocation contract changed
+- Do not treat a merged repo PR here as workspace-delivery complete if the root repo still needs a submodule bump
+
+## Workspace Integration
+
+A merged PR in `tiangong-lca-skills` is repo-complete, not delivery-complete.
+
+If the change must ship through the workspace:
+
+1. merge the child PR into `tiangong-lca-skills`
+2. update the `lca-workspace` submodule pointer deliberately
+3. complete any later workspace-level validation that depends on the updated skill set
