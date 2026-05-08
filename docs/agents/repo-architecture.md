@@ -21,8 +21,11 @@ checkPaths:
   - "*/scripts/**"
   - "*/references/**"
   - "*/assets/**"
-lastReviewedAt: 2026-05-03
-lastReviewedCommit: 5004ca88f8c2b7177a90fe696eafaf76d0e813cf
+  - .githooks/pre-push
+  - scripts/docpact-gate.sh
+  - scripts/install-git-hooks.sh
+lastReviewedAt: 2026-05-08
+lastReviewedCommit: 813ad4c1cddcae0eb57116e7ae9bd2da2854c115
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -52,3 +55,7 @@ If a skill needs a capability that does not exist in the CLI, add the capability
 ## Integration Semantics
 
 A merged PR in this repository is repo-complete only. If the updated skill set must ship through the workspace, root integration must deliberately update the `tiangong-lca-skills` submodule pointer after merge.
+
+## Local Docpact Push Gate
+
+This repository has a versioned local `pre-push` hook under `.githooks/pre-push` that delegates to `scripts/docpact-gate.sh`. The hook is a local developer guard for docpact config validation and enforced doc-governance linting; CI remains the authoritative PR enforcement path.
