@@ -30,6 +30,7 @@ const defaultSkillNames = [
   'process-dedup-review',
   'process-scope-statistics',
   'tiangong-lca-remote-ops',
+  'current-account-dataset-review',
 ];
 
 const removedQuickValidatePattern = new RegExp(String.raw`quick_validate` + String.raw`\.py`, 'u');
