@@ -31,7 +31,7 @@ checkPaths:
   - .githooks/**
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-05-08
+lastReviewedAt: 2026-05-13
 lastReviewedCommit: 813ad4c1cddcae0eb57116e7ae9bd2da2854c115
 related:
   - .docpact/config.yaml
@@ -87,6 +87,8 @@ Route those tasks to:
 - Repo-local documentation governance is enforced through `.docpact/config.yaml` and `.github/workflows/ai-doc-lint.yml`.
 - This repo is distribution-oriented; each skill should stay a thin wrapper over the unified `tiangong-lca` CLI
 - If a capability is missing, add it to `tiangong-lca-cli` first, then update the skill wrapper here
+- Current-account dataset review skills may orchestrate frozen local inputs through public CLI commands, but must not own direct database access, credential parsing, or private account runtime logic.
+- Local CLI checkouts selected by wrappers may be rebuilt automatically when their source is newer than `dist/src/main.js`; wrappers should still keep the CLI command surface in `tiangong-lca-cli`.
 - The canonical local validation command is `node scripts/validate-skills.mjs`
 - You may pass one or more skill paths to validate only the touched skills
 - For documentation-governance changes, run `docpact validate-config --root . --strict` and `docpact lint --root . --base origin/main --head HEAD --mode enforce`

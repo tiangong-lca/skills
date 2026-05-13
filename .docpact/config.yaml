@@ -1,6 +1,6 @@
 version: 1
 layout: repo
-lastReviewedAt: "2026-05-08"
+lastReviewedAt: "2026-05-13"
 lastReviewedCommit: "83749eb1836f7d64a4cf59c21d46200baefbae7c"
 
 catalog:
@@ -95,6 +95,11 @@ routing:
         - "*/scripts/**"
         - "*/references/**"
         - "*/assets/**"
+    current-account-dataset-review:
+      paths:
+        - current-account-dataset-review/SKILL.md
+        - current-account-dataset-review/agents/openai.yaml
+        - current-account-dataset-review/scripts/**
     validation:
       paths:
         - scripts/validate-skills.mjs
