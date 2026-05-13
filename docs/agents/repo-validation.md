@@ -24,7 +24,7 @@ checkPaths:
   - .githooks/pre-push
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-05-08
+lastReviewedAt: 2026-05-13
 lastReviewedCommit: 83749eb1836f7d64a4cf59c21d46200baefbae7c
 related:
   - AGENTS.md
@@ -47,6 +47,8 @@ You may pass one or more skill directories to validate only the touched skill pa
 - Skill instruction changes require validating the touched skill package.
 - Wrapper contract changes require checking the paired `agents/openai.yaml` and `SKILL.md` together.
 - Validation-script or test changes require running the full `node scripts/validate-skills.mjs` command when feasible.
+- New CLI-backed skills must be added to the default validation list when they are intended to ship as part of the standard checked-in skill set.
+- Wrapper-launcher changes require the launcher unit tests plus full skill validation against a built current `tiangong-lca-cli` checkout.
 - Documentation-governance changes require docpact validation.
 
 ## Docpact Validation

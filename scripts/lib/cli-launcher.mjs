@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -109,6 +109,7 @@ export function buildTiangongInvocation(tiangongArgs, options = {}) {
       mode: 'local',
       command: process.execPath,
       args: [cliBin, ...tiangongArgs],
+      cliDir,
       cliBin,
     };
   }
@@ -121,11 +122,83 @@ export function buildTiangongInvocation(tiangongArgs, options = {}) {
   };
 }
 
+function newestMtimeMs(targetPath, options) {
+  const pathExists = options.pathExists ?? existsSync;
+  const readDir = options.readDir ?? readdirSync;
+  const statPath = options.statPath ?? statSync;
+
+  if (!pathExists(targetPath)) {
+    return null;
+  }
+
+  const stat = statPath(targetPath);
+  if (!stat.isDirectory()) {
+    return stat.mtimeMs;
+  }
+
+  let newest = stat.mtimeMs;
+  for (const child of readDir(targetPath)) {
+    const childMtime = newestMtimeMs(path.join(targetPath, child), options);
+    if (typeof childMtime === 'number' && childMtime > newest) {
+      newest = childMtime;
+    }
+  }
+  return newest;
+}
+
+function localCliNeedsBuild(invocation, options) {
+  const pathExists = options.pathExists ?? existsSync;
+  const statPath = options.statPath ?? statSync;
+  const entryPath = path.join(invocation.cliDir, 'dist', 'src', 'main.js');
+  if (!pathExists(entryPath)) {
+    return true;
+  }
+
+  const builtAt = statPath(entryPath).mtimeMs;
+  const sourcePaths = [
+    path.join(invocation.cliDir, 'src'),
+    invocation.cliBin,
+    path.join(invocation.cliDir, 'package.json'),
+    path.join(invocation.cliDir, 'tsconfig.build.json'),
+  ];
+
+  return sourcePaths.some((sourcePath) => {
+    const sourceMtime = newestMtimeMs(sourcePath, options);
+    return typeof sourceMtime === 'number' && sourceMtime > builtAt;
+  });
+}
+
+function ensureLocalCliBuild(invocation, options) {
+  if (invocation.mode !== 'local' || options.prepareLocalCli === false) {
+    return;
+  }
+  if (!localCliNeedsBuild(invocation, options)) {
+    return;
+  }
+
+  const spawnImpl = options.buildSpawnImpl ?? spawnSync;
+  const result = spawnImpl(resolveNpmCommand(), ['run', 'build'], {
+    cwd: invocation.cliDir,
+    stdio: 'pipe',
+    encoding: 'utf8',
+  });
+  if (result.error) {
+    throw new Error(`Failed to build local TianGong CLI: ${result.error.message}`);
+  }
+  if (result.status !== 0) {
+    const detail = [result.stdout, result.stderr].filter(Boolean).join('\n').trim();
+    throw new Error(
+      `Local TianGong CLI build failed with exit code ${result.status}.${detail ? `\n${detail}` : ''}`,
+    );
+  }
+}
+
 export function runTiangongCommand(tiangongArgs, options = {}) {
   const spawnImpl = options.spawnImpl ?? spawnSync;
   const stdoutWrite = options.stdoutWrite ?? ((text) => process.stdout.write(text));
   const stderrWrite = options.stderrWrite ?? ((text) => process.stderr.write(text));
   const invocation = buildTiangongInvocation(tiangongArgs, options);
+  ensureLocalCliBuild(invocation, options);
   const result = spawnImpl(invocation.command, invocation.args, {
     stdio: 'pipe',
     encoding: 'utf8',

@@ -24,7 +24,7 @@ checkPaths:
   - .githooks/pre-push
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-05-08
+lastReviewedAt: 2026-05-13
 lastReviewedCommit: 83749eb1836f7d64a4cf59c21d46200baefbae7c
 related:
   - AGENTS.md
@@ -51,6 +51,10 @@ related:
 - `lca-workspace` owns root integration state and submodule pointer updates.
 
 If a skill needs a capability that does not exist in the CLI, add the capability to `tiangong-lca-cli` first and keep the skill as a thin wrapper over that CLI surface.
+
+Current-account dataset review is owned here only as a skill package and wrapper contract. Its durable runtime behavior belongs in public `tiangong-lca` CLI commands such as dataset validation, reference rewriting, lifecyclemodel save-draft, and lifecyclemodel graph export.
+
+The shared wrapper launcher may prepare a local CLI checkout by running its build when source files are newer than `dist/src/main.js`. That is a developer-experience guard for stale local checkouts, not permission for skills to duplicate CLI implementation.
 
 ## Integration Semantics
 
