@@ -13,7 +13,7 @@ Use this skill when the source of truth is a set of existing local `process-auto
 3. `references/source-analysis.md`
 
 ## Guardrails
-- The canonical runtime path is `skill -> Node wrapper -> tiangong-lca CLI`.
+- The canonical runtime path is `skill -> Node wrapper -> tiangong CLI`.
 - Persistent build outputs must use an explicit `--out-dir`; this skill does not choose a default output root.
 - For repeatable runs, use an explicit output directory such as `/abs/path/artifacts/<case_slug>/...`.
 - The current canonical slices are:
