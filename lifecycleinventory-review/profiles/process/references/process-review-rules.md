@@ -16,7 +16,7 @@
    - `friction/`: 可选的工具限制说明
 2. review 必须基于冻结后的输入进行；远端任务先 freeze snapshot，本地 run 也不要边读边改原始产物。
 3. `node scripts/run-review.mjs --profile process` 是本地 process review 的 canonical CLI 入口。
-4. 当前远端 snapshot review 的 canonical skill 入口是 `node scripts/run-remote-process-review.mjs`：先冻结 `tiangong-lca process list --json` 输出，再调用 `node scripts/run-review.mjs --profile process --rows-file ...`。只有在现有 `process list` 过滤维度不足以表达任务时，才使用补充 bridge，并在 review 备注或 `friction/` 目录中记录限制。
+4. 当前远端 snapshot review 的 canonical skill 入口是 `node scripts/run-remote-process-review.mjs`：先冻结 `tiangong process list --json` 输出，再调用 `node scripts/run-review.mjs --profile process --rows-file ...`。只有在现有 `process list` 过滤维度不足以表达任务时，才使用补充 bridge，并在 review 备注或 `friction/` 目录中记录限制。
 5. LLM 语义审核层默认关闭；只有显式启用时才可作为补充建议层，且不能替代硬规则。
 
 ## Required Inputs
@@ -271,6 +271,6 @@
 - 把 snapshot review 和下游治理/修复编排成一个 CLI 单命令的 native flow。
 
 因此遇到更复杂的远端全量 process review 任务时：
-- 优先使用 `run-remote-process-review.mjs` + `tiangong-lca process list` 的现有 canonical 组合；
+- 优先使用 `run-remote-process-review.mjs` + `tiangong process list` 的现有 canonical 组合；
 - 只有在组合仍不足以表达任务时，才允许使用补充 bridge；
 - 补充 bridge 应视为临时方案，而不是 skill 的默认用法。

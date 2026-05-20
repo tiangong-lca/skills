@@ -17,9 +17,9 @@ Use this skill when the source of truth is a set of existing local `process-auto
 - Persistent build outputs must use an explicit `--out-dir`; this skill does not choose a default output root.
 - For repeatable runs, use an explicit output directory such as `/abs/path/artifacts/<case_slug>/...`.
 - The current canonical slices are:
-  - `tiangong-lca lifecyclemodel auto-build`
-  - `tiangong-lca lifecyclemodel validate-build`
-  - `tiangong-lca lifecyclemodel publish-build`
+  - `tiangong lifecyclemodel auto-build`
+  - `tiangong lifecyclemodel validate-build`
+  - `tiangong lifecyclemodel publish-build`
 - The supported workflow is CLI-based and local to your build inputs:
   - no Python workflow
   - no MCP transport
@@ -52,7 +52,7 @@ Use this skill when the source of truth is a set of existing local `process-auto
 6. If the workflow later needs validation or publish handoff, call the dedicated CLI follow-up commands instead of rebuilding those paths inside the skill:
    - `node scripts/run-lifecyclemodel-automated-builder.mjs validate --run-dir <dir>`
    - `node scripts/run-lifecyclemodel-automated-builder.mjs publish --run-dir <dir>`
-7. If someone asks for remote discovery or AI-assisted model selection, add it as a native `tiangong-lca lifecyclemodel ...` capability first.
+7. If someone asks for remote discovery or AI-assisted model selection, add it as a native `tiangong lifecyclemodel ...` capability first.
 
 ## Commands
 ```bash
@@ -86,7 +86,7 @@ node lifecyclemodel-automated-builder/scripts/run-lifecyclemodel-automated-build
 - If you need remote discovery or writes, add that capability to the native CLI instead of extending this skill with a separate runtime.
 
 ## Bundled Resources
-- `scripts/run-lifecyclemodel-automated-builder.mjs`: native Node wrapper that delegates to `tiangong-lca lifecyclemodel ...`.
+- `scripts/run-lifecyclemodel-automated-builder.mjs`: native Node wrapper that delegates to `tiangong lifecyclemodel ...`.
 - `assets/example-request.json`: minimal current-slice manifest using `local_runs[]`.
 - `assets/example-local-runs.json`: multi-run local assembly manifest example.
 - `references/workflow.md`: current CLI-backed workflow and deferred slices.

@@ -6,10 +6,10 @@ description: Execute and troubleshoot Supabase edge function `flow_hybrid_search
 # Flow Hybrid Search
 
 ## Run Workflow
-1. By default the wrapper runs the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
+1. By default the wrapper runs the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
 2. Set `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`, or pass `--base-url` and `--api-key`.
-3. Execute `node scripts/run-flow-hybrid-search.mjs` with standard `tiangong-lca search flow` flags.
-4. The wrapper delegates to `tiangong-lca search flow`.
+3. Execute `node scripts/run-flow-hybrid-search.mjs` with standard `tiangong search flow` flags.
+4. The wrapper delegates to `tiangong search flow`.
 5. Confirm response shape, then debug with focused references.
 
 ## Commands

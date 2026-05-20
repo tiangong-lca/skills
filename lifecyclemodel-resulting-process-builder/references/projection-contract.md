@@ -53,12 +53,12 @@
 
 ## Publish handoff artifacts
 
-After the build step, `tiangong-lca lifecyclemodel publish-resulting-process` derives:
+After the build step, `tiangong lifecyclemodel publish-resulting-process` derives:
 
 - `publish-bundle.json`
 - `publish-intent.json`
 
-Those artifacts stay local until a later approved `tiangong-lca publish run`.
+Those artifacts stay local until a later approved `tiangong publish run`.
 
 ## Required metadata semantics
 

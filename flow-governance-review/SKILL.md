@@ -1,6 +1,6 @@
 ---
 name: flow-governance-review
-description: "Run the CLI-backed flow governance commands for review, remediation, deterministic process-flow repair, and publish preparation. Use `node scripts/run-flow-governance-review.mjs COMMAND ...` when you need the supported `tiangong-lca review flow` and `tiangong-lca flow ...` workflows from a skill wrapper."
+description: "Run the CLI-backed flow governance commands for review, remediation, deterministic process-flow repair, and publish preparation. Use `node scripts/run-flow-governance-review.mjs COMMAND ...` when you need the supported `tiangong review flow` and `tiangong flow ...` workflows from a skill wrapper."
 ---
 
 # Flow Governance Review
@@ -19,20 +19,20 @@ Do not use this skill for:
 - The canonical entrypoint is `node scripts/run-flow-governance-review.mjs <command> ...`.
 - Write outputs to an explicit directory such as `/abs/path/artifacts/<case_slug>/...`.
 - Supported commands are all CLI-backed:
-  - `review-flows` -> `tiangong-lca review flow`
-  - `flow-get` -> `tiangong-lca flow get`
-  - `flow-list` -> `tiangong-lca flow list`
-  - `materialize-db-flows` -> `tiangong-lca flow fetch-rows`
-  - `materialize-approved-decisions` -> `tiangong-lca flow materialize-decisions`
-  - `remediate-flows` -> `tiangong-lca flow remediate`
-  - `publish-version` -> `tiangong-lca flow publish-version`
-  - `publish-reviewed-data` -> `tiangong-lca flow publish-reviewed-data`
-  - `build-flow-alias-map` -> `tiangong-lca flow build-alias-map`
-  - `scan-process-flow-refs` -> `tiangong-lca flow scan-process-flow-refs`
-  - `plan-process-flow-repairs` -> `tiangong-lca flow plan-process-flow-repairs`
-  - `apply-process-flow-repairs` -> `tiangong-lca flow apply-process-flow-repairs`
-  - `regen-product` -> `tiangong-lca flow regen-product`
-  - `validate-processes` -> `tiangong-lca flow validate-processes`
+  - `review-flows` -> `tiangong review flow`
+  - `flow-get` -> `tiangong flow get`
+  - `flow-list` -> `tiangong flow list`
+  - `materialize-db-flows` -> `tiangong flow fetch-rows`
+  - `materialize-approved-decisions` -> `tiangong flow materialize-decisions`
+  - `remediate-flows` -> `tiangong flow remediate`
+  - `publish-version` -> `tiangong flow publish-version`
+  - `publish-reviewed-data` -> `tiangong flow publish-reviewed-data`
+  - `build-flow-alias-map` -> `tiangong flow build-alias-map`
+  - `scan-process-flow-refs` -> `tiangong flow scan-process-flow-refs`
+  - `plan-process-flow-repairs` -> `tiangong flow plan-process-flow-repairs`
+  - `apply-process-flow-repairs` -> `tiangong flow apply-process-flow-repairs`
+  - `regen-product` -> `tiangong flow regen-product`
+  - `validate-processes` -> `tiangong flow validate-processes`
 - `publish-reviewed-data` is fully CLI-owned for both local preparation and commit-time process publish.
 - There is no Python fallback path and no shell compatibility shim.
 
@@ -137,7 +137,7 @@ The following legacy commands were intentionally removed with the Python runtime
 - `apply-openclaw-*`
 - `validate-openclaw-*`
 
-If you need one of those workflows, add it first as a native `tiangong-lca review ...` or `tiangong-lca flow ...` command instead of rebuilding it inside this skill.
+If you need one of those workflows, add it first as a native `tiangong review ...` or `tiangong flow ...` command instead of rebuilding it inside this skill.
 
 ## Preferred Usage
 

@@ -30,13 +30,13 @@ function usage() {
 Wrapper options:
   --out-dir <dir>         Artifact root for the frozen snapshot and review outputs
   --review-out-dir <dir>  Override the nested review output dir (default: <out-dir>/review)
-  --report-file <file>    Reuse an existing tiangong-lca process list --json report instead of fetching
+  --report-file <file>    Reuse an existing tiangong process list --json report instead of fetching
   --json                  Print a compact wrapper summary JSON
   --cli-dir <dir>         Use a local TianGong CLI checkout instead of the published package
   -h, --help
 
 Forwarding modes:
-  --list                  All following args are forwarded to tiangong-lca process list
+  --list                  All following args are forwarded to tiangong process list
   --review                All following args are forwarded to node scripts/run-review.mjs --profile process
 
 Examples:
@@ -244,7 +244,7 @@ function freezeReport(reportFile, snapshotReportFile) {
 function parseRows(snapshotText, snapshotReportFile) {
   const parsed = JSON.parse(snapshotText);
   if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.rows)) {
-    throw new Error(`Expected a tiangong-lca process list report with a rows array: ${snapshotReportFile}`);
+    throw new Error(`Expected a tiangong process list report with a rows array: ${snapshotReportFile}`);
   }
   return parsed.rows;
 }

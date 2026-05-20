@@ -8,13 +8,13 @@ This skill is a thin wrapper around the supported CLI-backed governance commands
 
 - Entry point: `node scripts/run-flow-governance-review.mjs <command> ...`
 - Wrapper role:
-  - launch `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca` by default
+  - launch `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong` by default
   - honor `TIANGONG_LCA_CLI_DIR` / `--cli-dir` only as a local dev/CI override
-  - forward arguments to `tiangong-lca`
+  - forward arguments to `tiangong`
   - expose no Python fallback path
 - Command ownership:
-  - review lives in `tiangong-lca review flow`
-  - read/repair/publish slices live in `tiangong-lca flow ...`
+  - review lives in `tiangong review flow`
+  - read/repair/publish slices live in `tiangong flow ...`
 
 Write outputs to an explicit directory such as `/abs/path/artifacts/<case_slug>/...`.
 
@@ -57,7 +57,7 @@ Not available anymore:
 - `apply-openclaw-*`
 - `validate-openclaw-*`
 
-If any of these workflows is required again, add a native `tiangong-lca` command first and then reintroduce a thin wrapper.
+If any of these workflows is required again, add a native `tiangong` command first and then reintroduce a thin wrapper.
 
 ## Recommended Sequences
 

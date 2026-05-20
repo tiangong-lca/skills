@@ -100,7 +100,7 @@ node scripts/run-flow-governance-review.mjs materialize-approved-decisions \
 
 ## Output Contract
 
-The wrapper delegates to `tiangong-lca flow materialize-decisions` and writes:
+The wrapper delegates to `tiangong flow materialize-decisions` and writes:
 
 - `flow-dedup-canonical-map.json`
 - `flow-dedup-rewrite-plan.json`

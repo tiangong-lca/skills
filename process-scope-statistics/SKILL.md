@@ -49,7 +49,7 @@ Useful options:
 The wrapper delegates to the canonical CLI command:
 
 ```bash
-tiangong-lca process scope-statistics --out-dir /abs/path/process-scope-stats --scope visible --state-code 0 --state-code 100
+tiangong process scope-statistics --out-dir /abs/path/process-scope-stats --scope visible --state-code 0 --state-code 100
 ```
 
 Compatibility note:
@@ -78,5 +78,5 @@ Read `references/metric-definitions.md` when you need the exact counting rules f
 ## Notes
 
 - This is a read-only statistics skill; it does not save remote edits.
-- The skill is a thin wrapper over `tiangong-lca process scope-statistics`; it does not carry a separate remote runtime or private `.env` parser.
+- The skill is a thin wrapper over `tiangong process scope-statistics`; it does not carry a separate remote runtime or private `.env` parser.
 - The metric layer is deterministic and string-based. It does not try to semantically merge cross-language variants unless they already share the same stable identifier.

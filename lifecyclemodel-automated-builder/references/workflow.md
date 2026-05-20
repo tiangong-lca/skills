@@ -9,7 +9,7 @@ Turn existing local TianGong process-build runs into native lifecyclemodel `json
 The canonical entrypoint is:
 
 - `node scripts/run-lifecyclemodel-automated-builder.mjs build --input <manifest> --out-dir <dir>`
-- which delegates to `tiangong-lca lifecyclemodel auto-build`
+- which delegates to `tiangong lifecyclemodel auto-build`
 
 The wrapper does not choose a default output directory.
 Provide `--out-dir`, typically under a path such as `/abs/path/artifacts/<case_slug>/...`.

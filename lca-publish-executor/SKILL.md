@@ -1,13 +1,13 @@
 ---
 name: lca-publish-executor
-description: Publish local LCA artifact bundles through the unified `tiangong-lca publish run` contract. Use when another skill already produced local publish artifacts and needs one stable publish request instead of per-skill glue.
+description: Publish local LCA artifact bundles through the unified `tiangong publish run` contract. Use when another skill already produced local publish artifacts and needs one stable publish request instead of per-skill glue.
 ---
 
 # LCA Publish Executor
 
 ## Overview
 - Accept one JSON request that points at `publish-bundle.json` files, direct dataset payloads, or `process_from_flow` run ids.
-- Forward that request shape to `tiangong-lca publish run`.
+- Forward that request shape to `tiangong publish run`.
 - Keep relation metadata local when the publish mode says `local_manifest_only`.
 - Reuse publish bundles prepared by upstream CLI-backed builders instead of inventing a second publish contract here.
 
@@ -35,7 +35,7 @@ node scripts/run-lca-publish-executor.mjs publish \
 - `publish.relation_mode=local_manifest_only` is currently the only supported relation mode.
 
 ## Outputs
-- whatever `tiangong-lca publish run` emits for the request shape
+- whatever `tiangong publish run` emits for the request shape
 - at minimum expect `publish-report.json`
 - when relation mode stays local, also expect a local relation manifest in the publish output bundle
 

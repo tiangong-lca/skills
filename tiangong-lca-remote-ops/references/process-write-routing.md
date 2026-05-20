@@ -88,7 +88,7 @@ For every bulk write report, state explicitly:
 After every remote write, re-fetch the remote rows and run the canonical verifier. The skill wrapper delegates to the same CLI command:
 
 ```bash
-tiangong-lca process verify-rows \
+tiangong process verify-rows \
   --rows-file /abs/path/process-list-report.json \
   --out-dir /abs/path/artifacts/<case_slug>/outputs/post-write-verification
 ```

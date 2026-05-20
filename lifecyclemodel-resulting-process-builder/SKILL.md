@@ -9,10 +9,10 @@ Use this skill when the source of truth is already a lifecycle model `json_order
 
 ## Run Workflow
 
-1. By default the wrapper runs the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
-2. Use `node scripts/run-lifecyclemodel-resulting-process-builder.mjs build ...` to delegate to `tiangong-lca lifecyclemodel build-resulting-process`.
-3. Use `node scripts/run-lifecyclemodel-resulting-process-builder.mjs publish ...` to delegate to `tiangong-lca lifecyclemodel publish-resulting-process`.
-4. Confirm the local artifacts in the run directory before any later `tiangong-lca publish run` step.
+1. By default the wrapper runs the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
+2. Use `node scripts/run-lifecyclemodel-resulting-process-builder.mjs build ...` to delegate to `tiangong lifecyclemodel build-resulting-process`.
+3. Use `node scripts/run-lifecyclemodel-resulting-process-builder.mjs publish ...` to delegate to `tiangong lifecyclemodel publish-resulting-process`.
+4. Confirm the local artifacts in the run directory before any later `tiangong publish run` step.
 
 The active runtime path is `skill -> Node wrapper -> tiangong-lca CLI`. Python and MCP are no longer part of the normal execution path for this skill.
 

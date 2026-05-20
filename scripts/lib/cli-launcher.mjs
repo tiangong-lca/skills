@@ -5,7 +5,9 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 export const publishedCliPackageSpec = '@tiangong-lca/cli@latest';
-export const publishedCliCommand = `npm exec --yes --package=${publishedCliPackageSpec} -- tiangong-lca`;
+export const publishedCliBinary = 'tiangong';
+export const publishedCliCommand = `npm exec --yes --package=${publishedCliPackageSpec} -- ${publishedCliBinary}`;
+const localCliBinNames = ['tiangong.js', 'tiangong-lca.js'];
 
 const launcherDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultSkillsRepoRoot = path.resolve(launcherDir, '..', '..');
@@ -98,10 +100,11 @@ export function buildTiangongInvocation(tiangongArgs, options = {}) {
     });
 
   if (cliDir) {
-    const cliBin = path.join(cliDir, 'bin', 'tiangong-lca.js');
-    if (!pathExists(cliBin)) {
+    const cliBinCandidates = localCliBinNames.map((binName) => path.join(cliDir, 'bin', binName));
+    const cliBin = cliBinCandidates.find((candidate) => pathExists(candidate));
+    if (!cliBin) {
       throw new Error(
-        `Cannot find TianGong CLI at ${cliBin}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`,
+        `Cannot find TianGong CLI at ${cliBinCandidates.join(' or ')}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`,
       );
     }
 
@@ -117,7 +120,7 @@ export function buildTiangongInvocation(tiangongArgs, options = {}) {
   return {
     mode: 'published',
     command: resolveNpmCommand(),
-    args: ['exec', '--yes', `--package=${publishedCliPackageSpec}`, '--', 'tiangong-lca', ...tiangongArgs],
+    args: ['exec', '--yes', `--package=${publishedCliPackageSpec}`, '--', publishedCliBinary, ...tiangongArgs],
     searchedCliDirs,
   };
 }
