@@ -1,6 +1,6 @@
 ---
 name: process-automated-builder
-description: Execute the supported `process_from_flow` CLI workflow. Use `node scripts/run-process-automated-builder.mjs auto-build|resume-build|publish-build|batch-build` when you need the unified `tiangong-lca process ...` surface from a skill wrapper.
+description: Execute the supported `process_from_flow` CLI workflow. Use `node scripts/run-process-automated-builder.mjs auto-build|resume-build|publish-build|batch-build` when you need the unified `tiangong process ...` surface from a skill wrapper.
 ---
 
 # Process Automated Builder
@@ -18,7 +18,7 @@ This skill uses the CLI only. Legacy alternate runtimes are not part of the supp
 2. Choose an explicit output directory, for example `/abs/path/artifacts/<case_slug>/...`.
 3. Use `node scripts/run-process-automated-builder.mjs auto-build ... --out-dir <dir>` to create one local run root.
 4. Continue with `resume-build`, `publish-build`, or `batch-build` as needed, passing `--run-dir` or `--out-dir` explicitly.
-5. If a missing capability is discovered, add a native `tiangong-lca process ...` command in `tiangong-lca-cli` first. Do not add new business runtime inside this skill.
+5. If a missing capability is discovered, add a native `tiangong process ...` command in `tiangong-lca-cli` first. Do not add new business runtime inside this skill.
 
 ## Parallel Execution Contract
 - `Run-level parallel`: multiple flow inputs can run concurrently, but each run must use a distinct `run_id`.
@@ -47,7 +47,7 @@ node scripts/run-process-automated-builder.mjs batch-build --input /abs/path/bat
 ```
 
 ## Runtime Requirements
-- The wrapper runs the published CLI by default through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca`.
+- The wrapper runs the published CLI by default through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`.
 - Set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir` only when you need a local CLI working tree for dev/CI.
 - The wrapper requires explicit output paths instead of relying on `cwd/artifacts/...` defaults.
 - For repeatable runs, use an explicit output root such as `/abs/path/artifacts/<case_slug>/...`.
@@ -66,7 +66,7 @@ node scripts/run-process-automated-builder.mjs batch-build --input /abs/path/bat
 - Missing `--input` / `--flow-file`: new runs need one explicit request or reference-flow input.
 - Run-level conflicts: do not reuse the same `run_id` across concurrent writers.
 - Publish preparation issues: inspect `stage_outputs/10_publish/` and `cache/agent_handoff_summary.json` before touching downstream publish flow.
-- If a required step is missing, add it as a native `tiangong-lca process ...` command instead of reintroducing a legacy runtime here.
+- If a required step is missing, add it as a native `tiangong process ...` command instead of reintroducing a legacy runtime here.
 
 ## Load References On Demand
 - `references/workflow-map.md`: current CLI-only execution map and output layout.

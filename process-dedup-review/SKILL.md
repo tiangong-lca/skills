@@ -27,7 +27,7 @@ node process-dedup-review/scripts/run-process-dedup-review.mjs \
 The wrapper delegates to the canonical CLI command:
 
 ```bash
-tiangong-lca process dedup-review --input /abs/path/duplicate-groups.json --out-dir /abs/path/artifacts/<case_slug>
+tiangong process dedup-review --input /abs/path/duplicate-groups.json --out-dir /abs/path/artifacts/<case_slug>
 ```
 
 ## Canonical Input Contract

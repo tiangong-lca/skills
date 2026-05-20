@@ -26,7 +26,7 @@ Wrapper options:
   -h, --help
 
 Delegates to:
-  tiangong-lca process refresh-references
+  tiangong process refresh-references
 
 Runtime:
   default                  ${publishedCliCommand}

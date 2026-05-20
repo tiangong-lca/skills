@@ -16,7 +16,7 @@ node scripts/run-lifecyclemodel-hybrid-search.mjs --dry-run
 
 ## Direct CLI equivalent
 ```bash
-npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca \
+npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong \
   search lifecyclemodel \
   --input ./assets/example-request.json \
   --base-url "https://example.supabase.co/functions/v1" \

@@ -8,7 +8,7 @@ Prefer local JSON or JSONL inputs. In local mode, no remote credentials are requ
 
 ## Wrapper Resolution
 
-Wrappers run the published CLI by default through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca`.
+Wrappers run the published CLI by default through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`.
 
 Set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir` only when you need a local CLI working tree for dev/CI.
 
@@ -54,4 +54,4 @@ Only `review-flows` can optionally enable the CLI LLM path. When using `--enable
 - Keep long-lived machine artifacts under an explicit output root such as `/abs/path/artifacts/<case_slug>/flow-processing/`.
 - `publish-reviewed-data` stays dry-run unless `--commit` is passed.
 - `publish-reviewed-data --original-flow-rows-file` can skip unchanged flow rows before version planning or commit.
-- The wrapper does not load `.env` files. It forwards the current process environment to `tiangong-lca`.
+- The wrapper does not load `.env` files. It forwards the current process environment to `tiangong`.

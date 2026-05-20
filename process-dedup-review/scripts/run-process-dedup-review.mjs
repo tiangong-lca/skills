@@ -26,7 +26,7 @@ Wrapper options:
   -h, --help
 
 Delegates to:
-  tiangong-lca process dedup-review
+  tiangong process dedup-review
 
 Runtime:
   default                  ${publishedCliCommand}

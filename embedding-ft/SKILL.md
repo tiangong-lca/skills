@@ -6,10 +6,10 @@ description: Execute and troubleshoot Supabase edge function `embedding_ft` that
 # Embedding FT
 
 ## Run Workflow
-1. By default the wrapper runs the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
+1. By default the wrapper runs the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong`. Use `TIANGONG_LCA_CLI_DIR` or `--cli-dir` only for local dev/CI overrides.
 2. Set `TIANGONG_LCA_API_BASE_URL` and `TIANGONG_LCA_API_KEY`, or pass `--base-url` and `--api-key`.
-3. Execute `node scripts/run-embedding-ft.mjs` with standard `tiangong-lca admin embedding-run` flags.
-4. The wrapper delegates to `tiangong-lca admin embedding-run`.
+3. Execute `node scripts/run-embedding-ft.mjs` with standard `tiangong admin embedding-run` flags.
+4. The wrapper delegates to `tiangong admin embedding-run`.
 5. Inspect `completedJobs` and `failedJobs`, then triage via references.
 
 ## Commands

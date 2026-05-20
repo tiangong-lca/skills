@@ -5,7 +5,7 @@ description: Plan and orchestrate recursive LCA assembly across `process-automat
 
 # Lifecycle Model Recursive Orchestrator
 
-Use this skill when one request needs more than a single builder call. The orchestrator validates a request, resolves each node to reuse/build/cutoff, invokes the native `tiangong-lca lifecyclemodel orchestrate` actions, and writes a full local run directory.
+Use this skill when one request needs more than a single builder call. The orchestrator validates a request, resolves each node to reuse/build/cutoff, invokes the native `tiangong lifecyclemodel orchestrate` actions, and writes a full local run directory.
 
 ## What The Implementation Does
 
@@ -61,11 +61,11 @@ Use extra `nodes` only for additional dependencies or subsystems beyond the root
 
 ## Downstream Builders
 
-- `process_builder` reuses the same native slice as `tiangong-lca process auto-build`
-- `submodel_builder` reuses the same native slice as `tiangong-lca lifecyclemodel auto-build`
-- `projector` reuses the same native slice as `tiangong-lca lifecyclemodel build-resulting-process`
+- `process_builder` reuses the same native slice as `tiangong process auto-build`
+- `submodel_builder` reuses the same native slice as `tiangong lifecyclemodel auto-build`
+- `projector` reuses the same native slice as `tiangong lifecyclemodel build-resulting-process`
 
-The wrapper does not call other skills directly. It delegates to `tiangong-lca lifecyclemodel orchestrate`, and the CLI orchestrator owns request normalization, node resolution, invocation ordering, and final manifests.
+The wrapper does not call other skills directly. It delegates to `tiangong lifecyclemodel orchestrate`, and the CLI orchestrator owns request normalization, node resolution, invocation ordering, and final manifests.
 
 Current limitation:
 
@@ -78,7 +78,7 @@ Current limitation:
 1. Read `assets/request.schema.json` and prepare a manifest.
 2. Run `plan` and inspect the generated `assembly-plan.json`.
 3. Run `execute` to invoke native CLI builder slices and persist invocation logs.
-4. Run `publish` only to prepare a local handoff bundle. Remote writes remain outside this skill and should later go through `tiangong-lca publish run`.
+4. Run `publish` only to prepare a local handoff bundle. Remote writes remain outside this skill and should later go through `tiangong publish run`.
 
 ## Commands
 

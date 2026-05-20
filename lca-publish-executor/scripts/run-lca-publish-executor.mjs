@@ -20,7 +20,7 @@ Wrapper options:
   --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 Canonical CLI command:
-  tiangong-lca publish run --input <file> [options]
+  tiangong publish run --input <file> [options]
 
 Compatibility aliases:
   --request <file>          Alias for the CLI's --input <file>
@@ -32,7 +32,7 @@ Examples:
 Notes:
   - default runtime is ${publishedCliCommand}
   - this wrapper is CLI-only; there is no Python or MCP fallback path
-  - publish execution is unified under tiangong-lca publish run
+  - publish execution is unified under tiangong publish run
 `.trim();
 }
 

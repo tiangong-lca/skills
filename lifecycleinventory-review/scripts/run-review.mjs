@@ -21,8 +21,8 @@ Wrapper options:
   --cli-dir <dir>          Override the published CLI and use a local tiangong-lca-cli repository path
 
 Profiles:
-  process                  Delegate to tiangong-lca review process for either --rows-file or --run-root input
-  lifecyclemodel           Delegate to tiangong-lca review lifecyclemodel
+  process                  Delegate to tiangong review process for either --rows-file or --run-root input
+  lifecyclemodel           Delegate to tiangong review lifecyclemodel
 
 Runtime:
   default                  ${publishedCliCommand}

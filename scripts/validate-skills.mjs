@@ -139,7 +139,7 @@ const docGuards = [
     file: 'process-dedup-review/SKILL.md',
     pattern: /review_duplicate_processes\.py|--xlsx/u,
     message:
-      'process-dedup-review should delegate to tiangong-lca process dedup-review with grouped JSON input, not a bundled Python workbook runtime.',
+      'process-dedup-review should delegate to tiangong process dedup-review with grouped JSON input, not a bundled Python workbook runtime.',
   },
   {
     file: 'process-dedup-review/agents/openai.yaml',
@@ -180,15 +180,15 @@ const requiredDocPatterns = [
   },
   {
     file: 'process-scope-statistics/SKILL.md',
-    pattern: /tiangong-lca process scope-statistics/u,
+    pattern: /tiangong process scope-statistics/u,
     message:
-      'process-scope-statistics should document the canonical tiangong-lca process scope-statistics command.',
+      'process-scope-statistics should document the canonical tiangong process scope-statistics command.',
   },
   {
     file: 'process-dedup-review/SKILL.md',
-    pattern: /tiangong-lca process dedup-review/u,
+    pattern: /tiangong process dedup-review/u,
     message:
-      'process-dedup-review should document the canonical tiangong-lca process dedup-review command.',
+      'process-dedup-review should document the canonical tiangong process dedup-review command.',
   },
 ];
 
@@ -304,10 +304,13 @@ function ensureCliBuild(cliDir, required) {
   if (!cliDir || !required) {
     return;
   }
-  const cliBin = path.join(cliDir, 'bin', 'tiangong-lca.js');
+  const cliBinCandidates = ['tiangong.js', 'tiangong-lca.js'].map((binName) =>
+    path.join(cliDir, 'bin', binName),
+  );
+  const cliBin = cliBinCandidates.find((candidate) => existsSync(candidate));
   const cliDist = path.join(cliDir, 'dist', 'src', 'main.js');
-  if (!existsSync(cliBin)) {
-    fail(`Cannot find TianGong CLI at ${cliBin}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`);
+  if (!cliBin) {
+    fail(`Cannot find TianGong CLI at ${cliBinCandidates.join(' or ')}. Set TIANGONG_LCA_CLI_DIR or pass --cli-dir.`);
   }
   if (!existsSync(cliDist)) {
     fail(`TianGong CLI is missing built artifacts at ${cliDist}. Run npm run build in tiangong-lca-cli first.`);

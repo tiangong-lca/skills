@@ -63,7 +63,7 @@ Use this when:
 
 - the run already contains local process/source datasets
 - the next step should be unified publish handoff
-- downstream publish should go through `tiangong-lca publish run`, not a skill-private path
+- downstream publish should go through `tiangong publish run`, not a skill-private path
 
 ## Prepare A Batch
 
@@ -80,7 +80,7 @@ The wrapper intentionally requires `--out-dir` / `--run-dir` instead of letting 
 
 ## Required Env
 
-- Wrappers use `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca` by default.
+- Wrappers use `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong` by default.
 - Set `TIANGONG_LCA_CLI_DIR` only when you need a local CLI working tree for dev/CI.
 
 The canonical commands above do not require any legacy provider, transport, or OCR env stack.

@@ -53,20 +53,20 @@ Wrapper options:
   --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 CLI-backed commands:
-  review-flows              Delegate to tiangong-lca review flow
-  flow-get                  Delegate to tiangong-lca flow get
-  flow-list                 Delegate to tiangong-lca flow list
-  materialize-db-flows      Delegate real-DB flow ref materialization to tiangong-lca flow fetch-rows
-  materialize-approved-decisions Delegate approved merge decisions to tiangong-lca flow materialize-decisions
-  remediate-flows           Delegate to tiangong-lca flow remediate
-  publish-version           Delegate to tiangong-lca flow publish-version
-  publish-reviewed-data     Delegate reviewed flow/process local publish preparation to tiangong-lca flow publish-reviewed-data
-  build-flow-alias-map      Delegate to tiangong-lca flow build-alias-map
-  scan-process-flow-refs    Delegate to tiangong-lca flow scan-process-flow-refs
-  plan-process-flow-repairs Delegate to tiangong-lca flow plan-process-flow-repairs
-  apply-process-flow-repairs Delegate to tiangong-lca flow apply-process-flow-repairs
-  regen-product             Delegate to tiangong-lca flow regen-product
-  validate-processes        Delegate to tiangong-lca flow validate-processes
+  review-flows              Delegate to tiangong review flow
+  flow-get                  Delegate to tiangong flow get
+  flow-list                 Delegate to tiangong flow list
+  materialize-db-flows      Delegate real-DB flow ref materialization to tiangong flow fetch-rows
+  materialize-approved-decisions Delegate approved merge decisions to tiangong flow materialize-decisions
+  remediate-flows           Delegate to tiangong flow remediate
+  publish-version           Delegate to tiangong flow publish-version
+  publish-reviewed-data     Delegate reviewed flow/process local publish preparation to tiangong flow publish-reviewed-data
+  build-flow-alias-map      Delegate to tiangong flow build-alias-map
+  scan-process-flow-refs    Delegate to tiangong flow scan-process-flow-refs
+  plan-process-flow-repairs Delegate to tiangong flow plan-process-flow-repairs
+  apply-process-flow-repairs Delegate to tiangong flow apply-process-flow-repairs
+  regen-product             Delegate to tiangong flow regen-product
+  validate-processes        Delegate to tiangong flow validate-processes
 
 Notes:
   - default runtime is ${publishedCliCommand}
@@ -75,7 +75,7 @@ Notes:
   - publish-reviewed-data now uses the CLI for both local preparation and commit-time process publish
   - materialize-db-flows is the canonical bridge from real DB refs to local review-input rows
   - materialize-approved-decisions is the canonical bridge from approved merge decisions to canonical-map / rewrite-plan / seed artifacts
-  - removed OpenClaw / governance orchestration commands must be reintroduced as native tiangong-lca subcommands before use
+  - removed OpenClaw / governance orchestration commands must be reintroduced as native tiangong subcommands before use
 
 Examples:
   node scripts/run-flow-governance-review.mjs materialize-db-flows --refs-file /abs/path/flow-refs.json --out-dir /abs/path/materialized --fail-on-missing
@@ -123,7 +123,7 @@ function main() {
 
   if (removedCommands.has(command)) {
     fail(
-      `Command '${command}' was removed with the legacy Python workflow. Reintroduce it as a native tiangong-lca CLI command before use.`,
+      `Command '${command}' was removed with the legacy Python workflow. Reintroduce it as a native tiangong CLI command before use.`,
     );
   }
 
