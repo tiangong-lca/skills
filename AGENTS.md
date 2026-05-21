@@ -29,6 +29,7 @@ checkPaths:
   - test/**
   - .github/workflows/**
   - .githooks/**
+  - scripts/docpact
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-05-13
@@ -91,7 +92,7 @@ Route those tasks to:
 - Local CLI checkouts selected by wrappers may be rebuilt automatically when their source is newer than `dist/src/main.js`; wrappers should still keep the CLI command surface in `tiangong-lca-cli`.
 - The canonical local validation command is `node scripts/validate-skills.mjs`
 - You may pass one or more skill paths to validate only the touched skills
-- For documentation-governance changes, run `docpact validate-config --root . --strict` and `docpact lint --root . --base origin/main --head HEAD --mode enforce`
+- For documentation-governance changes, run `scripts/docpact validate-config --root . --strict` and `scripts/docpact lint --root . --base origin/main --head HEAD --mode enforce`
 
 ## Hard Boundaries
 
@@ -117,4 +118,4 @@ Install the versioned local hook once per checkout:
 ./scripts/install-git-hooks.sh
 ```
 
-The `pre-push` hook runs `scripts/docpact-gate.sh`, which performs strict config validation and `docpact lint --mode enforce` before the push leaves the machine. The default comparison base is `origin/main`. Override it for unusual stacks with `DOCPACT_BASE_REF=<ref>` or `scripts/docpact-gate.sh --base <ref>`. The gate writes its detailed report to a temporary file so normal pushes do not create `.docpact/runs/` artifacts.
+The `pre-push` hook runs `scripts/docpact-gate.sh`, which delegates CLI lookup to `scripts/docpact` and performs strict config validation plus enforced lint before the push leaves the machine. The wrapper checks `DOCPACT_BIN`, Cargo install locations, Homebrew install locations, and then `PATH`, so local agent shells should not fail only because bare `docpact` is unavailable. The default comparison base is `origin/main`. Override it for unusual stacks with `DOCPACT_BASE_REF=<ref>` or `scripts/docpact-gate.sh --base <ref>`. The gate writes its detailed report to a temporary file so normal pushes do not create `.docpact/runs/` artifacts.
