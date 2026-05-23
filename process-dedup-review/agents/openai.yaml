@@ -1,4 +1,4 @@
 interface:
   display_name: "Process Dedup Review"
-  short_description: "Review duplicate process candidates and recommend keep/delete"
-  default_prompt: "Use $process-dedup-review to call the TianGong CLI on grouped duplicate-process JSON, enrich candidates with remote metadata when available, and produce structured keep/delete recommendations plus review notes."
+  short_description: "Review duplicate process candidates with CLI-owned evidence gates"
+  default_prompt: "Use $process-dedup-review to call the TianGong CLI on grouped duplicate-process JSON, enrich candidates with remote metadata when available, and produce structured keep/delete recommendations plus manual-review handoff notes."

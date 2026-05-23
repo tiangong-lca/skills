@@ -5,9 +5,13 @@
 Keep `process-automated-builder` as a thin wrapper over the unified CLI surface:
 
 - `tiangong-lca process auto-build`
+- `tiangong-lca process identity-preflight`
+- `tiangong-lca process build-plan validate|materialize`
 - `tiangong-lca process resume-build`
 - `tiangong-lca process publish-build`
 - `tiangong-lca process batch-build`
+- `tiangong-lca process complete-required-fields`
+- `tiangong-lca process verify-rows`
 
 This skill does not add a second runtime layer.
 
@@ -29,6 +33,14 @@ For an existing run:
 For a batch manifest:
 
 - `node scripts/run-process-automated-builder.mjs batch-build --input <batch-request.json> --out-dir <dir>`
+
+For production gates:
+
+- `node scripts/run-process-automated-builder.mjs identity-preflight --input <process-preflight.json> --out-dir <dir>`
+- `node scripts/run-process-automated-builder.mjs build-plan validate --input <process-build-plan.json> --out-dir <dir>`
+- `node scripts/run-process-automated-builder.mjs build-plan materialize --input <process-build-plan.json> --out-dir <dir>`
+- `node scripts/run-process-automated-builder.mjs complete-required-fields --input <processes.jsonl> --out <processes.completed.jsonl>`
+- `node scripts/run-process-automated-builder.mjs verify-rows --rows-file <process-list-report.json> --out-dir <dir>`
 
 ## Canonical Runtime Layers
 
@@ -69,6 +81,26 @@ For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>
 - `reports/process-auto-build-report.json`
 - staged directories under `stage_outputs/01_*` through `stage_outputs/10_publish/`
 
+`identity-preflight` writes:
+
+- `outputs/identity-decision.json`
+- `outputs/identity-candidates.jsonl`
+- `outputs/identity-candidate-sources.json`
+
+`build-plan validate` writes:
+
+- `outputs/build-plan-gate-report.json`
+
+`build-plan materialize` writes:
+
+- `outputs/build-plan-gate-report.json`
+- `outputs/materialized-process.json`
+
+`complete-required-fields` writes:
+
+- the requested completed rows file
+- deterministic required field completion report emitted by the CLI, when `--out-dir` is also supplied
+
 `resume-build` reopens the explicit `--run-dir` and writes:
 
 - `manifests/resume-metadata.json`
@@ -90,6 +122,11 @@ For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>
 - `manifests/run-manifest.json`
 - `reports/process-batch-build-report.json`
 
+`verify-rows` writes:
+
+- `verification-report.json`
+- row-level local schema/reference findings emitted by the CLI
+
 ## Parallel Rules
 
 - Run-level parallel is allowed when each item uses a distinct `run_id`.
@@ -101,3 +138,5 @@ For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>
 - Do not reintroduce old env names or skill-private HTTP clients.
 - Do not add new business scripts here.
 - If a future step needs LLM, KB search, unstructured parsing, validation, or publish execution, expose it as a native `tiangong-lca process ...` capability first.
+- Treat `block_duplicate` and `manual_review` from identity preflight as terminal autonomous stop states.
+- Treat any failed build-plan gate as a blocker; do not reproduce the gate logic inside the skill.

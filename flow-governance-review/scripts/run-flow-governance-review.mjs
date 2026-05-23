@@ -9,6 +9,8 @@ import {
 class UsageError extends Error {}
 
 const cliBackedCommands = new Map([
+  ["identity-preflight", ["flow", "identity-preflight"]],
+  ["build-plan", ["flow", "build-plan"]],
   ["review-flows", ["review", "flow"]],
   ["flow-get", ["flow", "get"]],
   ["flow-list", ["flow", "list"]],
@@ -53,6 +55,8 @@ Wrapper options:
   --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 CLI-backed commands:
+  identity-preflight        Delegate to tiangong-lca flow identity-preflight
+  build-plan                Delegate to tiangong-lca flow build-plan validate|materialize
   review-flows              Delegate to tiangong-lca review flow
   flow-get                  Delegate to tiangong-lca flow get
   flow-list                 Delegate to tiangong-lca flow list
@@ -78,6 +82,9 @@ Notes:
   - removed OpenClaw / governance orchestration commands must be reintroduced as native tiangong-lca subcommands before use
 
 Examples:
+  node scripts/run-flow-governance-review.mjs identity-preflight --input /abs/path/flow-preflight.json --out-dir /abs/path/identity
+  node scripts/run-flow-governance-review.mjs build-plan validate --input /abs/path/flow-build-plan.json --out-dir /abs/path/build-plan
+  node scripts/run-flow-governance-review.mjs build-plan materialize --input /abs/path/flow-build-plan.json --out-dir /abs/path/build-plan
   node scripts/run-flow-governance-review.mjs materialize-db-flows --refs-file /abs/path/flow-refs.json --out-dir /abs/path/materialized --fail-on-missing
   node scripts/run-flow-governance-review.mjs materialize-approved-decisions --decision-file /abs/path/approved-decisions.json --flow-rows-file /abs/path/materialized/review-input-rows.jsonl --out-dir /abs/path/decision-artifacts
   node scripts/run-flow-governance-review.mjs review-flows --rows-file /abs/path/flows.jsonl --out-dir /abs/path/review

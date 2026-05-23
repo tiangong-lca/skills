@@ -35,6 +35,14 @@ node tiangong-lca-remote-ops/scripts/verify-process-rows.mjs \
   --out-dir /abs/path/post-write-verification
 ```
 
+- For multi-type TIDAS reference verification, use the public dataset command through `current-account-dataset-review`:
+
+```bash
+node current-account-dataset-review/scripts/run-current-account-dataset-review.mjs verify-remote \
+  --input /abs/path/rows.jsonl \
+  --out-dir /abs/path/dataset-verify-remote
+```
+
 ## Runtime Contract
 - Remote refresh uses canonical CLI env only:
   - `TIANGONG_LCA_API_BASE_URL`
@@ -49,3 +57,5 @@ node tiangong-lca-remote-ops/scripts/verify-process-rows.mjs \
 - Keep `--out-dir` explicit so manifests, progress logs, blockers, and verification artifacts are reproducible.
 - Before any remote write, apply the state-driven routing rule in [references/process-write-routing.md](references/process-write-routing.md).
 - Treat local `ProcessSchema` validation plus unresolved-reference checks as the hard gate, not HTTP success alone.
+- If upstream identity, build-plan, bilingual, reference, or matrix-readiness reports contain blockers, do not call the remote write path.
+- Preserve post-write verification artifacts in the handoff; a successful HTTP response is not sufficient evidence.
