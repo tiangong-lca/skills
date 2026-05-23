@@ -1,0 +1,4 @@
+interface:
+  display_name: "TIDAS Bilingual Transcreation"
+  short_description: "Produce reviewed Chinese/English TIDAS translations through CLI extract/apply/validate"
+  default_prompt: "Use $tidas-bilingual-transcreation to review TIDAS translation units, write high-quality trans-reviewed JSONL, apply it with the TianGong CLI, and validate bilingual rows with evidence artifacts."
