@@ -79,14 +79,14 @@ This repo does not own:
 
 Route those tasks to:
 
-- `tiangong-lca-cli` for new native `tiangong-lca <noun> <verb>` commands
+- `tiangong-lca-cli` for new native `tiangong <noun> <verb>` commands
 - the owning product/runtime repo for business logic or API changes
 - `lca-workspace` for root integration after merge
 
 ## Runtime Facts
 
 - Repo-local documentation governance is enforced through `.docpact/config.yaml` and `.github/workflows/ai-doc-lint.yml`.
-- This repo is distribution-oriented; each skill should stay a thin wrapper over the unified `tiangong-lca` CLI
+- This repo is distribution-oriented; each skill should stay a thin wrapper over the unified `tiangong` CLI
 - If a capability is missing, add it to `tiangong-lca-cli` first, then update the skill wrapper here
 - Current-account dataset review skills may orchestrate frozen local inputs through public CLI commands, but must not own direct database access, credential parsing, or private account runtime logic.
 - Local CLI checkouts selected by wrappers may be rebuilt automatically when their source is newer than `dist/src/main.js`; wrappers should still keep the CLI command surface in `tiangong-lca-cli`.

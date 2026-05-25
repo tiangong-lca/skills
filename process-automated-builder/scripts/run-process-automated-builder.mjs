@@ -25,10 +25,10 @@ Wrapper options:
   --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 Canonical commands:
-  auto-build                Delegate to tiangong-lca process auto-build
-  resume-build              Delegate to tiangong-lca process resume-build
-  publish-build             Delegate to tiangong-lca process publish-build
-  batch-build               Delegate to tiangong-lca process batch-build
+  auto-build                Delegate to tiangong process auto-build
+  resume-build              Delegate to tiangong process resume-build
+  publish-build             Delegate to tiangong process publish-build
+  batch-build               Delegate to tiangong process batch-build
 
 auto-build compatibility options:
   --request <file>          Alias for the CLI's --input <file>

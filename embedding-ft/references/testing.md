@@ -16,7 +16,7 @@ node scripts/run-embedding-ft.mjs --dry-run
 
 ## Direct CLI equivalent
 ```bash
-npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca \
+npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong \
   admin embedding-run \
   --input ./assets/example-jobs.json \
   --base-url "https://example.supabase.co/functions/v1" \

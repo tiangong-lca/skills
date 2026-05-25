@@ -7,7 +7,7 @@ Provide a planner/executor layer that can recursively assemble LCA systems by co
 Public entrypoint:
 
 - `node scripts/run-lifecyclemodel-recursive-orchestrator.mjs <plan|execute|publish> ...`
-- canonical command: `tiangong-lca lifecyclemodel orchestrate <plan|execute|publish> ...`
+- canonical command: `tiangong lifecyclemodel orchestrate <plan|execute|publish> ...`
 
 ## Stages
 
@@ -51,9 +51,9 @@ The planner should emit a dry-run plan first.
 
 ### 5. Materialization
 If allowed:
-- execute the native process-builder slice used by `tiangong-lca process auto-build`
-- execute the native lifecyclemodel-builder slice used by `tiangong-lca lifecyclemodel auto-build`
-- execute the native projector slice used by `tiangong-lca lifecyclemodel build-resulting-process` when projection is requested
+- execute the native process-builder slice used by `tiangong process auto-build`
+- execute the native lifecyclemodel-builder slice used by `tiangong lifecyclemodel auto-build`
+- execute the native projector slice used by `tiangong lifecyclemodel build-resulting-process` when projection is requested
 
 ### 6. Reconciliation
 Re-read newly materialized outputs and resolve:

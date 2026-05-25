@@ -20,7 +20,7 @@ Wrapper options:
   --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 Canonical CLI command:
-  tiangong-lca lifecyclemodel orchestrate <plan|execute|publish> [options]
+  tiangong lifecyclemodel orchestrate <plan|execute|publish> [options]
 
 Compatibility aliases:
   --request <file>          Alias for the CLI's --input <file>
@@ -33,7 +33,7 @@ Examples:
 Notes:
   - default runtime is ${publishedCliCommand}
   - this wrapper is CLI-only; there is no Python fallback path
-  - recursive orchestration now lives in tiangong-lca lifecyclemodel orchestrate
+  - recursive orchestration now lives in tiangong lifecyclemodel orchestrate
 `.trim();
 }
 

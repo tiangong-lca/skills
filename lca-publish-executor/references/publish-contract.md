@@ -26,7 +26,7 @@ Upstream builder skills may each emit different local artifacts, but OpenClaw sh
 
 - `lifecyclemodels`:
   - normalized into the unified CLI publish request
-  - downstream write semantics are owned by `tiangong-lca publish run`
+  - downstream write semantics are owned by `tiangong publish run`
 - `processes`:
   - normalized into the unified CLI publish request
   - non-canonical projection payloads can still be reported as deferred instead of being blindly committed

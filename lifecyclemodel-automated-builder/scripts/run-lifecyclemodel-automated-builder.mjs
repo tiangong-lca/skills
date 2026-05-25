@@ -28,18 +28,18 @@ Build compatibility options:
   --dry-run                 Print the resolved CLI command and exit
 
 Canonical CLI commands:
-  tiangong-lca lifecyclemodel auto-build --input <file> --out-dir <dir>
-  tiangong-lca lifecyclemodel validate-build --run-dir <dir>
-  tiangong-lca lifecyclemodel publish-build --run-dir <dir>
+  tiangong lifecyclemodel auto-build --input <file> --out-dir <dir>
+  tiangong lifecyclemodel validate-build --run-dir <dir>
+  tiangong lifecyclemodel publish-build --run-dir <dir>
 
 Runtime:
   default                  ${publishedCliCommand}
   local override           --cli-dir /path/to/tiangong-lca-cli or TIANGONG_LCA_CLI_DIR
 
 Notes:
-  - build is implemented and delegates to tiangong-lca lifecyclemodel auto-build
-  - validate delegates to tiangong-lca lifecyclemodel validate-build and re-runs local validation on one existing build run
-  - publish delegates to tiangong-lca lifecyclemodel publish-build and prepares local publish handoff artifacts only
+  - build is implemented and delegates to tiangong lifecyclemodel auto-build
+  - validate delegates to tiangong lifecyclemodel validate-build and re-runs local validation on one existing build run
+  - publish delegates to tiangong lifecyclemodel publish-build and prepares local publish handoff artifacts only
   - build requires an explicit --out-dir; choose an output path such as /abs/path/artifacts/<case_slug>/...`);
 }
 

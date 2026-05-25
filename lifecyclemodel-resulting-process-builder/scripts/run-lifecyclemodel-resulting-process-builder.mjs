@@ -48,8 +48,8 @@ Wrapper options:
   --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 Canonical CLI commands:
-  tiangong-lca lifecyclemodel build-resulting-process --input <file>
-  tiangong-lca lifecyclemodel publish-resulting-process --run-dir <dir>
+  tiangong lifecyclemodel build-resulting-process --input <file>
+  tiangong lifecyclemodel publish-resulting-process --run-dir <dir>
 
 Runtime:
   default                  ${publishedCliCommand}

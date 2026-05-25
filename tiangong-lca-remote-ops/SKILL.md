@@ -6,7 +6,7 @@ description: Wrap TianGong CLI process maintenance commands for authenticated re
 # TianGong LCA Remote Ops
 
 ## Scope
-- This skill is a thin wrapper around native `tiangong-lca process ...` commands.
+- This skill is a thin wrapper around native `tiangong process ...` commands.
 - Use it when the task is specifically about remote `processes` maintenance or post-write verification.
 - Do not add business-specific runtime logic, Supabase auth code, or custom `.env` parsing into this skill. If capability is missing, add it to `tiangong-cli` first.
 

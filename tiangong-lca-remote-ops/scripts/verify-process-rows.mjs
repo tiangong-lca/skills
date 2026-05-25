@@ -26,7 +26,7 @@ Wrapper options:
   -h, --help
 
 Delegates to:
-  tiangong-lca process verify-rows
+  tiangong process verify-rows
 
 Runtime:
   default                  ${publishedCliCommand}
@@ -34,7 +34,7 @@ Runtime:
 
 Notes:
   - this wrapper is local-only; it validates a frozen rows file and does not require remote credentials by itself
-  - accepted inputs include raw process rows JSON/JSONL and tiangong-lca process list reports with rows[]
+  - accepted inputs include raw process rows JSON/JSONL and tiangong process list reports with rows[]
   - keep --out-dir explicit so verification artifacts are reproducible and easy to diff
 
 Examples:

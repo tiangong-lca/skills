@@ -43,15 +43,27 @@ test('buildTiangongInvocation uses npm exec for the published CLI contract', () 
     '--yes',
     '--package=@tiangong-lca/cli@latest',
     '--',
-    'tiangong-lca',
+    'tiangong',
     'review',
     'process',
     '--help',
   ]);
-  assert.match(publishedCliCommand, /npm exec --yes --package=@tiangong-lca\/cli@latest -- tiangong-lca/u);
+  assert.match(publishedCliCommand, /npm exec --yes --package=@tiangong-lca\/cli@latest -- tiangong/u);
 });
 
-test('buildTiangongInvocation prefers an auto-discovered local CLI checkout', () => {
+test('buildTiangongInvocation prefers an auto-discovered local CLI checkout with the current binary name', () => {
+  const invocation = buildTiangongInvocation(['review', 'process', '--help'], {
+    repoRoot: '/workspace/tiangong-lca-skills',
+    pathExists: (candidate) =>
+      candidate === '/workspace/tiangong-cli' || candidate === '/workspace/tiangong-cli/bin/tiangong.js',
+  });
+
+  assert.equal(invocation.mode, 'local');
+  assert.equal(invocation.command, process.execPath);
+  assert.deepEqual(invocation.args, ['/workspace/tiangong-cli/bin/tiangong.js', 'review', 'process', '--help']);
+});
+
+test('buildTiangongInvocation keeps compatibility with older local CLI checkout binaries', () => {
   const invocation = buildTiangongInvocation(['review', 'process', '--help'], {
     repoRoot: '/workspace/tiangong-lca-skills',
     pathExists: (candidate) =>
@@ -89,7 +101,7 @@ test('runTiangongCommand rebuilds a stale local CLI before invocation', () => {
   const paths = new Set([
     cliDir,
     `${cliDir}/bin`,
-    `${cliDir}/bin/tiangong-lca.js`,
+    `${cliDir}/bin/tiangong.js`,
     `${cliDir}/dist/src/main.js`,
     `${cliDir}/src`,
     `${cliDir}/src/cli.ts`,
@@ -101,7 +113,7 @@ test('runTiangongCommand rebuilds a stale local CLI before invocation', () => {
     [`${cliDir}/dist/src/main.js`, 10],
     [`${cliDir}/src`, 20],
     [`${cliDir}/src/cli.ts`, 20],
-    [`${cliDir}/bin/tiangong-lca.js`, 5],
+    [`${cliDir}/bin/tiangong.js`, 5],
     [`${cliDir}/package.json`, 5],
     [`${cliDir}/tsconfig.build.json`, 5],
   ]);
@@ -141,7 +153,7 @@ test('runTiangongCommand rebuilds a stale local CLI before invocation', () => {
   });
   assert.equal(calls[1].command, process.execPath);
   assert.deepEqual(calls[1].args, [
-    `${cliDir}/bin/tiangong-lca.js`,
+    `${cliDir}/bin/tiangong.js`,
     'process',
     'save-draft',
     '--help',

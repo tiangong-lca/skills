@@ -4,10 +4,10 @@
 
 Keep `process-automated-builder` as a thin wrapper over the unified CLI surface:
 
-- `tiangong-lca process auto-build`
-- `tiangong-lca process resume-build`
-- `tiangong-lca process publish-build`
-- `tiangong-lca process batch-build`
+- `tiangong process auto-build`
+- `tiangong process resume-build`
+- `tiangong process publish-build`
+- `tiangong process batch-build`
 
 This skill does not add a second runtime layer.
 
@@ -34,9 +34,9 @@ For a batch manifest:
 
 1. Skill wrapper
    - native Node `.mjs`
-   - launches `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca` by default
+   - launches `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong` by default
    - resolves `TIANGONG_LCA_CLI_DIR` only when a local override is requested
-   - forwards arguments to `tiangong-lca`
+   - forwards arguments to `tiangong`
 2. CLI implementation
    - owns request normalization
    - owns run-id and artifact layout
@@ -100,4 +100,4 @@ For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>
 
 - Do not reintroduce old env names or skill-private HTTP clients.
 - Do not add new business scripts here.
-- If a future step needs LLM, KB search, unstructured parsing, validation, or publish execution, expose it as a native `tiangong-lca process ...` capability first.
+- If a future step needs LLM, KB search, unstructured parsing, validation, or publish execution, expose it as a native `tiangong process ...` capability first.
