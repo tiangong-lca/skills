@@ -1,4 +1,4 @@
 interface:
   display_name: "Current Account Dataset Review"
-  short_description: "Run CLI-backed multi-type TianGong dataset review and repair steps"
-  default_prompt: "Use $current-account-dataset-review to validate local flow/process/lifecyclemodel rows, rewrite flow references, save lifecyclemodel drafts, and generate lifecyclemodel graph audit artifacts through the TianGong CLI."
+  short_description: "Run CLI-backed current-account dataset review, reference, and verification gates"
+  default_prompt: "Use $current-account-dataset-review to validate local flow/process/lifecyclemodel rows, rewrite or refresh references, save lifecyclemodel drafts, verify remote references, and generate lifecyclemodel graph audit artifacts through the TianGong CLI."

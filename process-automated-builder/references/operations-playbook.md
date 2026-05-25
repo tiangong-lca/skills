@@ -4,10 +4,33 @@
 
 ```bash
 node process-automated-builder/scripts/run-process-automated-builder.mjs auto-build --help
+node process-automated-builder/scripts/run-process-automated-builder.mjs identity-preflight --help
+node process-automated-builder/scripts/run-process-automated-builder.mjs build-plan --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs resume-build --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs publish-build --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs batch-build --help
 ```
+
+## Run Identity And Build Gates
+
+```bash
+node process-automated-builder/scripts/run-process-automated-builder.mjs identity-preflight \
+  --input /abs/path/process-preflight.json \
+  --out-dir /abs/path/artifacts/<case_slug>/identity \
+  --json
+
+node process-automated-builder/scripts/run-process-automated-builder.mjs build-plan validate \
+  --input /abs/path/process-build-plan.json \
+  --out-dir /abs/path/artifacts/<case_slug>/build-plan \
+  --json
+
+node process-automated-builder/scripts/run-process-automated-builder.mjs build-plan materialize \
+  --input /abs/path/process-build-plan.json \
+  --out-dir /abs/path/artifacts/<case_slug>/build-plan \
+  --json
+```
+
+Stop on `block_duplicate`, `manual_review`, a failed build-plan gate, or any schema blocker. The skill should not override the CLI decision.
 
 ## Start One Run
 
@@ -64,6 +87,8 @@ Use this when:
 - the run already contains local process/source datasets
 - the next step should be unified publish handoff
 - downstream publish should go through `tiangong-lca publish run`, not a skill-private path
+
+Before this step, run `process complete-required-fields` or `process build-plan materialize` as appropriate. For annual supply or production volume, the CLI must use explicit evidence first, then reference-flow `meanAmount`, then reference-flow `resultingAmount`; the skill should only supply evidence and context.
 
 ## Prepare A Batch
 

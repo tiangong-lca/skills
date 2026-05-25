@@ -84,6 +84,15 @@ If the source begins as a spreadsheet, convert it into grouped JSON before using
 - Treat a group as an exact duplicate only when the normalized exchange multiset is identical after ignoring exchange row order and exchange internal IDs.
 - Keep/delete is a review recommendation, not an automatic remote delete.
 - If you cannot verify downstream references, label the delete list as `priority delete candidates` rather than claiming the rows are globally safe to remove.
+- If the upstream identity workflow returned `block_duplicate`, preserve that decision as the reason to reuse an existing row instead of creating another process.
+- If any group requires semantic judgment beyond exact exchange equality, mark it `manual_review` in the handoff and stop autonomous delete planning for that group.
+- Do not convert `delete-plan.json` into remote mutation without a separate CLI-backed write command, dry-run artifact, and post-write verification.
+
+## Required Handoff Artifacts
+
+- Input artifact: grouped duplicate-process JSON.
+- CLI output artifacts: `inputs/dedup-input.manifest.json`, optional `inputs/processes.remote-metadata.json`, `outputs/duplicate-groups.json`, and `outputs/delete-plan.json`.
+- Review output: a concise report that states exact duplicate evidence, chosen keeper, reference-verification coverage, and whether each delete candidate is safe or only prioritized for manual review.
 
 ## Load On Demand
 

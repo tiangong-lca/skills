@@ -19,6 +19,8 @@ Do not use this skill for:
 - The canonical entrypoint is `node scripts/run-flow-governance-review.mjs <command> ...`.
 - Write outputs to an explicit directory such as `/abs/path/artifacts/<case_slug>/...`.
 - Supported commands are all CLI-backed:
+  - `identity-preflight` -> `tiangong-lca flow identity-preflight`
+  - `build-plan` -> `tiangong-lca flow build-plan validate|materialize`
   - `review-flows` -> `tiangong-lca review flow`
   - `flow-get` -> `tiangong-lca flow get`
   - `flow-list` -> `tiangong-lca flow list`
@@ -40,6 +42,8 @@ Do not use this skill for:
 
 - `flow-get`
 - `flow-list`
+- `identity-preflight`
+- `build-plan`
 - `materialize-db-flows`
 - `materialize-approved-decisions`
 - `remediate-flows`
@@ -62,6 +66,18 @@ node scripts/run-flow-governance-review.mjs <command> ...
 For CLI-backed deterministic governance slices, prefer:
 
 ```bash
+node scripts/run-flow-governance-review.mjs identity-preflight \
+  --input /abs/path/flow-preflight.json \
+  --out-dir /abs/path/identity
+
+node scripts/run-flow-governance-review.mjs build-plan validate \
+  --input /abs/path/flow-build-plan.json \
+  --out-dir /abs/path/build-plan
+
+node scripts/run-flow-governance-review.mjs build-plan materialize \
+  --input /abs/path/flow-build-plan.json \
+  --out-dir /abs/path/build-plan
+
 node scripts/run-flow-governance-review.mjs materialize-db-flows \
   --refs-file /abs/path/flow-refs.json \
   --out-dir /abs/path/materialized \
@@ -143,19 +159,24 @@ If you need one of those workflows, add it first as a native `tiangong-lca revie
 
 Use the supported commands as composable slices:
 
-1. `materialize-db-flows` when the task must bind to real DB rows
-2. `review-flows`
-3. `materialize-approved-decisions` after merge decisions are approved
-4. `remediate-flows`
-5. `build-flow-alias-map` when version cleanup produced old/new scopes
-6. `scan-process-flow-refs`
-7. `plan-process-flow-repairs`
-8. `apply-process-flow-repairs`
-9. `validate-processes`
-10. `publish-version` or `publish-reviewed-data`
+1. `identity-preflight` before creating a new flow. Stop on `block_duplicate` or `manual_review`.
+2. `build-plan validate` and `build-plan materialize` before producing a canonical `flowDataSet`.
+3. `materialize-db-flows` when the task must bind to real DB rows.
+4. `review-flows`.
+5. `materialize-approved-decisions` after merge decisions are approved.
+6. `remediate-flows`.
+7. Use `tidas-bilingual-transcreation` plus `dataset bilingual extract/apply/validate` when flow names, synonyms, comments, or classification text need bilingual review.
+8. `build-flow-alias-map` when version cleanup produced old/new scopes.
+9. `scan-process-flow-refs`.
+10. `plan-process-flow-repairs`.
+11. `apply-process-flow-repairs`.
+12. `validate-processes`.
+13. `publish-version` or `publish-reviewed-data`.
 
 ## Standard Outputs
 
+- `identity-decision.json`, `identity-candidates.jsonl`, and `identity-candidate-sources.json` from `identity-preflight`
+- `build-plan-gate-report.json` and `materialized-flow.json` from `build-plan`
 - `flow-alias-map.json` when alias building is applicable
 - `scan-findings.json` and `repair-summary.json` when process snapshots are provided
 - `publish-report.json` from `publish-reviewed-data`

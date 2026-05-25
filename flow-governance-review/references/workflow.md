@@ -13,6 +13,8 @@ This skill is a thin wrapper around the supported CLI-backed governance commands
   - forward arguments to `tiangong-lca`
   - expose no Python fallback path
 - Command ownership:
+  - identity preflight lives in `tiangong-lca flow identity-preflight`
+  - build-plan gating and materialization live in `tiangong-lca flow build-plan`
   - review lives in `tiangong-lca review flow`
   - read/repair/publish slices live in `tiangong-lca flow ...`
 
@@ -28,6 +30,8 @@ node scripts/run-flow-governance-review.mjs <command> ...
 
 Supported commands:
 
+- `identity-preflight`
+- `build-plan`
 - `review-flows`
 - `flow-get`
 - `flow-list`
@@ -63,6 +67,14 @@ If any of these workflows is required again, add a native `tiangong-lca` command
 
 ### Review And Publish Flows
 
+For a newly generated or revised flow, run these gates first:
+
+1. `identity-preflight`
+2. `build-plan validate`
+3. `build-plan materialize`
+
+Stop if identity preflight returns `block_duplicate` or `manual_review`, or if the build-plan gate reports a blocker.
+
 When the task must bind to real DB flow rows:
 
 1. `materialize-db-flows`
@@ -93,6 +105,13 @@ When the task is already grounded on an existing local reviewed-row snapshot:
 
 ## Key Outputs
 
+- `identity-preflight`
+  - `identity-decision.json`
+  - `identity-candidates.jsonl`
+  - `identity-candidate-sources.json`
+- `build-plan`
+  - `build-plan-gate-report.json`
+  - `materialized-flow.json` for `materialize`
 - `review-flows`
   - `rule_findings.jsonl`
   - `llm_findings.jsonl`

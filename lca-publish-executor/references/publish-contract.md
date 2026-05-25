@@ -48,9 +48,24 @@ OpenClaw should know:
 - when to call this skill
 - how to populate the request JSON
 - how to read `publish-report.json`
+- how to read `verification-report.json` and stop on blockers
 
 OpenClaw should not embed per-skill publish internals such as:
 
 - how resulting-process builder bundles map to process payload arrays
 - how orchestrator bundles expose delegated `process_build_runs`
 - how commit executors or relation manifests are materialized by the CLI
+
+## Verification Boundary
+
+`tiangong-lca publish run` owns dry-run and commit verification. The skill reads the reports and decides whether to continue; it does not reproduce publish rules.
+
+Required handoff artifacts:
+
+- input request JSON
+- upstream publish bundle paths, when used
+- `publish-report.json`
+- `verification-report.json`
+- post-write `dataset verify-remote` or `process verify-rows` artifacts for commit-mode runs
+
+If any report contains blockers, stop autonomous publishing and preserve the artifact paths in the handoff.

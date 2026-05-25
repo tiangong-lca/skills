@@ -1,4 +1,4 @@
 interface:
   display_name: "Process Automated Builder"
-  short_description: "Run process-from-flow with a CLI-first workflow"
-  default_prompt: "Use $process-automated-builder to run the native Node .mjs wrapper for the CLI-owned process-from-flow local workflow stages: auto-build, resume-build, publish-build, and batch-build."
+  short_description: "Run CLI-backed process identity, build, and publish gates"
+  default_prompt: "Use $process-automated-builder to run the native Node .mjs wrapper for CLI-owned process identity-preflight, build-plan validate/materialize, required-field completion, process-from-flow, publish-build, and local verification gates."

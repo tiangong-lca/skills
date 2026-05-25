@@ -11,7 +11,16 @@ import {
 
 class UsageError extends Error {}
 
-const canonicalSubcommands = new Set(['auto-build', 'resume-build', 'publish-build', 'batch-build']);
+const canonicalSubcommands = new Set([
+  'identity-preflight',
+  'build-plan',
+  'auto-build',
+  'resume-build',
+  'publish-build',
+  'batch-build',
+  'complete-required-fields',
+  'verify-rows',
+]);
 
 function fail(message) {
   throw new UsageError(message);
@@ -19,16 +28,21 @@ function fail(message) {
 
 function renderHelp() {
   return `Usage:
-  node scripts/run-process-automated-builder.mjs <auto-build|resume-build|publish-build|batch-build> [options]
+  node scripts/run-process-automated-builder.mjs <command> [options]
 
 Wrapper options:
   --cli-dir <dir>           Override the published CLI and use a local tiangong-lca-cli repository path
 
 Canonical commands:
+  identity-preflight        Delegate to tiangong-lca process identity-preflight
+  build-plan validate       Delegate to tiangong-lca process build-plan validate
+  build-plan materialize    Delegate to tiangong-lca process build-plan materialize
   auto-build                Delegate to tiangong-lca process auto-build
   resume-build              Delegate to tiangong-lca process resume-build
   publish-build             Delegate to tiangong-lca process publish-build
   batch-build               Delegate to tiangong-lca process batch-build
+  complete-required-fields  Delegate to tiangong-lca process complete-required-fields
+  verify-rows               Delegate to tiangong-lca process verify-rows
 
 auto-build compatibility options:
   --request <file>          Alias for the CLI's --input <file>
@@ -48,10 +62,15 @@ Notes:
   - resume-build and publish-build should use --run-dir so the output root stays explicit
 
 Examples:
+  node scripts/run-process-automated-builder.mjs identity-preflight --input /abs/path/process-preflight.json --out-dir /abs/path/artifacts/<case_slug>/identity --json
+  node scripts/run-process-automated-builder.mjs build-plan validate --input /abs/path/process-build-plan.json --out-dir /abs/path/artifacts/<case_slug>/build-plan --json
+  node scripts/run-process-automated-builder.mjs build-plan materialize --input /abs/path/process-build-plan.json --out-dir /abs/path/artifacts/<case_slug>/build-plan --json
   node scripts/run-process-automated-builder.mjs auto-build --flow-file /abs/path/reference-flow.json --operation produce --out-dir /abs/path/artifacts/<case_slug>/process_from_flow/<run_id> --json
   node scripts/run-process-automated-builder.mjs resume-build --run-dir /abs/path/artifacts/<case_slug>/process_from_flow/<run_id> --run-id <run_id> --json
   node scripts/run-process-automated-builder.mjs publish-build --run-dir /abs/path/artifacts/<case_slug>/process_from_flow/<run_id> --run-id <run_id> --json
   node scripts/run-process-automated-builder.mjs batch-build --input /abs/path/batch-request.json --out-dir /abs/path/artifacts/<case_slug>/process_batch/<batch_id> --json
+  node scripts/run-process-automated-builder.mjs complete-required-fields --input /abs/path/processes.jsonl --out /abs/path/processes.completed.jsonl --default-unit MJ
+  node scripts/run-process-automated-builder.mjs verify-rows --rows-file /abs/path/process-list-report.json --out-dir /abs/path/artifacts/<case_slug>/process-verify
 `.trim();
 }
 
@@ -80,6 +99,12 @@ function hasFlag(flag, values) {
 
 function requireFlag(flag, values, message) {
   if (!hasFlag(flag, values)) {
+    fail(message);
+  }
+}
+
+function requireAnyFlag(flags, values, message) {
+  if (!flags.some((flag) => hasFlag(flag, values))) {
     fail(message);
   }
 }
@@ -315,6 +340,29 @@ function runCanonicalInputCommand(cliDir, subcommand, args) {
   return runTiangongCommand(['process', subcommand, ...forwardArgs], { cliDir });
 }
 
+function runProcessGateCommand(cliDir, subcommand, args) {
+  if (args.includes('-h') || args.includes('--help')) {
+    return runTiangongCommand(['process', subcommand, '--help'], { cliDir });
+  }
+  requireFlag('--input', args, `${subcommand} requires --input <file>.`);
+  requireFlag('--out-dir', args, `${subcommand} requires --out-dir <dir>.`);
+  return runTiangongCommand(['process', subcommand, ...args], { cliDir });
+}
+
+function runProcessBuildPlan(cliDir, args) {
+  if (args.includes('-h') || args.includes('--help')) {
+    return runTiangongCommand(['process', 'build-plan', '--help'], { cliDir });
+  }
+  const action = args[0];
+  if (action !== 'validate' && action !== 'materialize') {
+    fail("build-plan requires action 'validate' or 'materialize'.");
+  }
+  const forwardedArgs = args.slice(1);
+  requireFlag('--input', forwardedArgs, `build-plan ${action} requires --input <file>.`);
+  requireFlag('--out-dir', forwardedArgs, `build-plan ${action} requires --out-dir <dir>.`);
+  return runTiangongCommand(['process', 'build-plan', action, ...forwardedArgs], { cliDir });
+}
+
 function main() {
   const { cliDir, args } = normalizeCliRuntimeArgs(process.argv.slice(2));
 
@@ -338,6 +386,10 @@ function main() {
   const commandArgs = args.slice(1);
 
   switch (subcommand) {
+    case 'identity-preflight':
+      return runProcessGateCommand(cliDir, 'identity-preflight', commandArgs);
+    case 'build-plan':
+      return runProcessBuildPlan(cliDir, commandArgs);
     case 'auto-build':
       return runCanonicalAutoBuild(cliDir, commandArgs);
     case 'resume-build':
@@ -356,6 +408,20 @@ function main() {
       return runTiangongCommand(['process', 'publish-build', ...commandArgs], { cliDir });
     case 'batch-build':
       return runCanonicalInputCommand(cliDir, 'batch-build', commandArgs);
+    case 'complete-required-fields':
+      if (commandArgs.includes('-h') || commandArgs.includes('--help')) {
+        return runTiangongCommand(['process', 'complete-required-fields', '--help'], { cliDir });
+      }
+      requireFlag('--input', commandArgs, 'complete-required-fields requires --input <file>.');
+      requireAnyFlag(['--out'], commandArgs, 'complete-required-fields requires --out <file>.');
+      return runTiangongCommand(['process', 'complete-required-fields', ...commandArgs], { cliDir });
+    case 'verify-rows':
+      if (commandArgs.includes('-h') || commandArgs.includes('--help')) {
+        return runTiangongCommand(['process', 'verify-rows', '--help'], { cliDir });
+      }
+      requireFlag('--rows-file', commandArgs, 'verify-rows requires --rows-file <file>.');
+      requireFlag('--out-dir', commandArgs, 'verify-rows requires --out-dir <dir>.');
+      return runTiangongCommand(['process', 'verify-rows', ...commandArgs], { cliDir });
     default:
       fail(`Unknown subcommand: ${subcommand}`);
   }

@@ -37,8 +37,12 @@ node scripts/run-lca-publish-executor.mjs publish \
 ## Outputs
 - whatever `tiangong-lca publish run` emits for the request shape
 - at minimum expect `publish-report.json`
+- expect `verification-report.json` next to the publish report; read it before treating a dry-run or commit as complete
 - when relation mode stays local, also expect a local relation manifest in the publish output bundle
 
 ## Notes
 - This wrapper is CLI-only; there is no Python or MCP fallback path.
 - Keep this skill as a stable request façade only. Do not add publish internals here.
+- Do not publish if upstream identity, build-plan, schema, bilingual, review, reference, matrix-readiness, or account-verification gates are missing or blocked.
+- If `verification-report.json` contains blockers, stop and hand off the artifact path instead of retrying blindly.
+- After a commit-mode publish, run the appropriate post-write verification: `tiangong-lca dataset verify-remote` for TIDAS references and `tiangong-lca process verify-rows` for persisted process row snapshots.

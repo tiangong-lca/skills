@@ -15,7 +15,9 @@ const repoRoot = path.resolve(scriptDir, '..', '..');
 
 const actions = {
   validate: ['dataset', 'validate'],
+  'verify-remote': ['dataset', 'verify-remote'],
   'rewrite-references': ['dataset', 'references', 'rewrite'],
+  'refresh-remote-references': ['dataset', 'references', 'refresh-remote'],
   'save-lifecyclemodels': ['lifecyclemodel', 'save-draft'],
   'graph-lifecyclemodels': ['lifecyclemodel', 'graph'],
 };
@@ -29,10 +31,12 @@ function renderHelp() {
   node current-account-dataset-review/scripts/run-current-account-dataset-review.mjs <action> [options]
 
 Actions:
-  validate               Delegate to tiangong dataset validate
-  rewrite-references    Delegate to tiangong dataset references rewrite
-  save-lifecyclemodels  Delegate to tiangong lifecyclemodel save-draft
-  graph-lifecyclemodels Delegate to tiangong lifecyclemodel graph
+  validate               Delegate to tiangong-lca dataset validate
+  verify-remote          Delegate to tiangong-lca dataset verify-remote
+  rewrite-references    Delegate to tiangong-lca dataset references rewrite
+  refresh-remote-references Delegate to tiangong-lca dataset references refresh-remote
+  save-lifecyclemodels  Delegate to tiangong-lca lifecyclemodel save-draft
+  graph-lifecyclemodels Delegate to tiangong-lca lifecyclemodel graph
 
 Wrapper options:
   --cli-dir <dir>        Override the published CLI and use a local tiangong-cli repository path
@@ -44,7 +48,9 @@ Runtime:
 
 Examples:
   node current-account-dataset-review/scripts/run-current-account-dataset-review.mjs validate --input /abs/path/rows.jsonl --type auto --out-dir /abs/path/dataset-validate
+  node current-account-dataset-review/scripts/run-current-account-dataset-review.mjs verify-remote --input /abs/path/rows.jsonl --out-dir /abs/path/dataset-verify-remote
   node current-account-dataset-review/scripts/run-current-account-dataset-review.mjs rewrite-references --input /abs/path/rows.jsonl --from flow:<old>@01.00.000 --to flow:<new>@01.01.000 --type process --type lifecyclemodel --out-dir /abs/path/rewrite --dry-run
+  node current-account-dataset-review/scripts/run-current-account-dataset-review.mjs refresh-remote-references --input /abs/path/rows.jsonl --out /abs/path/rows.refreshed.jsonl --out-dir /abs/path/reference-refresh --dry-run
   node current-account-dataset-review/scripts/run-current-account-dataset-review.mjs save-lifecyclemodels --input /abs/path/lifecyclemodels.jsonl --out-dir /abs/path/save-draft --dry-run
   node current-account-dataset-review/scripts/run-current-account-dataset-review.mjs graph-lifecyclemodels --input /abs/path/lifecyclemodels.jsonl --out-dir /abs/path/graph --format all --check-connections
 
@@ -57,16 +63,12 @@ Notes:
 function main() {
   const { cliDir, args } = normalizeCliRuntimeArgs(process.argv.slice(2), { repoRoot });
 
-  if (args.includes('-h') || args.includes('--help')) {
+  if (args.length === 0 || args[0] === '-h' || args[0] === '--help') {
     console.log(renderHelp());
     process.exit(0);
   }
 
   const action = args[0];
-  if (!action) {
-    fail('Missing required action. Use --help for supported actions.');
-  }
-
   const command = actions[action];
   if (!command) {
     fail(`Unsupported action: ${action}. Use --help for supported actions.`);
