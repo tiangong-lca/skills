@@ -160,18 +160,19 @@ If you need one of those workflows, add it first as a native `tiangong-lca revie
 Use the supported commands as composable slices:
 
 1. `identity-preflight` before creating a new flow. Stop on `block_duplicate` or `manual_review`.
-2. `build-plan validate` and `build-plan materialize` before producing a canonical `flowDataSet`.
-3. `materialize-db-flows` when the task must bind to real DB rows.
-4. `review-flows`.
-5. `materialize-approved-decisions` after merge decisions are approved.
-6. `remediate-flows`.
-7. Use `tidas-bilingual-transcreation` plus `dataset bilingual extract/apply/validate` when flow names, synonyms, comments, or classification text need bilingual review.
-8. `build-flow-alias-map` when version cleanup produced old/new scopes.
-9. `scan-process-flow-refs`.
-10. `plan-process-flow-repairs`.
-11. `apply-process-flow-repairs`.
-12. `validate-processes`.
-13. `publish-version` or `publish-reviewed-data`.
+2. Author `unit_of_analysis` in the flow build plan before generation. For flow-only plans this may be a declared-unit dataset decision, but it must still record target kind, reference flow identity, reference unit, reference amount, flow property, and scaling evidence status. The skill makes the semantic decision; the CLI only checks that the artifact is present and complete.
+3. `build-plan validate` and `build-plan materialize` before producing a canonical `flowDataSet`.
+4. `materialize-db-flows` when the task must bind to real DB rows.
+5. `review-flows`.
+6. `materialize-approved-decisions` after merge decisions are approved.
+7. `remediate-flows`.
+8. Use `tidas-bilingual-transcreation` plus `dataset bilingual extract/apply/validate` when flow names, synonyms, comments, or classification text need bilingual review.
+9. `build-flow-alias-map` when version cleanup produced old/new scopes.
+10. `scan-process-flow-refs`.
+11. `plan-process-flow-repairs`.
+12. `apply-process-flow-repairs`.
+13. `validate-processes`.
+14. `publish-version` or `publish-reviewed-data`.
 
 ## Standard Outputs
 

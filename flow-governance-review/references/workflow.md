@@ -70,10 +70,13 @@ If any of these workflows is required again, add a native `tiangong-lca` command
 For a newly generated or revised flow, run these gates first:
 
 1. `identity-preflight`
-2. `build-plan validate`
-3. `build-plan materialize`
+2. Author `unit_of_analysis` in the flow build plan.
+3. `build-plan validate`
+4. `build-plan materialize`
 
-Stop if identity preflight returns `block_duplicate` or `manual_review`, or if the build-plan gate reports a blocker.
+For flow-only plans, `unit_of_analysis` can be a `declared_unit_dataset` decision when a full product-system functional unit is not appropriate. It still must record target kind, reference flow identity, reference unit, reference amount, flow property, and scaling evidence status.
+
+Stop if identity preflight returns `block_duplicate` or `manual_review`, if `unit_of_analysis` is missing or non-automatic, or if the build-plan gate reports a blocker.
 
 When the task must bind to real DB flow rows:
 

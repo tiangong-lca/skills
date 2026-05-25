@@ -96,6 +96,8 @@ For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>
 - `outputs/build-plan-gate-report.json`
 - `outputs/materialized-process.json`
 
+`process-build-plan.json` must include a skill-authored `unit_of_analysis` artifact before either build-plan action can pass. The skill chooses the semantic basis; the CLI only checks artifact presence/completeness and blocks `manual_review` / `blocked_until_scaling_evidence` decisions.
+
 `complete-required-fields` writes:
 
 - the requested completed rows file
@@ -139,4 +141,5 @@ For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>
 - Do not add new business scripts here.
 - If a future step needs LLM, KB search, unstructured parsing, validation, or publish execution, expose it as a native `tiangong-lca process ...` capability first.
 - Treat `block_duplicate` and `manual_review` from identity preflight as terminal autonomous stop states.
+- Treat missing or non-automatic `unit_of_analysis` decisions as terminal autonomous stop states until the skill-authored build plan is revised.
 - Treat any failed build-plan gate as a blocker; do not reproduce the gate logic inside the skill.
