@@ -1,25 +1,32 @@
 #!/usr/bin/env node
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import process from 'node:process';
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import process from "node:process";
 import {
   normalizeCliRuntimeArgs,
   publishedCliCommand,
   runTiangongCommand,
-} from '../../scripts/lib/cli-launcher.mjs';
+} from "../../scripts/lib/cli-launcher.mjs";
 
 class UsageError extends Error {}
 
 const canonicalSubcommands = new Set([
-  'identity-preflight',
-  'build-plan',
-  'auto-build',
-  'resume-build',
-  'publish-build',
-  'batch-build',
-  'complete-required-fields',
-  'verify-rows',
+  "identity-preflight",
+  "build-plan",
+  "auto-build",
+  "resume-build",
+  "publish-build",
+  "batch-build",
+  "complete-required-fields",
+  "verify-rows",
+  "evidence-search",
 ]);
 
 function fail(message) {
@@ -43,6 +50,7 @@ Canonical commands:
   batch-build               Delegate to tiangong-lca process batch-build
   complete-required-fields  Delegate to tiangong-lca process complete-required-fields
   verify-rows               Delegate to tiangong-lca process verify-rows
+  evidence-search plan|run   Delegate to tiangong-lca dataset evidence-search plan|run
 
 auto-build compatibility options:
   --request <file>          Alias for the CLI's --input <file>
@@ -71,6 +79,7 @@ Examples:
   node scripts/run-process-automated-builder.mjs batch-build --input /abs/path/batch-request.json --out-dir /abs/path/artifacts/<case_slug>/process_batch/<batch_id> --json
   node scripts/run-process-automated-builder.mjs complete-required-fields --input /abs/path/processes.jsonl --out /abs/path/processes.completed.jsonl --default-unit MJ
   node scripts/run-process-automated-builder.mjs verify-rows --rows-file /abs/path/process-list-report.json --out-dir /abs/path/artifacts/<case_slug>/process-verify
+  node scripts/run-process-automated-builder.mjs evidence-search plan --query "中国2026年电力结构数据" --out-dir /abs/path/artifacts/<case_slug>/evidence --json
 `.trim();
 }
 
@@ -85,8 +94,8 @@ function parseJsonText(rawText, sourceLabel) {
 
 function writeTempJsonFile(prefix, value) {
   const tempDir = mkdtempSync(path.join(os.tmpdir(), prefix));
-  const filePath = path.join(tempDir, 'payload.json');
-  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  const filePath = path.join(tempDir, "payload.json");
+  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
   return {
     tempDir,
     filePath,
@@ -116,45 +125,45 @@ function normalizeCliInputArgs(args) {
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
 
-    if (arg === '--request') {
+    if (arg === "--request") {
       if (index + 1 >= args.length) {
-        fail('--request requires a value');
+        fail("--request requires a value");
       }
       if (inputPath && inputPath !== args[index + 1]) {
-        fail('Use only one of --request or --input.');
+        fail("Use only one of --request or --input.");
       }
       inputPath = args[index + 1];
       index += 1;
       continue;
     }
 
-    if (arg.startsWith('--request=')) {
-      const value = arg.slice('--request='.length);
+    if (arg.startsWith("--request=")) {
+      const value = arg.slice("--request=".length);
       if (inputPath && inputPath !== value) {
-        fail('Use only one of --request or --input.');
+        fail("Use only one of --request or --input.");
       }
       inputPath = value;
       continue;
     }
 
-    if (arg === '--input') {
+    if (arg === "--input") {
       if (index + 1 >= args.length) {
-        fail('--input requires a value');
+        fail("--input requires a value");
       }
       const value = args[index + 1];
       if (inputPath && inputPath !== value) {
-        fail('Use only one of --request or --input.');
+        fail("Use only one of --request or --input.");
       }
       inputPath = value;
-      forwardArgs.push('--input', value);
+      forwardArgs.push("--input", value);
       index += 1;
       continue;
     }
 
-    if (arg.startsWith('--input=')) {
-      const value = arg.slice('--input='.length);
+    if (arg.startsWith("--input=")) {
+      const value = arg.slice("--input=".length);
       if (inputPath && inputPath !== value) {
-        fail('Use only one of --request or --input.');
+        fail("Use only one of --request or --input.");
       }
       inputPath = value;
       forwardArgs.push(arg);
@@ -164,8 +173,8 @@ function normalizeCliInputArgs(args) {
     forwardArgs.push(arg);
   }
 
-  if (inputPath && !hasFlag('--input', forwardArgs)) {
-    forwardArgs.unshift('--input', inputPath);
+  if (inputPath && !hasFlag("--input", forwardArgs)) {
+    forwardArgs.unshift("--input", inputPath);
   }
 
   return {
@@ -178,7 +187,7 @@ function runCanonicalAutoBuild(cliDir, args) {
   let flowFile = null;
   let flowJson = null;
   let flowFromStdin = false;
-  let operation = 'produce';
+  let operation = "produce";
   let showHelp = false;
   const forwardArgs = [];
   const tempDirs = [];
@@ -188,72 +197,78 @@ function runCanonicalAutoBuild(cliDir, args) {
       const arg = args[index];
 
       switch (arg) {
-        case '--request':
-        case '--input':
+        case "--request":
+        case "--input":
           if (index + 1 >= args.length) {
             fail(`${arg} requires a value`);
           }
           if (inputPath && inputPath !== args[index + 1]) {
-            fail('Use only one of --request, --input, or flow wrapper options.');
+            fail(
+              "Use only one of --request, --input, or flow wrapper options.",
+            );
           }
           inputPath = args[index + 1];
           index += 1;
           break;
-        case '--flow-file':
+        case "--flow-file":
           if (index + 1 >= args.length) {
-            fail('--flow-file requires a value');
+            fail("--flow-file requires a value");
           }
           flowFile = args[index + 1];
           index += 1;
           break;
-        case '--flow-json':
+        case "--flow-json":
           if (index + 1 >= args.length) {
-            fail('--flow-json requires a value');
+            fail("--flow-json requires a value");
           }
           flowJson = args[index + 1];
           index += 1;
           break;
-        case '--flow-stdin':
+        case "--flow-stdin":
           flowFromStdin = true;
           break;
-        case '--operation':
+        case "--operation":
           if (index + 1 >= args.length) {
-            fail('--operation requires a value');
+            fail("--operation requires a value");
           }
           operation = args[index + 1];
           index += 1;
           break;
-        case '-h':
-        case '--help':
+        case "-h":
+        case "--help":
           showHelp = true;
           break;
         default:
-          if (arg.startsWith('--request=')) {
-            const value = arg.slice('--request='.length);
+          if (arg.startsWith("--request=")) {
+            const value = arg.slice("--request=".length);
             if (inputPath && inputPath !== value) {
-              fail('Use only one of --request, --input, or flow wrapper options.');
+              fail(
+                "Use only one of --request, --input, or flow wrapper options.",
+              );
             }
             inputPath = value;
             break;
           }
-          if (arg.startsWith('--input=')) {
-            const value = arg.slice('--input='.length);
+          if (arg.startsWith("--input=")) {
+            const value = arg.slice("--input=".length);
             if (inputPath && inputPath !== value) {
-              fail('Use only one of --request, --input, or flow wrapper options.');
+              fail(
+                "Use only one of --request, --input, or flow wrapper options.",
+              );
             }
             inputPath = value;
             break;
           }
-          if (arg.startsWith('--flow-file=')) {
-            flowFile = arg.slice('--flow-file='.length);
+          if (arg.startsWith("--flow-file=")) {
+            flowFile = arg.slice("--flow-file=".length);
             break;
           }
-          if (arg.startsWith('--flow-json=')) {
-            flowJson = arg.slice('--flow-json='.length);
+          if (arg.startsWith("--flow-json=")) {
+            flowJson = arg.slice("--flow-json=".length);
             break;
           }
-          if (arg.startsWith('--operation=')) {
-            operation = arg.slice('--operation='.length);
+          if (arg.startsWith("--operation=")) {
+            operation = arg.slice("--operation=".length);
             break;
           }
           forwardArgs.push(arg);
@@ -262,35 +277,41 @@ function runCanonicalAutoBuild(cliDir, args) {
     }
 
     if (showHelp) {
-      return runTiangongCommand(['process', 'auto-build', '--help'], { cliDir });
+      return runTiangongCommand(["process", "auto-build", "--help"], {
+        cliDir,
+      });
     }
 
-    const inputSourceCount = [inputPath ? 1 : 0, flowFile ? 1 : 0, flowJson ? 1 : 0, flowFromStdin ? 1 : 0].reduce(
-      (sum, value) => sum + value,
-      0,
-    );
+    const inputSourceCount = [
+      inputPath ? 1 : 0,
+      flowFile ? 1 : 0,
+      flowJson ? 1 : 0,
+      flowFromStdin ? 1 : 0,
+    ].reduce((sum, value) => sum + value, 0);
 
     if (inputSourceCount === 0) {
-      fail('Missing input. Use --input/--request or one of --flow-file/--flow-json/--flow-stdin.');
+      fail(
+        "Missing input. Use --input/--request or one of --flow-file/--flow-json/--flow-stdin.",
+      );
     }
     if (inputPath && inputSourceCount > 1) {
-      fail('Use either --input/--request or flow wrapper options, not both.');
+      fail("Use either --input/--request or flow wrapper options, not both.");
     }
     if (flowFile && flowJson) {
-      fail('--flow-file and --flow-json are mutually exclusive.');
+      fail("--flow-file and --flow-json are mutually exclusive.");
     }
     if (flowFile && flowFromStdin) {
-      fail('--flow-file and --flow-stdin are mutually exclusive.');
+      fail("--flow-file and --flow-stdin are mutually exclusive.");
     }
     if (flowJson && flowFromStdin) {
-      fail('--flow-json and --flow-stdin are mutually exclusive.');
+      fail("--flow-json and --flow-stdin are mutually exclusive.");
     }
-    if (operation !== 'produce' && operation !== 'treat') {
+    if (operation !== "produce" && operation !== "treat") {
       fail("--operation must be 'produce' or 'treat'.");
     }
 
     requireFlag(
-      '--out-dir',
+      "--out-dir",
       forwardArgs,
       "auto-build requires --out-dir <dir>. Choose an explicit output path, for example /abs/path/artifacts/<case_slug>/.",
     );
@@ -299,20 +320,22 @@ function runCanonicalAutoBuild(cliDir, args) {
       let resolvedFlowPath = flowFile ? path.resolve(flowFile) : null;
 
       if (flowJson || flowFromStdin) {
-        const flowPayload = flowJson ?? readFileSync(0, 'utf8');
+        const flowPayload = flowJson ?? readFileSync(0, "utf8");
         const tempFlow = writeTempJsonFile(
-          'tg-pab-flow-',
-          parseJsonText(flowPayload, flowJson ? '--flow-json' : 'stdin'),
+          "tg-pab-flow-",
+          parseJsonText(flowPayload, flowJson ? "--flow-json" : "stdin"),
         );
         tempDirs.push(tempFlow.tempDir);
         resolvedFlowPath = tempFlow.filePath;
       }
 
       if (!resolvedFlowPath || !existsSync(resolvedFlowPath)) {
-        fail(`Flow file not found: ${resolvedFlowPath ?? '(missing flow input)'}`);
+        fail(
+          `Flow file not found: ${resolvedFlowPath ?? "(missing flow input)"}`,
+        );
       }
 
-      const tempRequest = writeTempJsonFile('tg-pab-request-', {
+      const tempRequest = writeTempJsonFile("tg-pab-request-", {
         flow_file: resolvedFlowPath,
         operation,
       });
@@ -320,9 +343,12 @@ function runCanonicalAutoBuild(cliDir, args) {
       inputPath = tempRequest.filePath;
     }
 
-    return runTiangongCommand(['process', 'auto-build', '--input', inputPath, ...forwardArgs], {
-      cliDir,
-    });
+    return runTiangongCommand(
+      ["process", "auto-build", "--input", inputPath, ...forwardArgs],
+      {
+        cliDir,
+      },
+    );
   } finally {
     for (const tempDir of tempDirs) {
       rmSync(tempDir, { recursive: true, force: true });
@@ -333,34 +359,81 @@ function runCanonicalAutoBuild(cliDir, args) {
 function runCanonicalInputCommand(cliDir, subcommand, args) {
   const { forwardArgs } = normalizeCliInputArgs(args);
   requireFlag(
-    '--out-dir',
+    "--out-dir",
     forwardArgs,
     `${subcommand} requires --out-dir <dir>. Choose an explicit output path, for example /abs/path/artifacts/<case_slug>/.`,
   );
-  return runTiangongCommand(['process', subcommand, ...forwardArgs], { cliDir });
+  return runTiangongCommand(["process", subcommand, ...forwardArgs], {
+    cliDir,
+  });
 }
 
 function runProcessGateCommand(cliDir, subcommand, args) {
-  if (args.includes('-h') || args.includes('--help')) {
-    return runTiangongCommand(['process', subcommand, '--help'], { cliDir });
+  if (args.includes("-h") || args.includes("--help")) {
+    return runTiangongCommand(["process", subcommand, "--help"], { cliDir });
   }
-  requireFlag('--input', args, `${subcommand} requires --input <file>.`);
-  requireFlag('--out-dir', args, `${subcommand} requires --out-dir <dir>.`);
-  return runTiangongCommand(['process', subcommand, ...args], { cliDir });
+  requireFlag("--input", args, `${subcommand} requires --input <file>.`);
+  requireFlag("--out-dir", args, `${subcommand} requires --out-dir <dir>.`);
+  return runTiangongCommand(["process", subcommand, ...args], { cliDir });
 }
 
 function runProcessBuildPlan(cliDir, args) {
-  if (args.includes('-h') || args.includes('--help')) {
-    return runTiangongCommand(['process', 'build-plan', '--help'], { cliDir });
+  if (args.includes("-h") || args.includes("--help")) {
+    return runTiangongCommand(["process", "build-plan", "--help"], { cliDir });
   }
   const action = args[0];
-  if (action !== 'validate' && action !== 'materialize') {
+  if (action !== "validate" && action !== "materialize") {
     fail("build-plan requires action 'validate' or 'materialize'.");
   }
   const forwardedArgs = args.slice(1);
-  requireFlag('--input', forwardedArgs, `build-plan ${action} requires --input <file>.`);
-  requireFlag('--out-dir', forwardedArgs, `build-plan ${action} requires --out-dir <dir>.`);
-  return runTiangongCommand(['process', 'build-plan', action, ...forwardedArgs], { cliDir });
+  requireFlag(
+    "--input",
+    forwardedArgs,
+    `build-plan ${action} requires --input <file>.`,
+  );
+  requireFlag(
+    "--out-dir",
+    forwardedArgs,
+    `build-plan ${action} requires --out-dir <dir>.`,
+  );
+  return runTiangongCommand(
+    ["process", "build-plan", action, ...forwardedArgs],
+    { cliDir },
+  );
+}
+
+function runDatasetEvidenceSearch(cliDir, args) {
+  if (args.includes("-h") || args.includes("--help")) {
+    return runTiangongCommand(["dataset", "evidence-search", "--help"], {
+      cliDir,
+    });
+  }
+  const action = args[0];
+  if (action !== "plan" && action !== "run") {
+    fail("evidence-search requires action 'plan' or 'run'.");
+  }
+  const forwardedArgs = args.slice(1);
+  requireAnyFlag(
+    ["--query", "--input"],
+    forwardedArgs,
+    `evidence-search ${action} requires --query <text> or --input <file>.`,
+  );
+  requireFlag(
+    "--out-dir",
+    forwardedArgs,
+    `evidence-search ${action} requires --out-dir <dir>. Choose an explicit output path.`,
+  );
+  if (action === "run") {
+    requireAnyFlag(
+      ["--results", "--provider-url"],
+      forwardedArgs,
+      "evidence-search run requires --results <file> or --provider-url <url>.",
+    );
+  }
+  return runTiangongCommand(
+    ["dataset", "evidence-search", action, ...forwardedArgs],
+    { cliDir },
+  );
 }
 
 function main() {
@@ -373,7 +446,7 @@ function main() {
 
   const subcommand = args[0];
 
-  if (subcommand === 'help' || subcommand === '-h' || subcommand === '--help') {
+  if (subcommand === "help" || subcommand === "-h" || subcommand === "--help") {
     console.error(renderHelp());
     return 0;
   }
@@ -386,42 +459,74 @@ function main() {
   const commandArgs = args.slice(1);
 
   switch (subcommand) {
-    case 'identity-preflight':
-      return runProcessGateCommand(cliDir, 'identity-preflight', commandArgs);
-    case 'build-plan':
+    case "identity-preflight":
+      return runProcessGateCommand(cliDir, "identity-preflight", commandArgs);
+    case "build-plan":
       return runProcessBuildPlan(cliDir, commandArgs);
-    case 'auto-build':
+    case "auto-build":
       return runCanonicalAutoBuild(cliDir, commandArgs);
-    case 'resume-build':
+    case "resume-build":
       requireFlag(
-        '--run-dir',
+        "--run-dir",
         commandArgs,
-        'resume-build requires --run-dir <dir>. Use an explicit run directory under /abs/path/artifacts/<case_slug>/... and pass --run-id only as an optional consistency check.',
+        "resume-build requires --run-dir <dir>. Use an explicit run directory under /abs/path/artifacts/<case_slug>/... and pass --run-id only as an optional consistency check.",
       );
-      return runTiangongCommand(['process', 'resume-build', ...commandArgs], { cliDir });
-    case 'publish-build':
+      return runTiangongCommand(["process", "resume-build", ...commandArgs], {
+        cliDir,
+      });
+    case "publish-build":
       requireFlag(
-        '--run-dir',
+        "--run-dir",
         commandArgs,
-        'publish-build requires --run-dir <dir>. Use an explicit run directory under /abs/path/artifacts/<case_slug>/... and pass --run-id only as an optional consistency check.',
+        "publish-build requires --run-dir <dir>. Use an explicit run directory under /abs/path/artifacts/<case_slug>/... and pass --run-id only as an optional consistency check.",
       );
-      return runTiangongCommand(['process', 'publish-build', ...commandArgs], { cliDir });
-    case 'batch-build':
-      return runCanonicalInputCommand(cliDir, 'batch-build', commandArgs);
-    case 'complete-required-fields':
-      if (commandArgs.includes('-h') || commandArgs.includes('--help')) {
-        return runTiangongCommand(['process', 'complete-required-fields', '--help'], { cliDir });
+      return runTiangongCommand(["process", "publish-build", ...commandArgs], {
+        cliDir,
+      });
+    case "batch-build":
+      return runCanonicalInputCommand(cliDir, "batch-build", commandArgs);
+    case "complete-required-fields":
+      if (commandArgs.includes("-h") || commandArgs.includes("--help")) {
+        return runTiangongCommand(
+          ["process", "complete-required-fields", "--help"],
+          { cliDir },
+        );
       }
-      requireFlag('--input', commandArgs, 'complete-required-fields requires --input <file>.');
-      requireAnyFlag(['--out'], commandArgs, 'complete-required-fields requires --out <file>.');
-      return runTiangongCommand(['process', 'complete-required-fields', ...commandArgs], { cliDir });
-    case 'verify-rows':
-      if (commandArgs.includes('-h') || commandArgs.includes('--help')) {
-        return runTiangongCommand(['process', 'verify-rows', '--help'], { cliDir });
+      requireFlag(
+        "--input",
+        commandArgs,
+        "complete-required-fields requires --input <file>.",
+      );
+      requireAnyFlag(
+        ["--out"],
+        commandArgs,
+        "complete-required-fields requires --out <file>.",
+      );
+      return runTiangongCommand(
+        ["process", "complete-required-fields", ...commandArgs],
+        { cliDir },
+      );
+    case "verify-rows":
+      if (commandArgs.includes("-h") || commandArgs.includes("--help")) {
+        return runTiangongCommand(["process", "verify-rows", "--help"], {
+          cliDir,
+        });
       }
-      requireFlag('--rows-file', commandArgs, 'verify-rows requires --rows-file <file>.');
-      requireFlag('--out-dir', commandArgs, 'verify-rows requires --out-dir <dir>.');
-      return runTiangongCommand(['process', 'verify-rows', ...commandArgs], { cliDir });
+      requireFlag(
+        "--rows-file",
+        commandArgs,
+        "verify-rows requires --rows-file <file>.",
+      );
+      requireFlag(
+        "--out-dir",
+        commandArgs,
+        "verify-rows requires --out-dir <dir>.",
+      );
+      return runTiangongCommand(["process", "verify-rows", ...commandArgs], {
+        cliDir,
+      });
+    case "evidence-search":
+      return runDatasetEvidenceSearch(cliDir, commandArgs);
     default:
       fail(`Unknown subcommand: ${subcommand}`);
   }
