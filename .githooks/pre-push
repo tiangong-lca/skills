@@ -2,4 +2,19 @@
 set -eu
 
 repo_root="$(git rev-parse --show-toplevel)"
-exec "$repo_root/scripts/docpact-gate.sh" "$@"
+cd "$repo_root"
+
+"$repo_root/scripts/docpact-gate.sh" "$@"
+
+cli_dir="${TIANGONG_LCA_CLI_DIR:-}"
+if [ -z "$cli_dir" ] && [ -d "$repo_root/../tiangong-lca-cli" ]; then
+  cli_dir="$repo_root/../tiangong-lca-cli"
+fi
+if [ -n "$cli_dir" ]; then
+  echo "Building local TianGong CLI for skill validation."
+  (cd "$cli_dir" && npm run build)
+  export TIANGONG_LCA_CLI_DIR="$cli_dir"
+fi
+
+echo "Running local test gate: node scripts/validate-skills.mjs"
+node scripts/validate-skills.mjs
