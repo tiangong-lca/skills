@@ -12,6 +12,7 @@ Keep `process-automated-builder` as a thin wrapper over the unified CLI surface:
 - `tiangong-lca process batch-build`
 - `tiangong-lca process complete-required-fields`
 - `tiangong-lca process verify-rows`
+- `tiangong-lca dataset evidence-search plan|run`
 
 This skill does not add a second runtime layer.
 
@@ -36,6 +37,8 @@ For a batch manifest:
 
 For production gates:
 
+- `node scripts/run-process-automated-builder.mjs evidence-search plan --input <evidence-search.request.json> --out-dir <dir>`
+- `node scripts/run-process-automated-builder.mjs evidence-search run --input <evidence-search.request.json> --results <search-results.json> --out-dir <dir>`
 - `node scripts/run-process-automated-builder.mjs identity-preflight --input <process-preflight.json> --out-dir <dir>`
 - `node scripts/run-process-automated-builder.mjs build-plan validate --input <process-build-plan.json> --out-dir <dir>`
 - `node scripts/run-process-automated-builder.mjs build-plan materialize --input <process-build-plan.json> --out-dir <dir>`
@@ -63,6 +66,8 @@ There is no Python, shell, MCP, LangGraph, OpenAI, KB, or TianGong unstructured 
 The wrapper does not infer output directories from `cwd`; pass them explicitly.
 For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>/...`.
 
+Search/browser tools remain outside the skill wrapper. Codex may use web search, Browser, Chrome, or Computer Use to obtain evidence, but the resulting search output must be recorded through `dataset evidence-search run` before field authoring uses it.
+
 ## Current Output Layout
 
 `auto-build` prepares one run root under the explicit `--out-dir` and writes:
@@ -86,6 +91,13 @@ For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>
 - `outputs/identity-decision.json`
 - `outputs/identity-candidates.jsonl`
 - `outputs/identity-candidate-sources.json`
+
+`evidence-search plan|run` writes:
+
+- `outputs/evidence-search-plan.json`
+- `outputs/evidence-search-results.jsonl`
+- `outputs/evidence-search-report.json`
+- `outputs/evidence-search-declaration.json` when evidence is absent or only partial
 
 `build-plan validate` writes:
 
@@ -138,5 +150,7 @@ For repeatable runs, use explicit paths such as `/abs/path/artifacts/<case_slug>
 - Do not reintroduce old env names or skill-private HTTP clients.
 - Do not add new business scripts here.
 - If a future step needs LLM, KB search, unstructured parsing, validation, or publish execution, expose it as a native `tiangong-lca process ...` capability first.
+- Treat `dataset evidence-search` as the deterministic evidence log. The skill decides whether more search iterations are justified; the CLI records the query budget, normalized results, and declaration.
 - Treat `block_duplicate` and `manual_review` from identity preflight as terminal autonomous stop states.
+- Treat `completed_no_sufficient_evidence` from evidence search as a factual authoring stop state unless the build plan explicitly uses a proxy or assumption.
 - Treat any failed build-plan gate as a blocker; do not reproduce the gate logic inside the skill.
