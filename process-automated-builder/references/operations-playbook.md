@@ -5,11 +5,31 @@
 ```bash
 node process-automated-builder/scripts/run-process-automated-builder.mjs auto-build --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs identity-preflight --help
+node process-automated-builder/scripts/run-process-automated-builder.mjs evidence-search --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs build-plan --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs resume-build --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs publish-build --help
 node process-automated-builder/scripts/run-process-automated-builder.mjs batch-build --help
 ```
+
+## Run Evidence Retrieval
+
+Use this before authoring values that depend on public facts, especially numeric/time/geography/technology/source fields.
+
+```bash
+node process-automated-builder/scripts/run-process-automated-builder.mjs evidence-search plan \
+  --input /abs/path/evidence-search.request.json \
+  --out-dir /abs/path/artifacts/<case_slug>/evidence/<field_slug> \
+  --json
+
+node process-automated-builder/scripts/run-process-automated-builder.mjs evidence-search run \
+  --input /abs/path/evidence-search.request.json \
+  --results /abs/path/search-results.json \
+  --out-dir /abs/path/artifacts/<case_slug>/evidence/<field_slug> \
+  --json
+```
+
+Use web/search tools to collect `search-results.json`; use Browser/Computer Use only when search snippets are insufficient, the page is JS-rendered, or login/session/UI evidence is required. Stop when `evidence-search-report.json` shows sufficient authoritative evidence, or when `outputs/evidence-search-declaration.json` makes the remaining gap explicit.
 
 ## Run Identity And Build Gates
 
@@ -33,6 +53,7 @@ node process-automated-builder/scripts/run-process-automated-builder.mjs build-p
 ```
 
 Stop on `block_duplicate`, `manual_review`, missing `unit_of_analysis`, `blocked_until_scaling_evidence`, a failed build-plan gate, or any schema blocker. The skill should not override the CLI decision.
+For factual fields, also stop on `completed_no_sufficient_evidence`. `completed_with_partial_evidence` may proceed only when the partial scope is explicit in the build plan and evidence manifest.
 
 ## Start One Run
 
