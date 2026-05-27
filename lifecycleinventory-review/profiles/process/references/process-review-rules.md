@@ -130,6 +130,7 @@
 - 定量数值必须为正。
 - `functionalUnitOrOther` 必须存在。
 - 中英文功能单位文本必须和 reference flow / exchange unit 一致。
+- 若 review 输入来自 build-plan materialization，并带有 `unit_of_analysis` artifact，review 应复核最终 payload 的 quantitative reference、功能单位文本、reference flow 和单位表述是否背离该 artifact。review 只做一致性复核，不重新替 skill 做行业单位选择。
 
 典型问题：
 - 功能单位缺失；

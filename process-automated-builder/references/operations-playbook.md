@@ -33,6 +33,8 @@ Use web/search tools to collect `search-results.json`; use Browser/Computer Use 
 
 ## Run Identity And Build Gates
 
+Before running `build-plan validate` or `build-plan materialize`, the skill must add a `unit_of_analysis` artifact to the build plan. This is where the agent decides the functional unit / declared unit, reference flow, reference unit, and scaling evidence from source context.
+
 ```bash
 node process-automated-builder/scripts/run-process-automated-builder.mjs identity-preflight \
   --input /abs/path/process-preflight.json \
@@ -50,7 +52,7 @@ node process-automated-builder/scripts/run-process-automated-builder.mjs build-p
   --json
 ```
 
-Stop on `block_duplicate`, `manual_review`, a failed build-plan gate, or any schema blocker. The skill should not override the CLI decision.
+Stop on `block_duplicate`, `manual_review`, missing `unit_of_analysis`, `blocked_until_scaling_evidence`, a failed build-plan gate, or any schema blocker. The skill should not override the CLI decision.
 For factual fields, also stop on `completed_no_sufficient_evidence`. `completed_with_partial_evidence` may proceed only when the partial scope is explicit in the build plan and evidence manifest.
 
 ## Start One Run

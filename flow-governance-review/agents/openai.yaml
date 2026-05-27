@@ -1,4 +1,4 @@
 interface:
   display_name: "Flow Governance Review"
   short_description: "Run CLI-backed flow identity, build, review, repair, and publish gates"
-  default_prompt: "Use $flow-governance-review to run the CLI-backed governance workflows for flow identity-preflight, build-plan validate/materialize, review, remediation, process-flow repair, and publish preparation."
+  default_prompt: "Use $flow-governance-review to author unit_of_analysis for flow build plans, then run the CLI-backed governance workflows for flow identity-preflight, build-plan validate/materialize, review, remediation, process-flow repair, and publish preparation."

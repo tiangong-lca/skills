@@ -108,6 +108,8 @@ Search/browser tools remain outside the skill wrapper. Codex may use web search,
 - `outputs/build-plan-gate-report.json`
 - `outputs/materialized-process.json`
 
+`process-build-plan.json` must include a skill-authored `unit_of_analysis` artifact before either build-plan action can pass. The skill chooses the semantic basis; the CLI only checks artifact presence/completeness and blocks `manual_review` / `blocked_until_scaling_evidence` decisions.
+
 `complete-required-fields` writes:
 
 - the requested completed rows file
@@ -152,5 +154,6 @@ Search/browser tools remain outside the skill wrapper. Codex may use web search,
 - If a future step needs LLM, KB search, unstructured parsing, validation, or publish execution, expose it as a native `tiangong-lca process ...` capability first.
 - Treat `dataset evidence-search` as the deterministic evidence log. The skill decides whether more search iterations are justified; the CLI records the query budget, normalized results, and declaration.
 - Treat `block_duplicate` and `manual_review` from identity preflight as terminal autonomous stop states.
+- Treat missing or non-automatic `unit_of_analysis` decisions as terminal autonomous stop states until the skill-authored build plan is revised.
 - Treat `completed_no_sufficient_evidence` from evidence search as a factual authoring stop state unless the build plan explicitly uses a proxy or assumption.
 - Treat any failed build-plan gate as a blocker; do not reproduce the gate logic inside the skill.
