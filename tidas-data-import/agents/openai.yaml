@@ -1,0 +1,4 @@
+interface:
+  display_name: "TIDAS Data Import"
+  short_description: "Run CLI-backed TIDAS package conversion and source-document authoring lanes"
+  default_prompt: "Use $tidas-data-import for Foundry tasks that import packaged LCA datasets or author TIDAS data from PDF, Excel, or other source files."

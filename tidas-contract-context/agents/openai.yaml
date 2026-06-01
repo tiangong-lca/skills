@@ -1,0 +1,4 @@
+interface:
+  display_name: "TIDAS Contract Context"
+  short_description: "Fetch schema, methodology, ruleset, and AI context packs through the CLI"
+  default_prompt: "Use $tidas-contract-context before AI authoring or repairing TIDAS import data."

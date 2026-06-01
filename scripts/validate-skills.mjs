@@ -32,6 +32,8 @@ const defaultSkillNames = [
   'tiangong-lca-remote-ops',
   'current-account-dataset-review',
   'tidas-bilingual-transcreation',
+  'tidas-contract-context',
+  'tidas-data-import',
 ];
 
 const removedQuickValidatePattern = new RegExp(String.raw`quick_validate` + String.raw`\.py`, 'u');
