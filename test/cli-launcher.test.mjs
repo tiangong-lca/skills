@@ -31,7 +31,7 @@ test('normalizeCliRuntimeArgs keeps explicit cli-dir overrides above auto-discov
 });
 
 test('buildTiangongInvocation uses npm exec for the published CLI contract', () => {
-  const invocation = buildTiangongInvocation(['review', 'process', '--help'], {
+  const invocation = buildTiangongInvocation(['qa', 'process', '--help'], {
     repoRoot: '/workspace/tiangong-lca-skills',
     pathExists: () => false,
   });
@@ -44,7 +44,7 @@ test('buildTiangongInvocation uses npm exec for the published CLI contract', () 
     '--package=@tiangong-lca/cli@latest',
     '--',
     'tiangong-lca',
-    'review',
+    'qa',
     'process',
     '--help',
   ]);
@@ -52,7 +52,7 @@ test('buildTiangongInvocation uses npm exec for the published CLI contract', () 
 });
 
 test('buildTiangongInvocation prefers an auto-discovered local CLI checkout', () => {
-  const invocation = buildTiangongInvocation(['review', 'process', '--help'], {
+  const invocation = buildTiangongInvocation(['qa', 'process', '--help'], {
     repoRoot: '/workspace/tiangong-lca-skills',
     pathExists: (candidate) =>
       candidate === '/workspace/tiangong-cli' || candidate === '/workspace/tiangong-cli/bin/tiangong-lca.js',
@@ -60,12 +60,12 @@ test('buildTiangongInvocation prefers an auto-discovered local CLI checkout', ()
 
   assert.equal(invocation.mode, 'local');
   assert.equal(invocation.command, process.execPath);
-  assert.deepEqual(invocation.args, ['/workspace/tiangong-cli/bin/tiangong-lca.js', 'review', 'process', '--help']);
+  assert.deepEqual(invocation.args, ['/workspace/tiangong-cli/bin/tiangong-lca.js', 'qa', 'process', '--help']);
 });
 
 test('runTiangongCommand emits a clear diagnostic when the published help path returns no output', () => {
   let stderr = '';
-  const exitCode = runTiangongCommand(['review', 'process', '--help'], {
+  const exitCode = runTiangongCommand(['qa', 'process', '--help'], {
     repoRoot: '/workspace/tiangong-lca-skills',
     pathExists: () => false,
     spawnImpl: () => ({

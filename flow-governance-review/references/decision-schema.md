@@ -94,7 +94,7 @@ or:
 ```bash
 node scripts/run-flow-governance-review.mjs materialize-approved-decisions \
   --decision-file /abs/path/approved-decisions.json \
-  --flow-rows-file /abs/path/materialized/review-input-rows.jsonl \
+  --flow-rows-file /abs/path/materialized/qa-input-rows.jsonl \
   --out-dir /abs/path/decision-artifacts
 ```
 

@@ -35,7 +35,7 @@ The skill/Codex workflow owns the semantic search strategy:
 
 - identify the field path, expected evidence, geography, time scope, units, and acceptance criteria;
 - prefer direct evidence from official statistics, standards, PCR/PEF/ILCD/TIDAS context, primary source documents, or source rows before generic web pages;
-- generate a bounded query matrix in both Chinese and English when the field is China-facing or bilingual;
+- generate a bounded source-language query matrix with documented synonyms when needed;
 - use search APIs or Codex web search first; use Browser/Computer Use only for JS-rendered pages, login/session UI, PDF/readback, or visual verification;
 - change keywords only when the previous result set adds no new authoritative source or exposes a better source name;
 - stop when enough authoritative evidence is found, when the configured query/result budget is exhausted, or when the remaining gap is explicit.
@@ -137,9 +137,9 @@ node scripts/run-process-automated-builder.mjs complete-required-fields \
 
 The CLI owns the deterministic writer. For `annualSupplyOrProductionVolume`, use an explicit evidence value when present. If there is no evidence value, derive the value from the quantitative reference flow's `meanAmount` first, then `resultingAmount`, and write the field with the reference unit per year. Do not invent production-volume figures in the skill.
 
-6. Use `tidas-bilingual-transcreation` after materialization when bilingual fields are weak or newly generated. Apply and validate translations through `tiangong-lca dataset bilingual extract/apply/validate`.
+6. Keep authored rows source-language only for import/publish handoff unless a separate post-import language-completion task explicitly requests additional language fields.
 
-7. Prepare publish handoff only after evidence retrieval, unit-of-analysis decision, local schema, process review, bilingual validation, reference verification, and matrix/compute readiness gates pass.
+7. Prepare publish handoff only after evidence retrieval, unit-of-analysis decision, local schema, deterministic process QA, reference verification, and matrix/compute readiness gates pass. For external dataset/source-document imports, Foundry must also run the process curation gate so profile waivers and AI-authored repair packages are explicit before publish preparation.
 
 ## Parallel Execution Contract
 
@@ -201,6 +201,7 @@ node scripts/run-process-automated-builder.mjs evidence-search plan --query "中
 - Unit-of-analysis blockers: missing `unit_of_analysis`, `manual_review`, and `blocked_until_scaling_evidence` are stop states. Fix the skill-authored decision artifact; do not patch around the CLI gate.
 - Evidence blockers: `completed_no_sufficient_evidence` is a stop state for factual field authoring; `completed_with_partial_evidence` may proceed only when the partial scope is written into the field evidence and build plan.
 - Build-plan blockers: inspect `outputs/build-plan-gate-report.json`; do not patch around a failed CLI gate inside the skill.
+- Process QA findings from `qa process` are not a substitute for Foundry profile curation. If the rows came from an external import, route schema/QA findings through Foundry curation instead of asking the CLI to make semantic authoring decisions.
 - If a required step is missing, add it as a native `tiangong-lca process ...` command instead of reintroducing a legacy runtime here.
 
 ## Load References On Demand

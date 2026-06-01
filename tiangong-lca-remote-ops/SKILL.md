@@ -57,5 +57,5 @@ node current-account-dataset-review/scripts/run-current-account-dataset-review.m
 - Keep `--out-dir` explicit so manifests, progress logs, blockers, and verification artifacts are reproducible.
 - Before any remote write, apply the state-driven routing rule in [references/process-write-routing.md](references/process-write-routing.md).
 - Treat local `ProcessSchema` validation plus unresolved-reference checks as the hard gate, not HTTP success alone.
-- If upstream identity, build-plan, bilingual, reference, or matrix-readiness reports contain blockers, do not call the remote write path.
+- If upstream identity, build-plan, Foundry process curation, reference, or matrix-readiness reports contain blockers, do not call the remote write path.
 - Preserve post-write verification artifacts in the handoff; a successful HTTP response is not sufficient evidence.

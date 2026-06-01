@@ -31,7 +31,7 @@ Typical commands in this skill that may need those env values:
 
 Local-only commands that do not require remote credentials by themselves:
 
-- `review-flows`
+- `qa-flows`
 - `materialize-approved-decisions`
 - `remediate-flows`
 - `build-flow-alias-map`
@@ -43,7 +43,7 @@ Local-only commands that do not require remote credentials by themselves:
 
 ## Optional CLI LLM Inputs
 
-Only `review-flows` can optionally enable the CLI LLM path. When using `--enable-llm`, set the CLI's canonical LLM env:
+Only `qa-flows` can optionally enable the CLI LLM path. When using `--enable-llm`, set the CLI's canonical LLM env:
 
 - `TIANGONG_LCA_REVIEW_LLM_BASE_URL`
 - `TIANGONG_LCA_REVIEW_LLM_API_KEY`

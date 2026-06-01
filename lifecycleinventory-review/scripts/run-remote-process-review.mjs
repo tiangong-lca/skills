@@ -19,17 +19,17 @@ import {
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
-const runReviewScript = path.join(scriptDir, 'run-review.mjs');
+const runQaScript = path.join(scriptDir, 'run-review.mjs');
 
 class UsageError extends Error {}
 
 function usage() {
   return `Usage:
-  node scripts/run-remote-process-review.mjs --out-dir <dir> [wrapper-options] --list [process-list args] [--review [review args]]
+  node scripts/run-remote-process-review.mjs --out-dir <dir> [wrapper-options] --list [process-list args] [--qa [qa args]]
 
 Wrapper options:
-  --out-dir <dir>         Artifact root for the frozen snapshot and review outputs
-  --review-out-dir <dir>  Override the nested review output dir (default: <out-dir>/review)
+  --out-dir <dir>         Artifact root for the frozen snapshot and QA outputs
+  --qa-out-dir <dir>      Override the nested QA output dir (default: <out-dir>/qa)
   --report-file <file>    Reuse an existing tiangong-lca process list --json report instead of fetching
   --json                  Print a compact wrapper summary JSON
   --cli-dir <dir>         Use a local TianGong CLI checkout instead of the published package
@@ -37,17 +37,17 @@ Wrapper options:
 
 Forwarding modes:
   --list                  All following args are forwarded to tiangong-lca process list
-  --review                All following args are forwarded to node scripts/run-review.mjs --profile process
+  --qa                    All following args are forwarded to node scripts/run-review.mjs --profile process
 
 Examples:
   node scripts/run-remote-process-review.mjs \\
-    --out-dir /abs/path/artifacts/process-review \\
+    --out-dir /abs/path/artifacts/process-qa \\
     --list --state-code 0 --state-code 100 --all
 
   node scripts/run-remote-process-review.mjs \\
-    --out-dir /abs/path/artifacts/process-review \\
+    --out-dir /abs/path/artifacts/process-qa \\
     --list --user-id <owner> --state-code 0 --all \\
-    --review --logic-version 2026-04-14
+    --qa --logic-version 2026-04-14
 `.trim();
 }
 
@@ -78,11 +78,11 @@ function parseArgs(rawArgs) {
   const options = {
     cliDir,
     outDir: null,
-    reviewOutDir: null,
+    qaOutDir: null,
     reportFile: null,
     json: false,
     listArgs: [],
-    reviewArgs: [],
+    qaArgs: [],
   };
 
   let mode = 'wrapper';
@@ -98,7 +98,7 @@ function parseArgs(rawArgs) {
         options.listArgs.push(arg);
         continue;
       }
-      options.reviewArgs.push(arg);
+      options.qaArgs.push(arg);
       continue;
     }
 
@@ -107,8 +107,8 @@ function parseArgs(rawArgs) {
         mode = 'list';
         continue;
       }
-      if (arg === '--review') {
-        mode = 'review';
+      if (arg === '--qa') {
+        mode = 'qa';
         continue;
       }
       if (arg === '--out-dir') {
@@ -120,13 +120,13 @@ function parseArgs(rawArgs) {
         options.outDir = path.resolve(arg.slice('--out-dir='.length));
         continue;
       }
-      if (arg === '--review-out-dir') {
-        options.reviewOutDir = path.resolve(args[index + 1] ?? '');
+      if (arg === '--qa-out-dir') {
+        options.qaOutDir = path.resolve(args[index + 1] ?? '');
         index += 1;
         continue;
       }
-      if (arg.startsWith('--review-out-dir=')) {
-        options.reviewOutDir = path.resolve(arg.slice('--review-out-dir='.length));
+      if (arg.startsWith('--qa-out-dir=')) {
+        options.qaOutDir = path.resolve(arg.slice('--qa-out-dir='.length));
         continue;
       }
       if (arg === '--report-file') {
@@ -151,7 +151,7 @@ function parseArgs(rawArgs) {
       continue;
     }
 
-    options.reviewArgs.push(arg);
+    options.qaArgs.push(arg);
   }
 
   if (!options.outDir) {
@@ -163,7 +163,7 @@ function parseArgs(rawArgs) {
 
   return {
     ...options,
-    reviewOutDir: options.reviewOutDir ?? path.join(options.outDir, 'review'),
+    qaOutDir: options.qaOutDir ?? path.join(options.outDir, 'qa'),
   };
 }
 
@@ -199,16 +199,16 @@ function runProcessList(cliDir, listArgs) {
   };
 }
 
-function runReview(cliDir, rowsFile, reviewOutDir, reviewArgs) {
+function runQa(cliDir, rowsFile, qaOutDir, qaArgs) {
   const command = [
-    runReviewScript,
+    runQaScript,
     '--profile',
     'process',
     '--rows-file',
     rowsFile,
     '--out-dir',
-    reviewOutDir,
-    ...reviewArgs,
+    qaOutDir,
+    ...qaArgs,
   ];
   const result = spawnSync(process.execPath, command, {
     cwd: repoRoot,
@@ -222,7 +222,7 @@ function runReview(cliDir, rowsFile, reviewOutDir, reviewArgs) {
   }
   if (typeof result.status === 'number' && result.status !== 0) {
     const stderr = result.stderr?.trim() || result.stdout?.trim() || `exit code ${result.status}`;
-    throw new Error(`Process review failed: ${stderr}`);
+    throw new Error(`Process QA failed: ${stderr}`);
   }
 
   return {
@@ -257,7 +257,7 @@ function main() {
   ensureDir(inputsDir);
   ensureDir(logsDir);
   ensureDir(outputsDir);
-  ensureDir(args.reviewOutDir);
+  ensureDir(args.qaOutDir);
 
   const snapshotReportFile = path.join(inputsDir, 'process-list-report.json');
   const snapshotRowsFile = path.join(inputsDir, 'processes.snapshot.rows.jsonl');
@@ -286,25 +286,25 @@ function main() {
   const rows = parseRows(snapshotText, snapshotReportFile);
   writeJsonl(snapshotRowsFile, rows);
 
-  const reviewRun = runReview(args.cliDir, snapshotReportFile, args.reviewOutDir, args.reviewArgs);
-  writeText(path.join(logsDir, 'review-process.stdout.log'), reviewRun.stdout);
-  writeText(path.join(logsDir, 'review-process.stderr.log'), reviewRun.stderr);
+  const qaRun = runQa(args.cliDir, snapshotReportFile, args.qaOutDir, args.qaArgs);
+  writeText(path.join(logsDir, 'qa-process.stdout.log'), qaRun.stdout);
+  writeText(path.join(logsDir, 'qa-process.stderr.log'), qaRun.stderr);
 
   const summary = {
     generated_at_utc: new Date().toISOString(),
-    status: 'completed_remote_process_review_wrapper',
+    status: 'completed_remote_process_qa_wrapper',
     snapshot: {
       row_count: rows.length,
       report_file: snapshotReportFile,
       rows_file: snapshotRowsFile,
       ...listSummary,
     },
-    review: {
-      out_dir: args.reviewOutDir,
-      command: reviewRun.command,
+    qa: {
+      out_dir: args.qaOutDir,
+      command: qaRun.command,
     },
   };
-  writeJson(path.join(outputsDir, 'remote-process-review-summary.json'), summary);
+  writeJson(path.join(outputsDir, 'remote-process-qa-summary.json'), summary);
 
   if (args.json) {
     process.stdout.write(`${JSON.stringify(summary)}\n`);

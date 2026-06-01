@@ -91,7 +91,7 @@ npm i skills@latest -g
   ```
 - Validate only the skills you changed:
   ```bash
-  node scripts/validate-skills.mjs lifecycleinventory-review process-hybrid-search
+  node scripts/validate-skills.mjs lifecycleinventory-qa process-hybrid-search
   ```
 - CI runs the same validation script in `.github/workflows/validate-skills.yml` after checking out and building `tiangong-lca-cli`.
 
@@ -104,7 +104,7 @@ Current rules:
 - wrappers auto-discover a local sibling CLI checkout first when `../tiangong-lca-cli` or `../tiangong-cli` exists
 - otherwise wrappers fall back to the published CLI through `npm exec --yes --package=@tiangong-lca/cli@latest -- tiangong-lca`
 - use `--cli-dir` or `TIANGONG_LCA_CLI_DIR` to force a specific local CLI working tree during dev/CI
-- for remote process review snapshots, prefer `tiangong-lca process list --json` followed by `review process --rows-file ...` instead of ad hoc bridge scripts
+- for remote process QA snapshots, prefer `tiangong-lca process list --json` followed by `qa process --rows-file ...` instead of ad hoc bridge scripts
 - use native cross-platform Node `.mjs` wrappers as the canonical entrypoint
 - skill wrappers should not bundle business-specific Python runtimes, shell shims, MCP transports, or private env parsers
 - if a capability is missing, add a native `tiangong-lca <noun> <verb>` command first, then update the skill to call it

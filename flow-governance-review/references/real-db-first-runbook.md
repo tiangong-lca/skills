@@ -6,8 +6,8 @@ Use this path when the task explicitly says the conclusion must be based on real
 
 Typical examples:
 
-- cluster dedup review based on current DB rows
-- re-review after `search flow` returned candidate refs
+- cluster dedup QA based on current DB rows
+- rerun QA after `search flow` returned candidate refs
 - approved decision materialization that must bind to exact DB rows before downstream rewrite or publish planning
 
 ## Non-Negotiable Rule
@@ -16,7 +16,7 @@ When the task requires real DB binding:
 
 - do not use synthetic local rows to draw the conclusion
 - do not invent UUIDs, versions, or row payloads
-- do not treat `search flow` output as already-materialized review input
+- do not treat `search flow` output as already-materialized QA input
 
 If the task needs a conclusion about real DB objects, first lock the exact flow refs, then materialize the corresponding DB rows.
 
@@ -53,12 +53,12 @@ If the task needs a conclusion about real DB objects, first lock the exact flow 
      --fail-on-missing
    ```
 
-4. Review the materialized rows:
+4. QA the materialized rows:
 
    ```bash
-   node scripts/run-flow-governance-review.mjs review-flows \
-     --rows-file /abs/path/materialized/review-input-rows.jsonl \
-     --out-dir /abs/path/review
+   node scripts/run-flow-governance-review.mjs qa-flows \
+     --rows-file /abs/path/materialized/qa-input-rows.jsonl \
+     --out-dir /abs/path/qa
    ```
 
 ## Artifact Contract
@@ -66,7 +66,7 @@ If the task needs a conclusion about real DB objects, first lock the exact flow 
 `materialize-db-flows` writes:
 
 - `resolved-flow-rows.jsonl`
-- `review-input-rows.jsonl`
+- `qa-input-rows.jsonl`
 - `fetch-summary.json`
 - `missing-flow-refs.jsonl`
 - `ambiguous-flow-refs.jsonl`
@@ -74,7 +74,7 @@ If the task needs a conclusion about real DB objects, first lock the exact flow 
 Interpretation:
 
 - `resolved-flow-rows.jsonl` keeps one row per successfully resolved input ref
-- `review-input-rows.jsonl` collapses repeated refs by real `id@version` and records `_materialization.materialized_from_refs`
+- `qa-input-rows.jsonl` collapses repeated refs by real `id@version` and records `_materialization.materialized_from_refs`
 - `missing-flow-refs.jsonl` and `ambiguous-flow-refs.jsonl` are blocker artifacts, not advisory logs
 
 ## Blocked Cases

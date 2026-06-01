@@ -11,7 +11,7 @@ class UsageError extends Error {}
 const cliBackedCommands = new Map([
   ["identity-preflight", ["flow", "identity-preflight"]],
   ["build-plan", ["flow", "build-plan"]],
-  ["review-flows", ["review", "flow"]],
+  ["qa-flows", ["qa", "flow"]],
   ["flow-get", ["flow", "get"]],
   ["flow-list", ["flow", "list"]],
   ["materialize-db-flows", ["flow", "fetch-rows"]],
@@ -57,7 +57,7 @@ Wrapper options:
 CLI-backed commands:
   identity-preflight        Delegate to tiangong-lca flow identity-preflight
   build-plan                Delegate to tiangong-lca flow build-plan validate|materialize
-  review-flows              Delegate to tiangong-lca review flow
+  qa-flows              Delegate to tiangong-lca qa flow
   flow-get                  Delegate to tiangong-lca flow get
   flow-list                 Delegate to tiangong-lca flow list
   materialize-db-flows      Delegate real-DB flow ref materialization to tiangong-lca flow fetch-rows
@@ -77,7 +77,7 @@ Notes:
   - no shell compatibility shim is kept; call this .mjs entrypoint directly
   - the wrapper is now CLI-only; it no longer exposes any Python fallback path
   - publish-reviewed-data now uses the CLI for both local preparation and commit-time process publish
-  - materialize-db-flows is the canonical bridge from real DB refs to local review-input rows
+  - materialize-db-flows is the canonical bridge from real DB refs to local qa-input rows
   - materialize-approved-decisions is the canonical bridge from approved merge decisions to canonical-map / rewrite-plan / seed artifacts
   - removed OpenClaw / governance orchestration commands must be reintroduced as native tiangong-lca subcommands before use
 
@@ -86,8 +86,8 @@ Examples:
   node scripts/run-flow-governance-review.mjs build-plan validate --input /abs/path/flow-build-plan.json --out-dir /abs/path/build-plan
   node scripts/run-flow-governance-review.mjs build-plan materialize --input /abs/path/flow-build-plan.json --out-dir /abs/path/build-plan
   node scripts/run-flow-governance-review.mjs materialize-db-flows --refs-file /abs/path/flow-refs.json --out-dir /abs/path/materialized --fail-on-missing
-  node scripts/run-flow-governance-review.mjs materialize-approved-decisions --decision-file /abs/path/approved-decisions.json --flow-rows-file /abs/path/materialized/review-input-rows.jsonl --out-dir /abs/path/decision-artifacts
-  node scripts/run-flow-governance-review.mjs review-flows --rows-file /abs/path/flows.jsonl --out-dir /abs/path/review
+  node scripts/run-flow-governance-review.mjs materialize-approved-decisions --decision-file /abs/path/approved-decisions.json --flow-rows-file /abs/path/materialized/qa-input-rows.jsonl --out-dir /abs/path/decision-artifacts
+  node scripts/run-flow-governance-review.mjs qa-flows --rows-file /abs/path/flows.jsonl --out-dir /abs/path/qa
   node scripts/run-flow-governance-review.mjs remediate-flows --input-file /abs/path/invalid-flows.jsonl --out-dir /abs/path/remediation
   node scripts/run-flow-governance-review.mjs publish-version --input-file /abs/path/ready-flows.jsonl --out-dir /abs/path/publish --dry-run
   node scripts/run-flow-governance-review.mjs publish-reviewed-data --flow-rows-file /abs/path/reviewed-flows.jsonl --out-dir /abs/path/publish-reviewed

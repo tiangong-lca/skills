@@ -1,9 +1,9 @@
 ---
 name: flow-governance-review
-description: "Run the CLI-backed flow governance commands for review, remediation, deterministic process-flow repair, and publish preparation. Use `node scripts/run-flow-governance-review.mjs COMMAND ...` when you need the supported `tiangong-lca review flow` and `tiangong-lca flow ...` workflows from a skill wrapper."
+description: "Run the CLI-backed flow governance commands for QA, remediation, deterministic process-flow repair, and publish preparation. Use `node scripts/run-flow-governance-review.mjs COMMAND ...` when you need the supported `tiangong-lca qa flow` and `tiangong-lca flow ...` workflows from a skill wrapper."
 ---
 
-# Flow Governance Review
+# Flow Governance QA
 
 Keep local JSON or JSONL payloads as the system of record. This skill is a thin wrapper around the supported CLI governance commands.
 
@@ -21,7 +21,7 @@ Do not use this skill for:
 - Supported commands are all CLI-backed:
   - `identity-preflight` -> `tiangong-lca flow identity-preflight`
   - `build-plan` -> `tiangong-lca flow build-plan validate|materialize`
-  - `review-flows` -> `tiangong-lca review flow`
+  - `qa-flows` -> `tiangong-lca qa flow`
   - `flow-get` -> `tiangong-lca flow get`
   - `flow-list` -> `tiangong-lca flow list`
   - `materialize-db-flows` -> `tiangong-lca flow fetch-rows`
@@ -55,7 +55,7 @@ Do not use this skill for:
 - `apply-process-flow-repairs`
 - `regen-product`
 - `validate-processes`
-- `review-flows`
+- `qa-flows`
 
 Run them through:
 
@@ -85,12 +85,12 @@ node scripts/run-flow-governance-review.mjs materialize-db-flows \
 
 node scripts/run-flow-governance-review.mjs materialize-approved-decisions \
   --decision-file /abs/path/approved-decisions.json \
-  --flow-rows-file /abs/path/materialized/review-input-rows.jsonl \
+  --flow-rows-file /abs/path/materialized/qa-input-rows.jsonl \
   --out-dir /abs/path/decision-artifacts
 
-node scripts/run-flow-governance-review.mjs review-flows \
+node scripts/run-flow-governance-review.mjs qa-flows \
   --rows-file /abs/path/flows.jsonl \
-  --out-dir /abs/path/review
+  --out-dir /abs/path/qa
 
 node scripts/run-flow-governance-review.mjs remediate-flows \
   --input-file /abs/path/invalid-flows.jsonl \
@@ -153,7 +153,7 @@ The following legacy commands were intentionally removed with the Python runtime
 - `apply-openclaw-*`
 - `validate-openclaw-*`
 
-If you need one of those workflows, add it first as a native `tiangong-lca review ...` or `tiangong-lca flow ...` command instead of rebuilding it inside this skill.
+If you need one of those workflows, add it first as a native `tiangong-lca qa ...` or `tiangong-lca flow ...` command instead of rebuilding it inside this skill.
 
 ## Preferred Usage
 
@@ -163,10 +163,10 @@ Use the supported commands as composable slices:
 2. Author `unit_of_analysis` in the flow build plan before generation. For flow-only plans this may be a declared-unit dataset decision, but it must still record target kind, reference flow identity, reference unit, reference amount, flow property, and scaling evidence status. The skill makes the semantic decision; the CLI only checks that the artifact is present and complete.
 3. `build-plan validate` and `build-plan materialize` before producing a canonical `flowDataSet`.
 4. `materialize-db-flows` when the task must bind to real DB rows.
-5. `review-flows`.
+5. `qa-flows`.
 6. `materialize-approved-decisions` after merge decisions are approved.
 7. `remediate-flows`.
-8. Use `tidas-bilingual-transcreation` plus `dataset bilingual extract/apply/validate` when flow names, synonyms, comments, or classification text need bilingual review.
+8. Keep flow names, synonyms, comments, and classification text source-language only for import/publish gates.
 9. `build-flow-alias-map` when version cleanup produced old/new scopes.
 10. `scan-process-flow-refs`.
 11. `plan-process-flow-repairs`.
@@ -183,7 +183,7 @@ Use the supported commands as composable slices:
 - `publish-report.json` from `publish-reviewed-data`
 - `prepared-flow-rows.json` and `flow-version-map.json` from `publish-reviewed-data`
 - `skipped-unchanged-flow-rows.json` from `publish-reviewed-data` when `--original-flow-rows-file` is provided
-- `resolved-flow-rows.jsonl`, `review-input-rows.jsonl`, and `fetch-summary.json` from `materialize-db-flows`
+- `resolved-flow-rows.jsonl`, `qa-input-rows.jsonl`, and `fetch-summary.json` from `materialize-db-flows`
 - `flow-dedup-canonical-map.json`, `flow-dedup-rewrite-plan.json`, `manual-semantic-merge-seed.current.json`, and `blocked-clusters.json` from `materialize-approved-decisions`
 
 ## Example Output Layout

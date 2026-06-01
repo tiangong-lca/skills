@@ -6,7 +6,7 @@ Use evidence in this order:
 
 1. Exact normalized exchange signature.
 2. Remote process metadata (`state_code`, timestamps, exchange flow short descriptions).
-3. Bilingual process names.
+3. Source-language process names.
 4. Cross-object reference checks within the authenticated user's accessible scope, when available.
 5. Wider visible/shared reference checks, when available.
 
@@ -32,7 +32,7 @@ Ignore:
 Apply these in order:
 
 1. Prefer the row whose name matches the exchange semantics.
-2. Prefer the row with the more specific and better standardized bilingual name.
+2. Prefer the row with the more specific and better standardized source-language name.
 3. If both still tie, prefer the row that is already referenced elsewhere.
 4. If only session-scoped reference evidence is available, use it but state that wider visible/shared references were not checked.
 5. If reference evidence is unavailable and the semantic/name score still ties, prefer the older row and record the unresolved tie.

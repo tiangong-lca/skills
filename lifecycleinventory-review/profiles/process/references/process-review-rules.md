@@ -1,28 +1,34 @@
-# Process Review Rules
+# Process QA Rules
 
 适用场景：
-- review `process_from_flow` 等本地 process 构建产物；
-- review 冻结后的远端 `processes` snapshot；
-- 目标是先固定输入，再按 ILCD + skill 内置 rubric 做本地 review，最后输出可执行的修改清单；
-- 如果任务只是 review，不直接远端写回。
+- QA `process_from_flow` 等本地 process 构建产物；
+- QA 冻结后的远端 `processes` snapshot；
+- 目标是先固定输入，再按 ILCD + skill 内置 rubric 做本地 QA，最后输出可执行的修改清单；
+- 如果任务只是 QA，不直接远端写回。
 
 ## Execution Contract
 
-1. 先建立 review 输出目录：
+1. 先建立 QA 输出目录：
    - `inputs/`: 用户请求、run manifest 或远端 snapshot manifest、原始 rows JSONL
    - `outputs/`: rulebook JSON、findings JSONL、process-level patch plan、summary JSON
    - `logs/`: CLI 调用、分页抓取、重试、脚本 stdout/stderr
    - `reports/`: operations log、process change list、final summary、verification
    - `friction/`: 可选的工具限制说明
-2. review 必须基于冻结后的输入进行；远端任务先 freeze snapshot，本地 run 也不要边读边改原始产物。
-3. `node scripts/run-review.mjs --profile process` 是本地 process review 的 canonical CLI 入口。
-4. 当前远端 snapshot review 的 canonical skill 入口是 `node scripts/run-remote-process-review.mjs`：先冻结 `tiangong-lca process list --json` 输出，再调用 `node scripts/run-review.mjs --profile process --rows-file ...`。只有在现有 `process list` 过滤维度不足以表达任务时，才使用补充 bridge，并在 review 备注或 `friction/` 目录中记录限制。
-5. LLM 语义审核层默认关闭；只有显式启用时才可作为补充建议层，且不能替代硬规则。
+2. QA 必须基于冻结后的输入进行；远端任务先 freeze snapshot，本地 run 也不要边读边改原始产物。
+3. `node scripts/run-review.mjs --profile process` 是本地 process deterministic QA 的 canonical CLI 入口。它产出 schema/引用/定量参考/物料平衡等可复核 findings，不负责 profile waiver、AI 语义修复或最终入库前决策。
+4. 当前远端 snapshot QA 的 canonical skill 入口是 `node scripts/run-remote-process-review.mjs`：先冻结 `tiangong-lca process list --json` 输出，再调用 `node scripts/run-review.mjs --profile process --rows-file ...`。只有在现有 `process list` 过滤维度不足以表达任务时，才使用补充 bridge，并在 QA 备注或 `friction/` 目录中记录限制。
+5. LLM 语义审核不在 CLI process QA 中执行。外部数据导入、BAFU 等 profile 判断、placeholder 修复、functional unit authoring、source treatment 和 evidence closure，应由 Foundry curation gate 打包 AI authoring package 后处理。
+
+## Foundry Curation Boundary
+
+- CLI process QA 是 deterministic QA report，不是语义 authoring runtime。
+- Foundry 负责读取 process payload、schema report、CLI QA report、profile context/YAML，并产出 AI authoring package、结构化 suggestion/build-plan、profile waiver 和最终 prewrite 状态。
+- 对外部 dataset import，不能只因为 CLI QA 没有 blocker 就写库；必须确认 Foundry curation action items 已被修复或被 profile 明确 waiver。
 
 ## Required Inputs
 
-- 本地 run review：至少提供 `--run-root`、`--run-id` 或等价可复核的 process artifact bundle。
-- 远端 snapshot review：冻结后的 `processes` 行至少包含：
+- 本地 run QA：至少提供 `--run-root`、`--run-id` 或等价可复核的 process artifact bundle。
+- 远端 snapshot QA：冻结后的 `processes` 行至少包含：
   - `id`
   - `version`
   - `state_code`
@@ -45,7 +51,7 @@
 - 当前前端 `src/pages/Processes/requiredFields.ts`
 
 检查点：
-- review 默认应检查最终 `jsonOrdered` 是否满足当前 process schema-required 字段存在性要求，而不只检查若干经验规则。
+- QA 默认应检查最终 `jsonOrdered` 是否满足当前 process schema-required 字段存在性要求，而不只检查若干经验规则。
 - 至少应覆盖：
   - `processDataSet` 命名空间与版本头；
   - `processInformation.dataSetInformation` 下的 required 节点；
@@ -76,7 +82,7 @@
   - `treatmentStandardsRoutes`：写工艺路线、处理方式、技术路径、标准/子类型等“做法”信息。
   - `mixAndLocationTypes`：写 `production mix` / `technology mix` / `at plant` / `at farm gate` 等混合或交付/地点语义。
   - `functionalUnitFlowProperties`：写电压、等级、状态、品质、库容、粒径等功能单位或流属性限定。
-- `baseName`、`treatmentStandardsRoutes`、`mixAndLocationTypes` 在当前 TIDAS process schema 和前端 `requiredFields` 中都按 required 处理；review 时不得省略这三个键。
+- `baseName`、`treatmentStandardsRoutes`、`mixAndLocationTypes` 在当前 TIDAS process schema 和前端 `requiredFields` 中都按 required 处理；QA 时不得省略这三个键。
 - 若只有 2-3 段语义适用，只在适用字段填写文本；不适用但 schema-required 的字段也要保留为空多语言数组或等价 schema-safe 空结构。不要因为缺 1 个字段就把全部内容回退到 `baseName`，也不要直接删键。
 - `flowProperties` 不是默认兜底垃圾桶；没有明确流属性语义时，不要为了凑字段把 route/location 文案塞进去。
 - 地理信息不应混进过程/流名称本体，应放在专门字段。
@@ -99,7 +105,7 @@
 
 ### 3. Dataset Type and Linked Flow Integrity
 来源：
-- TianGong process structural review rule
+- TianGong process structural QA rule
 - ILCD process dataset minimum structural completeness expectations
 
 检查点：
@@ -129,8 +135,8 @@
 - 该 exchange 必须是 `Output`。
 - 定量数值必须为正。
 - `functionalUnitOrOther` 必须存在。
-- 中英文功能单位文本必须和 reference flow / exchange unit 一致。
-- 若 review 输入来自 build-plan materialization，并带有 `unit_of_analysis` artifact，review 应复核最终 payload 的 quantitative reference、功能单位文本、reference flow 和单位表述是否背离该 artifact。review 只做一致性复核，不重新替 skill 做行业单位选择。
+- source-language 功能单位文本必须和 reference flow / exchange unit 一致；没有 bilingual 强制要求，除非任务另行声明语言补全。
+- 若 QA 输入来自 build-plan materialization，并带有 `unit_of_analysis` artifact，QA 应复核最终 payload 的 quantitative reference、功能单位文本、reference flow 和单位表述是否背离该 artifact。QA 只做一致性复核，不重新替 skill 做行业单位选择。
 
 典型问题：
 - 功能单位缺失；
@@ -140,11 +146,11 @@
 
 修改动作：
 - 修正 reference exchange；
-- 以 reference flow + 数量 + 单位重写中英文功能单位。
+- 以 reference flow + 数量 + 单位重写 source-language 功能单位。
 
 ### 5. Unit Plausibility and Direct-Evidence Rule
 来源：
-- process review v2.1 historical rules
+- process QA v2.1 historical rules
 
 检查点：
 - 当且仅当存在直接证据时，才记录“单位疑似错误”。
@@ -185,7 +191,7 @@
 ### 7. Completeness / Cut-off / Balance Notes
 来源：
 - Section 6.6 `Deriving system boundaries and cut-off criteria`
-- process review v2.1 historical balance scope
+- process QA v2.1 historical balance scope
 
 远端或本地产物中常见可直接解析的字段：
 - `dataCutOffAndCompletenessPrinciples`
@@ -204,9 +210,10 @@
 - unresolved placeholder / unit mismatch：默认视为需要修改，不能当作已可发布版本。
 - energy balance insufficient：若过程本来只做质量衡算，可保留并明确说明；否则应补足能量输出或说明排除原因。
 - 平衡审查先做“存在性与可计算性”核查，不强行做缺乏证据的行业语义推断。
+- CLI 层的物料平衡结果默认是 QA observation；是否按 profile waiver、要求 AI 语义修复，或阻断入库，由 Foundry curation gate 决定。
 
 ### 8. Foreground-System Context
-这是 skill 内置的 review rule，不是 ILCD 原文条款，但对 TianGong 当前 process 很关键。
+这是 skill 内置的 QA rule，不是 ILCD 原文条款，但对 TianGong 当前 process 很关键。
 
 仅当 `model_id` 或等价前景系统上下文存在时启用。
 
@@ -219,7 +226,7 @@
 - 把描述改写成“这个过程在该产品系统中做什么”，而不是只描述抽象工艺路线。
 
 ### 9. Tool-authored Language Cleanup
-这是本批 process review 的高频补充规则。
+这是本批 process QA 的高频补充规则。
 
 检查点：
 - 文案里是否残留：
@@ -238,40 +245,42 @@
 
 ## Output Contract
 
-所有 process review 至少应产出：
+所有 process QA 至少应产出：
 - 一份机器可读 rubric / findings / plan / summary
 - 一份 `operations-log`
 - 一份 `final-summary`
 - 一份 `verification`
 - 限制说明（`cli-friction` / `skill-friction`）
 
-若任务是 snapshot/account review，至少产出：
-- `outputs/process-review-rubric.json`
-- `outputs/process-review-findings.jsonl`
-- `outputs/process-review-plan.json`
-- `outputs/process-review-summary.json`
+若任务是 snapshot/account QA，至少产出：
+- `outputs/process-qa-rubric.json`
+- `outputs/process-qa-findings.jsonl`
+- `outputs/process-qa-plan.json`
+- `outputs/process-qa-summary.json`
 - `reports/processes-needing-modification.md`
 - `reports/processes-needing-modification.zh-CN.md`
 
 若任务走 `node scripts/run-review.mjs --profile process`，当前 canonical CLI 输出为：
 - `one_flow_rerun_timing.md`
-- `one_flow_rerun_review_v2_1_zh.md`
-- `one_flow_rerun_review_v2_1_en.md`
+- `one_flow_rerun_qa_v2_1_zh.md`
+- `one_flow_rerun_qa_v2_1_en.md`
 - `flow_unit_issue_log.md`
-- `review_summary_v2_1.json`
-- `process-review-report.json`
+- `qa_summary_v2_1.json`
+- `process-qa-report.json`
 
-每个 review 文件都应包含：
+这些输出应被下游视为 deterministic QA 输入。对外部导入过程，Foundry curation gate 应把它们和 schema report、profile YAML/context、源数据 trace 一起打包给 AI authoring/repair 流程。
+
+每个 QA 文件都应包含：
 - 证据充足结论
 - 证据不足结论/限制
 
 ## Current Limitations
 
 当前原生支持尚不包括：
-- 按 review-report presence、反向引用关系等复杂条件直接筛选远端 process 的原生命令；
-- 把 snapshot review 和下游治理/修复编排成一个 CLI 单命令的 native flow。
+- 按 QA-report presence、反向引用关系等复杂条件直接筛选远端 process 的原生命令；
+- 把 snapshot QA 和下游治理/修复编排成一个 CLI 单命令的 native flow。
 
-因此遇到更复杂的远端全量 process review 任务时：
+因此遇到更复杂的远端全量 process QA 任务时：
 - 优先使用 `run-remote-process-review.mjs` + `tiangong-lca process list` 的现有 canonical 组合；
 - 只有在组合仍不足以表达任务时，才允许使用补充 bridge；
 - 补充 bridge 应视为临时方案，而不是 skill 的默认用法。
