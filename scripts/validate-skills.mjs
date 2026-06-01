@@ -157,29 +157,29 @@ const requiredDocPatterns = [
     file: 'lifecycleinventory-review/SKILL.md',
     pattern: /--rows-file/u,
     message:
-      'lifecycleinventory-review should document the native --rows-file process review path.',
+      'lifecycleinventory-review should document the native --rows-file process QA path.',
   },
   {
     file: 'lifecycleinventory-review/scripts/run-review.mjs',
     pattern: /--rows-file/u,
-    message: 'run-review.mjs help should include a rows-file process review example.',
+    message: 'run-review.mjs help should include a rows-file process QA example.',
   },
   {
     file: 'lifecycleinventory-review/SKILL.md',
     pattern: /run-remote-process-review\.mjs/u,
     message:
-      'lifecycleinventory-review should document the canonical remote snapshot review wrapper.',
+      'lifecycleinventory-review should document the canonical remote snapshot QA wrapper.',
   },
   {
     file: 'README.md',
     pattern: /process list --json/u,
-    message: 'README.md should mention the native process list -> review process rows-file path.',
+    message: 'README.md should mention the native process list -> qa process rows-file path.',
   },
   {
     file: 'README.zh-CN.md',
     pattern: /process list --json/u,
     message:
-      'README.zh-CN.md should mention the native process list -> review process rows-file path.',
+      'README.zh-CN.md should mention the native process list -> qa process rows-file path.',
   },
   {
     file: 'process-scope-statistics/SKILL.md',
@@ -226,19 +226,19 @@ const targetedSmokeChecks = [
     skill: 'lifecycleinventory-review',
     script: 'lifecycleinventory-review/scripts/run-review.mjs',
     args: ['--profile', 'process', '--help'],
-    description: 'process review profile help',
+    description: 'process QA profile help',
   },
   {
     skill: 'lifecycleinventory-review',
     script: 'lifecycleinventory-review/scripts/run-review.mjs',
     args: ['--profile', 'lifecyclemodel', '--help'],
-    description: 'lifecyclemodel review profile help',
+    description: 'lifecyclemodel QA profile help',
   },
   {
     skill: 'lifecycleinventory-review',
     script: 'lifecycleinventory-review/scripts/run-remote-process-review.mjs',
     args: ['--help'],
-    description: 'remote process review wrapper help',
+    description: 'remote process QA wrapper help',
   },
 ];
 
@@ -266,7 +266,7 @@ function printHelp() {
 
 Examples:
   node scripts/validate-skills.mjs
-  node scripts/validate-skills.mjs lifecycleinventory-review process-hybrid-search
+  node scripts/validate-skills.mjs lifecycleinventory-qa process-hybrid-search
   node scripts/validate-skills.mjs --cli-dir ../tiangong-lca-cli lifecycleinventory-review
   node scripts/validate-skills.mjs --cli-dir ../tiangong-cli lifecycleinventory-review
 

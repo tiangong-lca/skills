@@ -15,7 +15,7 @@ This skill is a thin wrapper around the supported CLI-backed governance commands
 - Command ownership:
   - identity preflight lives in `tiangong-lca flow identity-preflight`
   - build-plan gating and materialization live in `tiangong-lca flow build-plan`
-  - review lives in `tiangong-lca review flow`
+  - QA lives in `tiangong-lca qa flow`
   - read/repair/publish slices live in `tiangong-lca flow ...`
 
 Write outputs to an explicit directory such as `/abs/path/artifacts/<case_slug>/...`.
@@ -32,7 +32,7 @@ Supported commands:
 
 - `identity-preflight`
 - `build-plan`
-- `review-flows`
+- `qa-flows`
 - `flow-get`
 - `flow-list`
 - `materialize-db-flows`
@@ -65,7 +65,7 @@ If any of these workflows is required again, add a native `tiangong-lca` command
 
 ## Recommended Sequences
 
-### Review And Publish Flows
+### QA And Publish Flows
 
 For a newly generated or revised flow, run these gates first:
 
@@ -81,14 +81,14 @@ Stop if identity preflight returns `block_duplicate` or `manual_review`, if `uni
 When the task must bind to real DB flow rows:
 
 1. `materialize-db-flows`
-2. `review-flows`
+2. `qa-flows`
 3. `materialize-approved-decisions`
 4. `remediate-flows`
 5. `publish-version` or `publish-reviewed-data`
 
-When the task is already grounded on an existing local reviewed-row snapshot:
+When the task is already grounded on an existing local QA row snapshot:
 
-1. `review-flows`
+1. `qa-flows`
 2. `remediate-flows`
 3. `publish-version` or `publish-reviewed-data`
 
@@ -98,7 +98,7 @@ When the task is already grounded on an existing local reviewed-row snapshot:
 2. `plan-process-flow-repairs`
 3. `apply-process-flow-repairs`
 4. `validate-processes`
-5. `publish-reviewed-data` when local review decisions are complete
+5. `publish-reviewed-data` when local QA decisions are complete
 
 ### Alias Map After Cleanup
 
@@ -115,14 +115,14 @@ When the task is already grounded on an existing local reviewed-row snapshot:
 - `build-plan`
   - `build-plan-gate-report.json`
   - `materialized-flow.json` for `materialize`
-- `review-flows`
+- `qa-flows`
   - `rule_findings.jsonl`
   - `llm_findings.jsonl`
   - `findings.jsonl`
-  - `flow_review_summary.json`
+  - `flow_qa_summary.json`
 - `materialize-db-flows`
   - `resolved-flow-rows.jsonl`
-  - `review-input-rows.jsonl`
+  - `qa-input-rows.jsonl`
   - `fetch-summary.json`
   - `missing-flow-refs.jsonl`
   - `ambiguous-flow-refs.jsonl`

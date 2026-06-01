@@ -1,14 +1,15 @@
 ---
 name: tidas-bilingual-transcreation
-description: Use when producing or reviewing high-quality Chinese/English bilingual TIDAS or ILCD fields for flow, process, or lifecyclemodel rows. This skill makes Codex do semantic transcreation from extracted translation units while the TianGong CLI performs deterministic extract, apply, validation, and evidence artifact generation.
+description: Use only for explicit post-import language-completion tasks that ask for reviewed Chinese/English TIDAS or ILCD fields. Do not use this skill as an import, publish, or source-language readiness gate.
 ---
 
 # TIDAS Bilingual Transcreation
 
 ## Scope
 
-- Produce reviewed bilingual translations for local TIDAS rows after `dataset bilingual extract`.
-- Use TIDAS/ILCD context, process or flow review artifacts, source evidence, terminology, units, classification, geography, time, and technology context.
+- Produce reviewed bilingual translations for local TIDAS rows after `dataset bilingual extract` only when a task explicitly requests post-import language completion.
+- Do not run this skill for external dataset import readiness; import-ready rows are source-language rows.
+- Use TIDAS/ILCD context, process or flow QA artifacts, source evidence, terminology, units, classification, geography, time, and technology context.
 - Do not translate by mechanical term replacement. Write target-language text that is natural, professional, and faithful to the dataset meaning.
 - Do not perform remote writes, publish, save-draft, or credential handling from this skill.
 
@@ -62,7 +63,7 @@ Use the smallest set needed for the requested rows:
 - `outputs/trans-units.jsonl` from `dataset bilingual extract`.
 - Source rows or selected field snippets for field-level context.
 - Source evidence, if available.
-- Process/flow review reports, if available.
+- Process/flow QA reports, if available.
 - Flow governance decisions and process-flow reference rules, if the field names or comments mention linked flows.
 - Project terminology or user-approved glossary, if provided.
 
@@ -92,5 +93,4 @@ Stop and report blockers instead of applying translations when:
 - a field contains mixed-language residue, placeholders, or schema-invalid text that needs content repair before translation;
 - `dataset bilingual validate` reports blockers after apply.
 
-The task is not target-quality ready until `dataset bilingual validate` passes and `translation-evidence.json` exists for all reviewed bilingual fields.
-
+The language-completion task is not done until `dataset bilingual validate` passes and `translation-evidence.json` exists for all reviewed bilingual fields. This is not an import or publish readiness requirement.

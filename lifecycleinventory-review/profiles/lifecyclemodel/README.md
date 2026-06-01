@@ -4,7 +4,7 @@ Status: **implemented**.
 
 Canonical path:
 1. Run `node scripts/run-review.mjs --profile lifecyclemodel`.
-2. The wrapper delegates directly to `tiangong-lca review lifecyclemodel`.
+2. The wrapper delegates directly to `tiangong-lca qa lifecyclemodel`.
 
 Required inputs:
 - `--run-dir <dir>`

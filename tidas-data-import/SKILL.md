@@ -67,8 +67,12 @@ After either lane creates candidate TIDAS data, run the existing dataset gates t
 
 ```bash
 tiangong-lca dataset validate --help
-tiangong-lca dataset review --help
-tiangong-lca dataset bilingual --help
+tiangong-lca qa process --help
+tiangong-lca qa flow --help
+node scripts/foundry.mjs process-curation-gate --help
+node scripts/foundry.mjs process-curation-cleanup --help
 ```
 
-Block publish preparation when source evidence, schema validation, required fields, bilingual quality, duplicate checks, or runtime rulesets are unresolved.
+For process rows, treat `tiangong-lca qa process` as deterministic QA output only. It classifies structural issues, reference-flow/exchange evidence, and material-balance observations; Foundry owns profile policy, AI authoring packages, curated patches/build plans, import-only trace cleanup, profile waivers, and the final prewrite decision.
+
+Block publish preparation when source evidence, schema validation, required fields, duplicate checks, runtime rulesets, or Foundry process curation actions are unresolved.

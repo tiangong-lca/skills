@@ -24,7 +24,7 @@ function renderHelp() {
 
 What this verifies:
   - skills wrapper delegates materialize-db-flows to the CLI
-  - the emitted review-input rows are consumable by review-flows
+  - the emitted qa-input rows are consumable by qa-flows
   - approved decisions materialize into canonical / rewrite / seed artifacts
   - the whole chain runs against a local Supabase-shaped fixture server, not a real remote
 
@@ -293,7 +293,7 @@ async function main() {
       const refsFile = path.join(tempDir, "flow-refs.json");
       const decisionsFile = path.join(tempDir, "approved-decisions.json");
       const materializedDir = path.join(tempDir, "materialized");
-      const reviewDir = path.join(tempDir, "review");
+      const qaDir = path.join(tempDir, "qa");
       const decisionDir = path.join(tempDir, "decision-artifacts");
 
       writeJson(refsFile, [
@@ -356,27 +356,27 @@ async function main() {
       });
 
       const fetchSummary = readJson(path.join(materializedDir, "fetch-summary.json"));
-      assert.equal(fetchSummary.review_input_row_count, 2);
+      assert.equal(fetchSummary.qa_input_row_count, 2);
       assert.equal(fetchSummary.missing_ref_count, 0);
       assert.equal(fetchSummary.ambiguous_ref_count, 0);
 
       await run(process.execPath, [
         wrapperScript,
-        "review-flows",
+        "qa-flows",
         "--rows-file",
-        path.join(materializedDir, "review-input-rows.jsonl"),
+        path.join(materializedDir, "qa-input-rows.jsonl"),
         "--out-dir",
-        reviewDir,
+        qaDir,
       ], {
         cwd: repoRoot,
         env,
       });
 
-      const reviewSummary = readJson(path.join(reviewDir, "flow_review_summary.json"));
-      assert.equal(reviewSummary.flow_count, 2);
+      const qaSummary = readJson(path.join(qaDir, "flow_qa_summary.json"));
+      assert.equal(qaSummary.flow_count, 2);
       assert.ok(
-        typeof reviewSummary.rule_finding_count === "number",
-        "review summary should include rule_finding_count",
+        typeof qaSummary.rule_finding_count === "number",
+        "QA summary should include rule_finding_count",
       );
 
       await run(process.execPath, [
@@ -385,7 +385,7 @@ async function main() {
         "--decision-file",
         decisionsFile,
         "--flow-rows-file",
-        path.join(materializedDir, "review-input-rows.jsonl"),
+        path.join(materializedDir, "qa-input-rows.jsonl"),
         "--out-dir",
         decisionDir,
       ], {
