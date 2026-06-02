@@ -47,6 +47,8 @@ related:
 
 `tiangong-lca-skills` owns checked-in skill wrappers and skill packaging metadata for TianGong agent workflows. Start here when the task may change `SKILL.md`, `agents/openai.yaml`, validation rules, or the thin wrappers that connect skills to the unified CLI.
 
+Review note, 2026-06-02: dataset import curation queue guidance remains skill instruction only; CLI and Foundry own queue construction, curation package assembly, and deterministic gates.
+
 ## AI Load Order
 
 Load docs in this order:
