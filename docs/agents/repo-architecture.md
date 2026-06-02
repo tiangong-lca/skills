@@ -37,6 +37,8 @@ related:
 
 `tiangong-lca-skills` owns checked-in skill packages and CLI-backed agent workflow wrappers for TianGong workflows.
 
+Review note, 2026-06-02: dataset import curation queue changes keep this repository at the workflow-instruction layer; executable queue and curation gate behavior stays in CLI and Foundry.
+
 ## Owned Surfaces
 
 - `*/SKILL.md` contains canonical skill instructions and trigger contracts.

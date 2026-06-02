@@ -41,6 +41,7 @@ Required verification artifacts:
 - `conversion/outputs/import-lca-report.json`
 - `conversion/conversion-report.json`
 - `conversion/tidas/` when conversion succeeds
+- entity-level curation queue artifacts after downstream validation and QA: `curation-queue/outputs/curation-queue-manifest.json`, `curation-queue/outputs/curation-queue-tasks.jsonl`, `curation-queue/outputs/curation-queue-locks.json`, and `curation-queue/outputs/curation-queue-blockers.jsonl`
 
 ## Lane 2: Source Document Authoring
 
@@ -69,9 +70,24 @@ After either lane creates candidate TIDAS data, run the existing dataset gates t
 tiangong-lca dataset validate --help
 tiangong-lca qa process --help
 tiangong-lca qa flow --help
-node scripts/foundry.mjs process-curation-gate --help
-node scripts/foundry.mjs process-curation-cleanup --help
+node scripts/foundry.mjs dataset-curation-queue-build --help
+node scripts/foundry.mjs dataset-curation-gate --help
+node scripts/foundry.mjs dataset-curation-cleanup --help
 ```
+
+For structured external dataset imports, build the queue after schema validation and deterministic QA and before AI repair or publish preparation:
+
+```bash
+npm run dataset:curation-queue:build -- \
+  --processes .foundry/workspaces/<task-id>/rows/processes.normalized.jsonl \
+  --flows .foundry/workspaces/<task-id>/rows/flows.normalized.jsonl \
+  --support .foundry/workspaces/<task-id>/rows/sources.normalized.jsonl \
+  --out-dir .foundry/workspaces/<task-id>/curation-queue
+```
+
+The queue is the execution contract for support, flow, and process work. Do not select arbitrary clean-looking rows or write final semantic fields from task-local scripts; use the queue task input, closure, blocker, and run-plan artifacts.
+
+When running `dataset-curation-gate`, pass `--queue-dir .foundry/workspaces/<task-id>/curation-queue` so AI authoring packages include the entity queue task, dependency closure, referenced flow rows, and batch support rows in addition to schema, YAML, profile context, schema blockers, and QA findings.
 
 For process rows, treat `tiangong-lca qa process` as deterministic QA output only. It classifies structural issues, reference-flow/exchange evidence, and material-balance observations; Foundry owns profile policy, AI authoring packages, curated patches/build plans, import-only trace cleanup, profile waivers, and the final prewrite decision.
 

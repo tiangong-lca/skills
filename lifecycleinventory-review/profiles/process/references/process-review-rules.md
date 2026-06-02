@@ -22,7 +22,7 @@
 ## Foundry Curation Boundary
 
 - CLI process QA 是 deterministic QA report，不是语义 authoring runtime。
-- Foundry 负责读取 process payload、schema report、CLI QA report、profile context/YAML，并产出 AI authoring package、结构化 suggestion/build-plan、profile waiver 和最终 prewrite 状态。
+- Foundry 先通过 `dataset-curation-queue-build` / `tiangong-lca dataset curation-queue build` 建立 entity-level queue、lock、blocker、closure 和 run-plan artifacts，再读取 process payload、schema report、CLI QA report、profile context/YAML，并产出 AI authoring package、结构化 suggestion/build-plan、profile waiver 和最终 prewrite 状态。
 - 对外部 dataset import，不能只因为 CLI QA 没有 blocker 就写库；必须确认 Foundry curation action items 已被修复或被 profile 明确 waiver。
 
 ## Required Inputs

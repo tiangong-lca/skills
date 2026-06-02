@@ -41,6 +41,8 @@ The canonical local validation command is:
 node scripts/validate-skills.mjs
 ```
 
+Review note, 2026-06-02: dataset import curation queue instruction updates are validated by the standard full skill validation command.
+
 The local `pre-push` hook runs docpact first, builds the sibling `tiangong-lca-cli` when available, and then runs this validation command. The GitHub `validate-skills` workflow is manual-dispatch only, so ordinary pushes rely on the local gate.
 
 You may pass one or more skill directories to validate only the touched skill packages.
