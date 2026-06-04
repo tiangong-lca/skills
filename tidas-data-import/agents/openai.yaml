@@ -1,4 +1,4 @@
 interface:
   display_name: "TIDAS Data Import"
-  short_description: "Run CLI-backed TIDAS package conversion and source-document authoring lanes"
-  default_prompt: "Use $tidas-data-import for Foundry tasks that import packaged LCA datasets or author TIDAS data from PDF, Excel, or other source files."
+  short_description: "Run CLI-backed TIDAS import lanes and Foundry AI authoring-task patch gates"
+  default_prompt: "Use $tidas-data-import for Foundry tasks that import packaged LCA datasets or author TIDAS data from PDF, Excel, or other source files. When curation packages have AI-required blockers, build Foundry authoring tasks, read the full package/context, write strict structured patches without incomplete template status or __AI_FILL_* placeholders, collect them into a batch patch, apply through dataset-patch-apply, then use dataset-post-authoring-finalize for process validation, QA, dry-run, optional remote verify, and mutation manifest before any explicit commit."

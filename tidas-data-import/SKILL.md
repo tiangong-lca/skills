@@ -72,7 +72,10 @@ tiangong-lca qa process --help
 tiangong-lca qa flow --help
 node scripts/foundry.mjs dataset-curation-queue-build --help
 node scripts/foundry.mjs dataset-curation-gate --help
+node scripts/foundry.mjs dataset-authoring-task-build --help
+node scripts/foundry.mjs dataset-patch-apply --help
 node scripts/foundry.mjs dataset-curation-cleanup --help
+node scripts/foundry.mjs dataset-post-authoring-finalize --help
 ```
 
 For structured external dataset imports, build the queue after schema validation and deterministic QA and before AI repair or publish preparation:
@@ -88,6 +91,65 @@ npm run dataset:curation-queue:build -- \
 The queue is the execution contract for support, flow, and process work. Do not select arbitrary clean-looking rows or write final semantic fields from task-local scripts; use the queue task input, closure, blocker, and run-plan artifacts.
 
 When running `dataset-curation-gate`, pass `--queue-dir .foundry/workspaces/<task-id>/curation-queue` so AI authoring packages include the entity queue task, dependency closure, referenced flow rows, and batch support rows in addition to schema, YAML, profile context, schema blockers, and QA findings.
+
+When curation gate has AI-required action items, build explicit authoring tasks before writing any patch. Prefer batch mode from the gate report so all entity patches can be combined and applied once:
+
+```bash
+npm run dataset:authoring-task:build -- \
+  --curation-gate-report .foundry/workspaces/<task-id>/curation-gate/dataset-curation-gate-report.json \
+  --out-dir .foundry/workspaces/<task-id>/authoring-tasks
+```
+
+Use single-package mode for targeted rework:
+
+```bash
+npm run dataset:authoring-task:build -- \
+  --authoring-package .foundry/workspaces/<task-id>/curation-gate/ai-authoring-packages/<type>-<uuid>.authoring-package.json \
+  --out-dir .foundry/workspaces/<task-id>/authoring-tasks/<type>-<uuid>
+```
+
+Codex/skill must read `ai-authoring-task.md` and the full authoring package for each task, then write only structured patch JSON. The final patch file must not retain `template_status=requires_ai_completion` or any `__AI_FILL_*` placeholder. In batch mode, write per-task `ai-patches.json` files first, then collect them into the manifest's batch patch target:
+
+```bash
+npm run dataset:authoring-patch:collect -- \
+  --task-manifest .foundry/workspaces/<task-id>/authoring-tasks/authoring-task-manifest.json
+```
+
+Do not hand-edit row JSONL files and do not call database writes from the authoring task. If collect blocks, repair the per-task patch files before apply.
+
+Apply AI output deterministically:
+
+```bash
+npm run dataset:patch:apply -- \
+  --input .foundry/workspaces/<task-id>/rows/<type>.jsonl \
+  --patch .foundry/workspaces/<task-id>/authoring-tasks/ai-patches.batch.json \
+  --out .foundry/workspaces/<task-id>/rows/<type>.patched.jsonl \
+  --out-dir .foundry/workspaces/<task-id>/patch-apply \
+  --authoring-package-dir .foundry/workspaces/<task-id>/curation-gate/ai-authoring-packages \
+  --require-authoring-package \
+  --require-action-item-closure
+```
+
+If patch apply blocks on missing evidence, failed `test`, bad path, package mismatch, or unclosed action items, return to the authoring task. After a completed apply, use Foundry's process finalize wrapper for process rows:
+
+```bash
+npm run dataset:post-authoring-finalize -- \
+  --type process \
+  --rows-file .foundry/workspaces/<task-id>/rows/processes.patched.jsonl \
+  --out-dir .foundry/workspaces/<task-id>/post-authoring-finalize \
+  --profile bafu \
+  --queue-dir .foundry/workspaces/<task-id>/curation-queue \
+  --schema-file .foundry/workspaces/<task-id>/context/process/outputs/schema.json \
+  --yaml-file .foundry/workspaces/<task-id>/context/process/outputs/methodology.yaml \
+  --ruleset-file .foundry/workspaces/<task-id>/context/process/outputs/runtime-ruleset.json \
+  --patch-collect-report .foundry/workspaces/<task-id>/authoring-tasks/authoring-patch-collect-report.json \
+  --require-patch-collect-report \
+  --patch-apply-report .foundry/workspaces/<task-id>/patch-apply/outputs/dataset-patch-apply-report.json \
+  --target-user-id <uuid> \
+  --verify-remote
+```
+
+The finalize wrapper reruns SDK validation, deterministic QA, cleanup, post-authoring curation gate, dry-run, optional remote verification, and mutation manifest on one exact rows-file scope. Commit remains a later explicit CLI step after `dataset-post-authoring-finalize-report.json` and its mutation manifest are `ready_for_remote_write`, followed by post-commit remote verification.
 
 For process rows, treat `tiangong-lca qa process` as deterministic QA output only. It classifies structural issues, reference-flow/exchange evidence, and material-balance observations; Foundry owns profile policy, AI authoring packages, curated patches/build plans, import-only trace cleanup, profile waivers, and the final prewrite decision.
 
