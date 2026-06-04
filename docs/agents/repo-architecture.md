@@ -38,6 +38,7 @@ related:
 `tiangong-lca-skills` owns checked-in skill packages and CLI-backed agent workflow wrappers for TianGong workflows.
 
 Review note, 2026-06-02: dataset import curation queue changes keep this repository at the workflow-instruction layer; executable queue and curation gate behavior stays in CLI and Foundry.
+Review note, 2026-06-04: Foundry now has two checked-in top-level scenario skills, `external-dataset-curated-import` and `source-evidence-dataset-development`. They coordinate existing CLI/child-skill surfaces and must not grow package parsing, database write, or evidence retrieval implementations.
 
 ## Owned Surfaces
 
@@ -46,6 +47,11 @@ Review note, 2026-06-02: dataset import curation queue changes keep this reposit
 - `*/scripts/**`, `*/references/**`, and `*/assets/**` are skill-local support files intentionally shipped with a skill package.
 - `scripts/validate-skills.mjs` and `test/**` define repo-level validation for wrappers and packaging rules.
 - `README.md` and `README.zh-CN.md` explain installation and usage.
+
+Top-level Foundry scenario skills are allowed in this repository when they only encode workflow order and routing:
+
+- `external-dataset-curated-import`
+- `source-evidence-dataset-development`
 
 ## Non-Owner Boundaries
 

@@ -41,7 +41,7 @@ The canonical local validation command is:
 node scripts/validate-skills.mjs
 ```
 
-Review note, 2026-06-04: external runtime source-evidence skill guidance remains documentation and instruction-layer work. Validate the touched skill package plus docpact worktree lint; no new validator path is required because the external skill is not checked into this repository.
+Review note, 2026-06-04: external runtime source-evidence skill guidance remains documentation and instruction-layer work. The new top-level Foundry scenario skills are included in `scripts/validate-skills.mjs`; no new runtime validator path is required because the external Tiangong KB skill is not checked into this repository.
 
 The local `pre-push` hook runs docpact first, builds the sibling `tiangong-lca-cli` when available, and then runs this validation command. The GitHub `validate-skills` workflow is manual-dispatch only, so ordinary pushes rely on the local gate.
 

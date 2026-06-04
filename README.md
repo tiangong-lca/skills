@@ -29,11 +29,13 @@ Repository: https://github.com/tiangong-lca/skills
 Use the `skills` CLI from https://github.com/vercel-labs/skills to install, update, and manage these skills.
 
 ## Install the CLI
+
 ```bash
 npm i skills@latest -g
 ```
 
 ## Install
+
 - List available skills (no install):
   ```bash
   npx skills add https://github.com/tiangong-lca/skills --list
@@ -48,6 +50,7 @@ npm i skills@latest -g
   ```
 
 ## Target agents and scope
+
 - Target specific agents:
   ```bash
   npx skills add https://github.com/tiangong-lca/skills -a codex -a claude-code
@@ -61,11 +64,13 @@ npm i skills@latest -g
   - Global scope installs into the per-agent user skills directory resolved by the `skills` CLI on the current platform. Use `npx skills list` to inspect the exact path on macOS, Linux, or Windows.
 
 ## Install method
+
 - Interactive installs let you choose:
   - Symlink (recommended)
   - Copy
 
 ## Update and verify
+
 - List installed skills:
   ```bash
   npx skills list
@@ -98,7 +103,13 @@ npx skills update --project --yes
 
 Consuming projects should record the resolved upstream ref and command in task artifacts. Do not copy `tiangong-kb-*` skill folders into this repository unless the ownership boundary changes deliberately.
 
+## Foundry top-level workflows
+
+- `$external-dataset-curated-import`: BAFU, USLCI, and other structured LCA package imports through CLI conversion, curation queue `next`/`verify`, child skills, and publish handoff gates.
+- `$source-evidence-dataset-development`: evidence-driven data creation or update from PDFs, Word files, URLs, APIs, reports, database references, or scientific literature.
+
 ## Validation
+
 - Validate the canonical CLI-backed wrappers and migration doc guards locally:
   ```bash
   node scripts/validate-skills.mjs

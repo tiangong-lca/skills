@@ -29,11 +29,13 @@ lastReviewedCommit: 83749eb1836f7d64a4cf59c21d46200baefbae7c
 请使用 https://github.com/vercel-labs/skills 提供的 `skills` CLI 来安装、更新和管理这些 skills。
 
 ## 安装 CLI
+
 ```bash
 npm i skills@latest -g
 ```
 
 ## 安装
+
 - 仅列出可用技能（不安装）:
   ```bash
   npx skills add https://github.com/tiangong-lca/skills --list
@@ -48,6 +50,7 @@ npm i skills@latest -g
   ```
 
 ## 目标 agent 与作用域
+
 - 指定 agent:
   ```bash
   npx skills add https://github.com/tiangong-lca/skills -a codex -a claude-code
@@ -61,11 +64,13 @@ npm i skills@latest -g
   - 全局安装到 `skills` CLI 在当前平台解析出的 agent 用户目录。可通过 `npx skills list` 查看 macOS / Linux / Windows 上的实际路径。
 
 ## 安装方式
+
 - 交互式安装可选:
   - Symlink (recommended)
   - Copy
 
 ## 更新与确认
+
 - 列出已安装技能:
   ```bash
   npx skills list
@@ -98,7 +103,13 @@ npx skills update --project --yes
 
 消费项目应在任务 artifact 中记录解析到的 upstream ref 和命令。除非所有权边界被明确调整，不要把 `tiangong-kb-*` skill 目录复制到本仓库。
 
+## Foundry top-level workflows
+
+- `$external-dataset-curated-import`：BAFU、USLCI 等结构化 LCA 数据包导入，走 CLI 转换、curation queue `next`/`verify`、子 skill 和发布 handoff gates。
+- `$source-evidence-dataset-development`：从 PDF、Word、URL、API、报告、数据库引用或科学文献进行 evidence-driven 数据新增或更新。
+
 ## 校验
+
 - 本地校验 CLI-backed wrapper 与迁移文档守卫:
   ```bash
   node scripts/validate-skills.mjs

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Source Evidence Dataset Development"
+  short_description: "Top-level workflow for evidence-driven TIDAS data creation or update from documents, URLs, APIs, and literature"
+  default_prompt: "Use $source-evidence-dataset-development when a Foundry task must create or update TianGong TIDAS data from PDFs, Word files, URLs, APIs, reports, database references, or scientific literature. Freeze an executable seed, resolve runtime evidence skills such as tiangong-kb-sci-search with npx skills for SCI paper evidence, capture field-level evidence before authoring rows, fetch SDK context, validate/QA rows, drive the CLI curation queue with next/verify, route semantic blockers to child skills, and require dry-run, closeout, and readback verification before completion. Do not vendor external research skills or write the database directly."

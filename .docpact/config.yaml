@@ -1,8 +1,8 @@
 version: 1
 layout: repo
-# Review note, 2026-06-04: external runtime source-evidence skill guidance changed docs and tidas-data-import instructions only; ownership and coverage rules remain unchanged.
+# Review note, 2026-06-04: new Foundry top-level workflow skills and external runtime source-evidence guidance use existing skill-package and validation rules; ownership and coverage rules remain unchanged.
 lastReviewedAt: "2026-06-04"
-lastReviewedCommit: "7c5039a212974a8e3c8392e31c18f72d0322dfe1"
+lastReviewedCommit: "8077fb932de721aa9d39a929fc766dea662183bb"
 
 catalog:
   repos:

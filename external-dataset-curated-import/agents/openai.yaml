@@ -1,0 +1,4 @@
+interface:
+  display_name: "External Dataset Curated Import"
+  short_description: "Top-level workflow for BAFU, USLCI, and other structured LCA package imports"
+  default_prompt: "Use $external-dataset-curated-import when a Foundry task starts from a packaged or semi-structured LCA dataset such as BAFU or USLCI. Freeze the source manifest and profile, fetch SDK contract context, convert with tiangong-lca dataset import-lca convert or tidas-tools, validate and QA rows, build and drive the CLI curation queue with curation-queue next/verify, route semantic entity work to child skills, and require dry-run, commit handoff, closeout, and readback verification before completion. Do not parse packages, run database writes, or create profile-specific code inside the skill."

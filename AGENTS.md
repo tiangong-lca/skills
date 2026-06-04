@@ -94,6 +94,7 @@ Route those tasks to:
 - If a capability is missing, add it to `tiangong-lca-cli` first, then update the skill wrapper here
 - Current-account dataset review skills may orchestrate frozen local inputs through public CLI commands, but must not own direct database access, credential parsing, or private account runtime logic.
 - Source-evidence import skills may instruct agents to resolve external research skills with `npx skills`, but this repository should not mirror or pin those external skill packages.
+- `external-dataset-curated-import` and `source-evidence-dataset-development` are top-level workflow skills only; executable conversion, queue state, validation, QA, write, and verify behavior stays in CLI/Foundry-owned commands.
 - Local CLI checkouts selected by wrappers may be rebuilt automatically when their source is newer than `dist/src/main.js`; wrappers should still keep the CLI command surface in `tiangong-lca-cli`.
 - The canonical local validation command is `node scripts/validate-skills.mjs`
 - You may pass one or more skill paths to validate only the touched skills
