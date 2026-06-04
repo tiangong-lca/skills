@@ -24,9 +24,31 @@ Use this skill when a Foundry or account-governance task needs to remove, retire
 - The replacement source manifest or seed manifest when the operation includes redo.
 - Explicit operator approval for any commit path.
 
-## Planned CLI Surface
+## CLI Surface
 
-The owning command family is:
+For the narrow "clear my current account so I can re-import" workflow, use the implemented command:
+
+```bash
+tiangong-lca dataset maintenance clear-account \
+  --out-dir ./dataset-maintenance/account-clear \
+  --json
+
+tiangong-lca dataset maintenance clear-account \
+  --out-dir ./dataset-maintenance/account-clear \
+  --commit \
+  --confirm <current-account-email> \
+  --json
+```
+
+This command deletes only rows visible to the current authenticated user and filtered by that user's `user_id`
+through RLS. It covers authorable dataset tables in reference-safe delete order:
+`lifecyclemodels`, `processes`, `flows`, `sources`, and `contacts`.
+It does not delete `unitgroups` or `flowproperties`, because those are treated as protected support data by default.
+
+Use `--state-code <n>` only when the operator asks for a narrower cleanup. Omit it when the operator explicitly
+asks to clear all current-account data for re-import.
+
+For row-level delete, retirement, repair, or redo workflows, the owning command family remains:
 
 ```bash
 tiangong-lca dataset maintenance plan \
@@ -46,7 +68,8 @@ tiangong-lca dataset maintenance verify \
   --json
 ```
 
-Until those commands are implemented, the skill may plan and document the required artifacts, but must not substitute ad hoc SQL, REST deletes, or Foundry-local database code.
+Until the row-level plan/apply/verify commands are implemented, the skill may plan and document the required artifacts,
+but must not substitute ad hoc SQL, REST deletes, or Foundry-local database code.
 
 ## Workflow
 
