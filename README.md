@@ -18,7 +18,7 @@ checkPaths:
   - scripts/validate-skills.mjs
   - "*/SKILL.md"
   - "*/scripts/**"
-lastReviewedAt: 2026-05-08
+lastReviewedAt: 2026-06-04
 lastReviewedCommit: 83749eb1836f7d64a4cf59c21d46200baefbae7c
 ---
 
@@ -78,6 +78,25 @@ npm i skills@latest -g
   ```bash
   npx skills update
   ```
+
+## External runtime skills
+
+This repository owns checked-in TianGong LCA workflow skills. Fast-moving Tiangong KB research skills are consumed from their owning repositories at runtime instead of being mirrored here.
+
+For source-evidence dataset development that needs SCI paper evidence, resolve the latest external skill from `tiangong-ai/skills`:
+
+```bash
+npx skills use https://github.com/tiangong-ai/skills --skill tiangong-kb-sci-search --full-depth
+```
+
+Optional local project install:
+
+```bash
+npx skills add https://github.com/tiangong-ai/skills --skill tiangong-kb-sci-search --agent '*' --yes --full-depth
+npx skills update --project --yes
+```
+
+Consuming projects should record the resolved upstream ref and command in task artifacts. Do not copy `tiangong-kb-*` skill folders into this repository unless the ownership boundary changes deliberately.
 
 ## Validation
 - Validate the canonical CLI-backed wrappers and migration doc guards locally:

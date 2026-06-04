@@ -25,7 +25,7 @@ checkPaths:
   - scripts/docpact
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-06-02
+lastReviewedAt: 2026-06-04
 lastReviewedCommit: 7c5039a212974a8e3c8392e31c18f72d0322dfe1
 related:
   - AGENTS.md
@@ -50,10 +50,13 @@ Review note, 2026-06-02: dataset import curation queue changes keep this reposit
 ## Non-Owner Boundaries
 
 - `tiangong-lca-cli` owns the native public command surface, low-level command semantics, REST clients, and auth behavior.
+- External source-evidence research skill repositories, such as `tiangong-ai/skills`, own fast-moving Tiangong KB retrieval skills.
 - Product/runtime repositories own business logic and API behavior.
 - `lca-workspace` owns root integration state and submodule pointer updates.
 
 If a skill needs a capability that does not exist in the CLI, add the capability to `tiangong-lca-cli` first and keep the skill as a thin wrapper over that CLI surface.
+
+If a Foundry/source-evidence workflow needs an external Tiangong KB research skill, consume it with `npx skills` at runtime and record the resolved upstream ref in the task workspace. Do not copy the external skill package into this repository unless ownership is intentionally transferred.
 
 Current-account dataset review is owned here only as a skill package and wrapper contract. Its durable runtime behavior belongs in public `tiangong-lca` CLI commands such as dataset validation, reference rewriting, lifecyclemodel save-draft, and lifecyclemodel graph export.
 

@@ -1,7 +1,7 @@
 version: 1
 layout: repo
-# Review note, 2026-06-02: dataset import curation queue guidance changed skill docs only; ownership and coverage rules remain unchanged.
-lastReviewedAt: "2026-06-02"
+# Review note, 2026-06-04: external runtime source-evidence skill guidance changed docs and tidas-data-import instructions only; ownership and coverage rules remain unchanged.
+lastReviewedAt: "2026-06-04"
 lastReviewedCommit: "7c5039a212974a8e3c8392e31c18f72d0322dfe1"
 
 catalog:

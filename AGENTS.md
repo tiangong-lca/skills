@@ -32,7 +32,7 @@ checkPaths:
   - scripts/docpact
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-06-02
+lastReviewedAt: 2026-06-04
 lastReviewedCommit: 7c5039a212974a8e3c8392e31c18f72d0322dfe1
 related:
   - .docpact/config.yaml
@@ -76,12 +76,14 @@ This repo owns:
 This repo does not own:
 
 - the public CLI command surface
+- external fast-moving source-evidence research skills such as `tiangong-kb-sci-search`
 - product runtime business logic
 - workspace integration state after merge
 
 Route those tasks to:
 
 - `tiangong-lca-cli` for new native `tiangong-lca <noun> <verb>` commands
+- `tiangong-ai/skills` consumed through `npx skills` for external Tiangong KB research skills
 - the owning product/runtime repo for business logic or API changes
 - `lca-workspace` for root integration after merge
 
@@ -91,6 +93,7 @@ Route those tasks to:
 - This repo is distribution-oriented; each skill should stay a thin wrapper over the unified `tiangong-lca` CLI
 - If a capability is missing, add it to `tiangong-lca-cli` first, then update the skill wrapper here
 - Current-account dataset review skills may orchestrate frozen local inputs through public CLI commands, but must not own direct database access, credential parsing, or private account runtime logic.
+- Source-evidence import skills may instruct agents to resolve external research skills with `npx skills`, but this repository should not mirror or pin those external skill packages.
 - Local CLI checkouts selected by wrappers may be rebuilt automatically when their source is newer than `dist/src/main.js`; wrappers should still keep the CLI command surface in `tiangong-lca-cli`.
 - The canonical local validation command is `node scripts/validate-skills.mjs`
 - You may pass one or more skill paths to validate only the touched skills
@@ -99,6 +102,7 @@ Route those tasks to:
 ## Hard Boundaries
 
 - Do not add private business runtimes, MCP transports, or unrelated orchestration layers inside a skill when the behavior should live in the CLI or an owning repo
+- Do not vendor external runtime skills from `tiangong-ai/skills`; consuming projects should resolve them with `npx skills` and record the resolved upstream ref in task artifacts
 - Do not leave a changed `SKILL.md` without updating the paired `agents/openai.yaml` when the invocation contract changed
 - Do not treat a merged repo PR here as workspace-delivery complete if the root repo still needs a submodule bump
 

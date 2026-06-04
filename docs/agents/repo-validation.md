@@ -25,7 +25,7 @@ checkPaths:
   - scripts/docpact
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-06-02
+lastReviewedAt: 2026-06-04
 lastReviewedCommit: 7c5039a212974a8e3c8392e31c18f72d0322dfe1
 related:
   - AGENTS.md
@@ -41,7 +41,7 @@ The canonical local validation command is:
 node scripts/validate-skills.mjs
 ```
 
-Review note, 2026-06-02: dataset import curation queue instruction updates are validated by the standard full skill validation command.
+Review note, 2026-06-04: external runtime source-evidence skill guidance remains documentation and instruction-layer work. Validate the touched skill package plus docpact worktree lint; no new validator path is required because the external skill is not checked into this repository.
 
 The local `pre-push` hook runs docpact first, builds the sibling `tiangong-lca-cli` when available, and then runs this validation command. The GitHub `validate-skills` workflow is manual-dispatch only, so ordinary pushes rely on the local gate.
 

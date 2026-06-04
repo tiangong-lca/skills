@@ -18,7 +18,7 @@ checkPaths:
   - scripts/validate-skills.mjs
   - "*/SKILL.md"
   - "*/scripts/**"
-lastReviewedAt: 2026-05-08
+lastReviewedAt: 2026-06-04
 lastReviewedCommit: 83749eb1836f7d64a4cf59c21d46200baefbae7c
 ---
 
@@ -78,6 +78,25 @@ npm i skills@latest -g
   ```bash
   npx skills update
   ```
+
+## 外部运行时 skills
+
+本仓库只维护 checked-in 的 TianGong LCA workflow skills。变化较快的 Tiangong KB research skills 应在使用项目中运行时解析，不在本仓库镜像。
+
+source-evidence 数据集开发如果需要 SCI 论文证据，使用 `tiangong-ai/skills` 的最新外部 skill：
+
+```bash
+npx skills use https://github.com/tiangong-ai/skills --skill tiangong-kb-sci-search --full-depth
+```
+
+如确实需要本地项目级安装：
+
+```bash
+npx skills add https://github.com/tiangong-ai/skills --skill tiangong-kb-sci-search --agent '*' --yes --full-depth
+npx skills update --project --yes
+```
+
+消费项目应在任务 artifact 中记录解析到的 upstream ref 和命令。除非所有权边界被明确调整，不要把 `tiangong-kb-*` skill 目录复制到本仓库。
 
 ## 校验
 - 本地校验 CLI-backed wrapper 与迁移文档守卫:

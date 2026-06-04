@@ -11,6 +11,7 @@ Use this skill when Foundry needs to create or prepare TIDAS data from external 
 
 - This skill orchestrates CLI commands only.
 - Do not embed schema, methodology YAML, ruleset, converter logic, or prompt templates in this skill.
+- Do not vendor external source-evidence research skills into this repository.
 - Fetch the target contract context before AI generation, conversion repair, or review.
 - Treat CLI reports as the durable artifact contract for downstream Foundry routing.
 
@@ -61,6 +62,26 @@ Required verification artifacts:
 - `authoring/outputs/source-extract.json`
 - `authoring/context/<type>/outputs/ai-context.md`
 - `authoring/outputs/authoring-report.json`
+
+### Source Evidence Runtime Skills
+
+For source-document authoring that needs SCI paper or academic journal evidence, resolve the latest external research skill at runtime:
+
+```bash
+npx skills use https://github.com/tiangong-ai/skills \
+  --skill tiangong-kb-sci-search \
+  --full-depth
+```
+
+`tiangong-kb-sci-search` searches only the `sci` channel. Do not use it as a report, patent, general web, or all-source retrieval wrapper. If the task needs those other source classes, keep them as separate evidence channels.
+
+When a Foundry task uses an external runtime skill, write a resolution record before retrieval:
+
+```text
+.foundry/workspaces/<task-id>/runtime-skills/runtime-skill-resolution.json
+```
+
+The record should include the `npx skills` command, source repo, resolved `refs/heads/main` commit from `git ls-remote https://github.com/tiangong-ai/skills.git refs/heads/main`, skill name, evidence channel, timestamp, and output artifact paths. Retrieved papers are evidence candidates only; field values still need evidence dossier capture, limitations/conflicts, validation, curation, dry-run, and verification gates.
 
 ## Downstream Gates
 
