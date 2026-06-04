@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dataset RLS Maintenance"
+  short_description: "Plan, approve, apply, and verify current-user RLS-scoped dataset cleanup and redo workflows"
+  default_prompt: "Use $dataset-rls-maintenance when a TianGong LCA task needs to remove, retire, repair, or redo previously imported rows under the current user's RLS access. Freeze a maintenance scope manifest, require a current-user visible snapshot, protected rows, reference impact report, dry-run, explicit approval, commit report, and readback verification. Orchestrate only through tiangong-lca dataset maintenance plan/apply/verify or existing public CLI commands named by the approved plan. Do not call Supabase directly, parse credentials, bypass RLS, or add private delete logic."

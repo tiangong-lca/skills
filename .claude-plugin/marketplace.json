@@ -48,6 +48,17 @@
             "skills": [
                 "./embedding-ft"
             ]
+        },
+        {
+            "name": "lca-foundry-workflows",
+            "description": "Top-level Data Foundry workflows for external package imports, source-evidence authoring, and current-user RLS maintenance.",
+            "source": "./",
+            "strict": false,
+            "skills": [
+                "./external-dataset-curated-import",
+                "./source-evidence-dataset-development",
+                "./dataset-rls-maintenance"
+            ]
         }
     ]
 }
