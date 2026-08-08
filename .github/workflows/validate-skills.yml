@@ -21,10 +21,10 @@ jobs:
             arch: arm64
     steps:
       - name: Checkout skills
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout tiangong-lca-cli
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: tiangong-lca/tiangong-cli
           path: .ci/tiangong-lca-cli
