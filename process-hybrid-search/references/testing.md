@@ -13,20 +13,20 @@ Confirm the CLI's Production endpoint and region in the planned request. This mu
 ## Human login and read-only smoke
 
 ```bash
-pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca auth status --json
+pnpm dlx --package=@tiangong-lca/cli@0.1.11 tiangong-lca auth status --json
 ```
 
 A fresh install reports `login-required` (exit 1). The human user then runs the pinned CLI's `auth login` in a trusted terminal and completes browser consent. Never ask an agent to collect a password, code, or token. After login:
 
 ```bash
-pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca auth doctor-auth --json
+pnpm dlx --package=@tiangong-lca/cli@0.1.11 tiangong-lca auth doctor-auth --json
 node scripts/run-process-hybrid-search.mjs --published-cli --json
 ```
 
 ## Direct CLI equivalent
 
 ```bash
-pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca search process --input ./assets/example-request.json --dry-run --json
+pnpm dlx --package=@tiangong-lca/cli@0.1.11 tiangong-lca search process --input ./assets/example-request.json --dry-run --json
 ```
 
 Use `--cli-dir /path/to/tiangong-lca-cli` only for an explicitly selected matching local build. Custom environment setup is documented in `env.md`; it is not a Production prerequisite.

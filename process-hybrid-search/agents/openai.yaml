@@ -1,4 +1,4 @@
 interface:
   display_name: "Process Hybrid Search"
   short_description: "Debug and tune process hybrid search requests"
-  default_prompt: "Use $process-hybrid-search through the pinned CLI OAuth session and its zero-config official Production profile; check auth status first, hand browser login to the human when required, and never request credentials, codes, or tokens."
+  default_prompt: "Use $process-hybrid-search through the pinned CLI 0.1.11 OAuth session and its zero-config official Production profile; check auth status first, hand browser login to the human when required, and never request credentials, codes, or tokens."

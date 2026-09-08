@@ -49,7 +49,7 @@ For production gates:
 
 1. Skill wrapper
    - native Node `.mjs`
-   - launches `pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca` by default
+   - launches `pnpm dlx --package=@tiangong-lca/cli@0.1.11 tiangong-lca` by default
    - resolves `TIANGONG_LCA_CLI_DIR` only when a local override is requested
    - forwards arguments to `tiangong-lca`
 2. CLI implementation

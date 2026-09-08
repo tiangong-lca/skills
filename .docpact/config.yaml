@@ -1,11 +1,12 @@
 version: 1
 layout: repo
+# Current release proof, 2026-09-08: Skills #94 aligns active wrappers and all three identical bundles to published CLI 0.1.11 / cli-v0.1.11 / 1f9f75fcae3c386e601b49a7da95df0d6a526f6f. Foundry lock delivery still waits for actual F1.
 # Release proof, 2026-09-02: Skills #91 pins verified CLI 0.1.8 / b4701984b4a86fe4680fa5995d0a0b6753dbdfd6; all three bundled launchers must remain byte-identical to their root authority.
 # Review note, 2026-09-02: Skills #91 adds self-contained, byte-checked launcher bundles for the three hybrid-search packages and CLI-owned Production bootstrap guidance under existing skill/validation/doc routes; no auth runtime ownership moves into Skills.
 # Review note, 2026-08-25: the existing validation-and-packaging contract now governs the pinned Node/pnpm package, frozen lockfile, shared CLI launcher/toolchain checks, and validation workflow; no separate rule was needed.
 # Review note, 2026-09-01: Skills #89 advances every active shared/default wrapper, immutable CI checkout, local override contract, fixture, and current skill reference to OAuth-only CLI 0.1.7 / merge cb5be8f1e209f69570f4c7ef4ef29d61af52eed7. Existing validation, packaging, skill, and documentation routes own the change; no ownership or rule split is required.
-lastReviewedAt: "2026-09-02"
-lastReviewedCommit: "3206f8705485a0979d999ccfb320f68ec8a6df97"
+lastReviewedAt: "2026-09-08"
+lastReviewedCommit: "29039bcc07a7b246acc3d4009ee641d3a6878d01"
 
 catalog:
   repos:
