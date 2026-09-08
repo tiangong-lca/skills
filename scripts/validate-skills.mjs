@@ -49,6 +49,7 @@ const defaultSkillNames = [
   "source-evidence-dataset-development",
   "dataset-rls-maintenance",
   "foundry-tidas-authoring",
+  "foundry-tidas-import",
 ];
 
 const removedQuickValidatePattern = new RegExp(

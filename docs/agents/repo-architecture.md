@@ -30,8 +30,8 @@ checkPaths:
   - package.json
   - pnpm-lock.yaml
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 2a9773fdd562887e8545f4f5932b86163a926100
-lastReviewedNote: "Reviewed for Skills #94: the internal on-demand Foundry authoring package returns data-only decisions/patches from current task evidence, with self-contained semantic guidance and no runtime or credential logic. Existing 21 purposes and CLI0.1.11 wrappers remain; import/bootstrap/F1 qualification is pending."
+lastReviewedCommit: d0190f1b6557fd1be44d7a5528659c2ecc09fd6d
+lastReviewedNote: "Reviewed for Skills #94: the ordinary TianGong Foundry entry follows current public task actions and data-only semantic submissions, preserves exact account authorization and no-replay recovery, and is included in source validation. Final bootstrap lock, marketplace recommendation and public four-platform qualification remain pending F1."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -89,3 +89,5 @@ A merged PR in this repository is repo-complete only. If the updated skill set m
 This repository has a versioned local `pre-push` hook under `.githooks/pre-push` that delegates to `scripts/docpact-gate.sh`, resolves the docpact CLI through `scripts/docpact`, installs Skills through its frozen pnpm lockfile, and defaults validation to the published CLI. It installs/builds a local CLI only when explicitly selected and only after launcher-owned package evidence validation. The hook then runs `pnpm prepush:gate`; it is the local guard for docpact config validation, enforced doc-governance linting, toolchain tests, and skill validation. The GitHub `validate-skills` workflow is manual-dispatch only.
 
 The internal `foundry-tidas-authoring` package is data-only guidance over an existing Foundry work item. Its local semantic reference is self-contained; execution, artifact registration, current authorization and readback remain Foundry/CLI responsibilities. The original workflow skill purposes remain separate.
+
+`foundry-tidas-import` owns ordinary task instructions for both packaged imports and source-evidence development. Its self-contained public workflow reference describes task/semantic selection and current-action consumption; it carries no state machine or database logic. A missing internal authoring skill can be handled from the runtime-generated work item and template without a sibling-directory dependency. Final bootstrap data and marketplace activation remain dependent on actual F1.
