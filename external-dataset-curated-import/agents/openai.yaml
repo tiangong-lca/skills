@@ -1,4 +1,4 @@
 interface:
   display_name: "External Dataset Curated Import"
   short_description: "Top-level workflow for BAFU, USLCI, and other structured LCA package imports"
-  default_prompt: "Use $external-dataset-curated-import for packaged LCA data. Keep conversion local, then before remote work require CLI OAuth status/doctor-auth, separate account sessions, and human browser login; never request credentials, codes, tokens, or API keys. Preserve queue, dry-run, commit, closeout, and readback evidence."
+  default_prompt: "Use $external-dataset-curated-import for packaged LCA data. Keep conversion local, then before remote work require CLI OAuth status/doctor-auth, separate account sessions, and human browser login only when required; never request credentials, codes, tokens, or API keys. Preserve queue, dry-run, commit, closeout, and readback evidence. For a registered public Foundry task, act only on its current work item and supplied structured actions; return input files without changing registered rows, reports, checkpoints or attempt state. Keep the standalone CLI procedure outside that managed task."

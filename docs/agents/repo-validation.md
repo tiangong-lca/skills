@@ -32,8 +32,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 123dacb4c1167c8cff6c64fbf438969f77685669
-lastReviewedNote: "Reviewed for Skills #94: list the ordinary Foundry entry first in the existing marketplace group, retain every previous membership, and keep semantic authoring internal/on-demand. Both README languages agree. Catalogue source validation passes; actual F1 lock and four-platform public installation remain pending."
+lastReviewedCommit: a8dba08a67a3c775f89f528b5131f062bda37a87
+lastReviewedNote: "Reviewed for Skills #94: preserve both retained CLI workflow purposes while limiting their use inside registered public Foundry tasks to current work items, selected input files and supplied actions. Paired prompts agree; helpers cannot rewrite registered checkpoints, rows or attempts. Runtime code, scripts and final F1 requirements are unchanged."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -97,3 +97,5 @@ Default validation now includes all 23 source skill directories: the original 21
 `test/foundry-bootstrap-package.test.mjs` checks both script SHA-256 values against the immutable C1 source and executes an isolated host bootstrap without its lock to prove refusal before installation or application launch. POSIX syntax is checked with `sh -n`; Run the PowerShell execution case on Windows without execution-policy bypass. These negative/source checks do not count as final public bootstrap qualification.
 
 Marketplace changes must resolve every listed skill to a real package, preserve existing group memberships, and list the ordinary Foundry entry before its internal semantic role. Check the two-language installation guidance together. Catalogue presence alone does not qualify a missing F1 lock or replace four-platform public bootstrap tests.
+
+For retained import/source-evidence helpers, review both invocation contexts: an independent CLI workflow keeps its original command/evidence capabilities, while a registered Foundry task consumes only current work items/actions and cannot enter the standalone checkpoint/queue procedure. Validate the changed skill and paired prompt together; this instruction review does not replace runtime no-replay tests.

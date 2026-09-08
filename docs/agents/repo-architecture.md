@@ -32,8 +32,8 @@ checkPaths:
   - package.json
   - pnpm-lock.yaml
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 123dacb4c1167c8cff6c64fbf438969f77685669
-lastReviewedNote: "Reviewed for Skills #94: list the ordinary Foundry entry first in the existing marketplace group, retain every previous membership, and keep semantic authoring internal/on-demand. Both README languages agree. Catalogue source validation passes; actual F1 lock and four-platform public installation remain pending."
+lastReviewedCommit: a8dba08a67a3c775f89f528b5131f062bda37a87
+lastReviewedNote: "Reviewed for Skills #94: preserve both retained CLI workflow purposes while limiting their use inside registered public Foundry tasks to current work items, selected input files and supplied actions. Paired prompts agree; helpers cannot rewrite registered checkpoints, rows or attempts. Runtime code, scripts and final F1 requirements are unchanged."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -98,3 +98,5 @@ The internal `foundry-tidas-authoring` package is data-only guidance over an exi
 The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.12` commit `6df087b0dda2544a0fd68f2a143559e81d20d60b`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion. The original scripts select only their adjacent lock; the final F1 lock remains absent until its public release is independently qualified.
 
 The independently copied Foundry entry retains the original C1 copyright/license text at `assets/licenses/tiangong-cli-LICENSE` beside its bundled scripts. Its bytes are checked with the script pins; this adds no user-facing license command or confirmation flow.
+
+The retained `external-dataset-curated-import` and `source-evidence-dataset-development` skills support independent CLI workflows. Within a registered public Foundry task they act as domain helpers over current work items and supplied actions; they return selected input files and cannot manually advance queues, checkpoints, registered artifacts or attempts. Their paired agent prompts preserve this boundary.
