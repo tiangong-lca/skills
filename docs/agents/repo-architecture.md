@@ -14,6 +14,7 @@ whenToUpdate:
   - when the CLI boundary changes
   - when skill validation or packaging ownership changes
 checkPaths:
+  - .claude-plugin/marketplace.json
   - .gitattributes
   - AGENTS.md
   - .docpact/config.yaml
@@ -31,8 +32,8 @@ checkPaths:
   - package.json
   - pnpm-lock.yaml
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: e2b107378059723331b72c1f2fef958211d2bef5
-lastReviewedNote: "Reviewed for Skills #94: adopt independently verified public CLI0.1.12/tag6df087b and its unchanged original bootstrap scripts. The corrected PowerShell source passed real native HTTP checks; active wrapper pins, paired metadata and three identical launcher bundles are aligned. Final Foundry F1 lock, catalogue recommendation and full public installation qualification remain separate."
+lastReviewedCommit: 123dacb4c1167c8cff6c64fbf438969f77685669
+lastReviewedNote: "Reviewed for Skills #94: list the ordinary Foundry entry first in the existing marketplace group, retain every previous membership, and keep semantic authoring internal/on-demand. Both README languages agree. Catalogue source validation passes; actual F1 lock and four-platform public installation remain pending."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -56,6 +57,7 @@ Review note, 2026-08-25: the repository adds only a pnpm validation package and 
 - `package.json` and `pnpm-lock.yaml` pin the validation-only Node `24.19.0` / pnpm `11.24.0` package contract; this does not turn the skill packages into a TypeScript runtime.
 - `scripts/lib/cli-launcher.mjs` owns exact local/published CLI selection, package evidence checks, frozen local preparation, and argv-only process dispatch.
 - `README.md` and `README.zh-CN.md` explain installation and usage.
+- `.claude-plugin/marketplace.json` groups the existing skill packages for discovery. Its Foundry group lists the ordinary entry first, the on-demand authoring role, and the retained specialized workflows.
 
 Top-level Foundry scenario skills are allowed in this repository when they only encode workflow order and routing:
 

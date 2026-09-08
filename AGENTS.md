@@ -15,6 +15,7 @@ whenToUpdate:
   - when repo ownership or CLI boundary rules change
   - when repo-local docpact governance or source docs change
 checkPaths:
+  - .claude-plugin/marketplace.json
   - .gitattributes
   - AGENTS.md
   - README.md
@@ -38,8 +39,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: e2b107378059723331b72c1f2fef958211d2bef5
-lastReviewedNote: "Reviewed for Skills #94: adopt independently verified public CLI0.1.12/tag6df087b and its unchanged original bootstrap scripts. The corrected PowerShell source passed real native HTTP checks; active wrapper pins, paired metadata and three identical launcher bundles are aligned. Final Foundry F1 lock, catalogue recommendation and full public installation qualification remain separate."
+lastReviewedCommit: 123dacb4c1167c8cff6c64fbf438969f77685669
+lastReviewedNote: "Reviewed for Skills #94: list the ordinary Foundry entry first in the existing marketplace group, retain every previous membership, and keep semantic authoring internal/on-demand. Both README languages agree. Catalogue source validation passes; actual F1 lock and four-platform public installation remain pending."
 related:
   - .docpact/config.yaml
   - docs/agents/repo-architecture.md
@@ -81,6 +82,7 @@ This repo owns:
 - `scripts/validate-skills.mjs` and repo validation tests
 - `package.json`, `pnpm-lock.yaml`, and the shared CLI launcher/toolchain checks used by repo validation
 - `README.md` and `README.zh-CN.md` for install and usage guidance
+- `.claude-plugin/marketplace.json` for grouped discovery, with one ordinary Foundry entry, an internal semantic role and retained specialized workflows
 
 This repo does not own:
 

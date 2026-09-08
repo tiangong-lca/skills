@@ -12,6 +12,7 @@ whenToUpdate:
   - when skill installation guidance changes
   - when the unified CLI wrapper contract changes
 checkPaths:
+  - .claude-plugin/marketplace.json
   - README.md
   - README.zh-CN.md
   - scripts/lib/cli-launcher.mjs
@@ -19,8 +20,8 @@ checkPaths:
   - "*/SKILL.md"
   - "*/scripts/**"
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: e2b107378059723331b72c1f2fef958211d2bef5
-lastReviewedNote: "Reviewed for Skills #94: adopt independently verified public CLI0.1.12/tag6df087b and its unchanged original bootstrap scripts. The corrected PowerShell source passed real native HTTP checks; active wrapper pins, paired metadata and three identical launcher bundles are aligned. Final Foundry F1 lock, catalogue recommendation and full public installation qualification remain separate."
+lastReviewedCommit: 123dacb4c1167c8cff6c64fbf438969f77685669
+lastReviewedNote: "Reviewed for Skills #94: list the ordinary Foundry entry first in the existing marketplace group, retain every previous membership, and keep semantic authoring internal/on-demand. Both README languages agree. Catalogue source validation passes; actual F1 lock and four-platform public installation remain pending."
 ---
 
 # 天工 LCA Skills
@@ -104,7 +105,21 @@ npx skills update --project --yes
 
 消费项目应在任务 artifact 中记录解析到的 upstream ref 和命令。除非所有权边界被明确调整，不要把 `tiangong-kb-*` skill 目录复制到本仓库。
 
-## Foundry top-level workflows
+## TianGong Foundry
+
+外部数据包导入、源证据数据开发和继续已有 Foundry 任务，统一使用 `$foundry-tidas-import` 作为日常入口。它通过随包 bootstrap 选择合格运行时，将任务输出放在独立可写工作区。
+
+```bash
+npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-import
+```
+
+`lca-foundry-workflows` marketplace 包首先列出此入口。`foundry-tidas-authoring` 仅在当前语义工作项需要时加载，是内部角色；日常入口也能直接使用运行时提供的工作项说明，无须依赖另一个已安装技能目录。
+
+发布准备状态：当前分支仍等待最终公开 F1 lock 和四平台安装验证。不要使用不完整的技能副本或自行获取其他 lock。安装、登录不授予数据写入权限；继续执行任务当前的授权与恢复动作。
+
+### 专项工作流
+
+原有技能保留各自用途：
 
 - `$external-dataset-curated-import`：BAFU、USLCI 等结构化 LCA 数据包导入，走 CLI 转换、curation queue `next`/`verify`、子 skill 和发布 handoff gates。
 - `$source-evidence-dataset-development`：从 PDF、Word、URL、API、报告、数据库引用或科学文献进行 evidence-driven 数据新增或更新。

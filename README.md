@@ -12,6 +12,7 @@ whenToUpdate:
   - when skill installation guidance changes
   - when the unified CLI wrapper contract changes
 checkPaths:
+  - .claude-plugin/marketplace.json
   - README.md
   - README.zh-CN.md
   - scripts/lib/cli-launcher.mjs
@@ -19,8 +20,8 @@ checkPaths:
   - "*/SKILL.md"
   - "*/scripts/**"
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: e2b107378059723331b72c1f2fef958211d2bef5
-lastReviewedNote: "Reviewed for Skills #94: adopt independently verified public CLI0.1.12/tag6df087b and its unchanged original bootstrap scripts. The corrected PowerShell source passed real native HTTP checks; active wrapper pins, paired metadata and three identical launcher bundles are aligned. Final Foundry F1 lock, catalogue recommendation and full public installation qualification remain separate."
+lastReviewedCommit: 123dacb4c1167c8cff6c64fbf438969f77685669
+lastReviewedNote: "Reviewed for Skills #94: list the ordinary Foundry entry first in the existing marketplace group, retain every previous membership, and keep semantic authoring internal/on-demand. Both README languages agree. Catalogue source validation passes; actual F1 lock and four-platform public installation remain pending."
 ---
 
 # Tiangong LCA Skills
@@ -104,7 +105,21 @@ npx skills update --project --yes
 
 Consuming projects should record the resolved upstream ref and command in task artifacts. Do not copy `tiangong-kb-*` skill folders into this repository unless the ownership boundary changes deliberately.
 
-## Foundry top-level workflows
+## TianGong Foundry
+
+Use `$foundry-tidas-import` as the ordinary entry for external dataset packages, source-evidence development and continuing an existing Foundry task. It selects the qualified runtime through its bundled bootstrap and keeps task outputs in a separate writable workspace.
+
+```bash
+npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-import
+```
+
+The `lca-foundry-workflows` marketplace package lists this entry first. `foundry-tidas-authoring` is an internal role loaded only for a current semantic work item; it is not a second task entry. The ordinary entry can use the runtime's work-item instructions when that internal role is not installed.
+
+Release preparation: this branch still awaits the final public F1 lock and four-platform installed qualification. Do not use an incomplete copied entry or obtain an alternate lock. Installation and login do not grant permission to write data; continue the task's current authorization and recovery actions.
+
+### Specialized workflows
+
+The existing skills retain their independent uses:
 
 - `$external-dataset-curated-import`: BAFU, USLCI, and other structured LCA package imports through CLI conversion, curation queue `next`/`verify`, child skills, and publish handoff gates.
 - `$source-evidence-dataset-development`: evidence-driven data creation or update from PDFs, Word files, URLs, APIs, reports, database references, or scientific literature.

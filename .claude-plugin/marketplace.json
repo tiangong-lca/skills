@@ -6,7 +6,7 @@
     },
     "metadata": {
         "description": "Tiangong LCA skills for hybrid search, embedding, LCI review/remediation, and process automation across flows, processes, and lifecycle models.",
-        "version": "1.1.0"
+        "version": "1.2.0"
     },
     "plugins": [
         {
@@ -51,10 +51,12 @@
         },
         {
             "name": "lca-foundry-workflows",
-            "description": "Top-level Data Foundry workflows for external package imports, source-evidence authoring, and current-user RLS maintenance.",
+            "description": "TianGong Foundry entry for package imports and source-evidence development, with on-demand semantic authoring and retained specialized import and RLS maintenance workflows.",
             "source": "./",
             "strict": false,
             "skills": [
+                "./foundry-tidas-import",
+                "./foundry-tidas-authoring",
                 "./external-dataset-curated-import",
                 "./source-evidence-dataset-development",
                 "./dataset-rls-maintenance"
