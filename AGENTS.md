@@ -38,8 +38,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 6cca45d7ca13fe2ef125610b0a54fa4ea5c19cbb
-lastReviewedNote: "Reviewed for Skills #94: actual Windows CI isolated the timeout to plain PowerShell startup before any bootstrap code. The non-interactive test now closes child stdin explicitly while retaining stdout/stderr capture, private system directories and the original script/interpreter. No runtime or trust guard is changed; actual Windows confirmation remains required."
+lastReviewedCommit: 444bc9ca948361bb7e8a7b5da90be38a70663321
+lastReviewedNote: "Reviewed for Skills #94: add a Windows-only early public-download probe that executes unchanged C1 PowerShell function bodies against the official Node24.19.0 checksum file and compares bytes with an independent fetch. This tests the real HTTP response before final F1 publication, not credentials or business data; local non-Windows skips are explicitly distinguished from required Windows proof."
 related:
   - .docpact/config.yaml
   - docs/agents/repo-architecture.md

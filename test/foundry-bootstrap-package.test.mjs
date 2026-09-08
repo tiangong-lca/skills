@@ -68,3 +68,37 @@ test("an isolated bootstrap without its adjacent lock refuses before installing 
     assert.equal(fs.existsSync(path.join(base, "tiangong-lca", "runtimes")), false);
   assert.deepEqual(fs.readdirSync(copy), [path.basename(script)]);
 });
+
+test("the original C1 PowerShell download helper accepts a real public response", {
+  skip: process.platform !== "win32",
+}, async (t) => {
+  const url = "https://nodejs.org/dist/v24.19.0/SHASUMS256.txt";
+  const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(30_000) });
+  assert.equal(response.status, 200);
+  const expectedBytes = Buffer.from(await response.arrayBuffer());
+  assert.ok(expectedBytes.length > 0 && expectedBytes.length < 64 * 1024);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "foundry-c1-download-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const original = path.join(scripts, "tiangong-runtime-bootstrap.ps1");
+  const output = path.join(root, "checksums.txt"), probe = path.join(root, "probe.ps1");
+  const quote = (value) => "'" + value.replaceAll("'", "''") + "'";
+  fs.writeFileSync(probe, [
+    "Set-StrictMode -Version Latest",
+    "$ErrorActionPreference = 'Stop'",
+    "$tokens = $null; $errors = $null",
+    `$ast = [Management.Automation.Language.Parser]::ParseFile(${quote(original)}, [ref]$tokens, [ref]$errors)`,
+    "if ($errors.Count) { throw 'Original bootstrap did not parse' }",
+    "$functions = $ast.FindAll({ param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] }, $false)",
+    "foreach ($function in $functions) { . ([scriptblock]::Create($function.Extent.Text)) }",
+    `Download ${quote(url)} ${quote(output)} ${expectedBytes.length}`,
+  ].join("\n") + "\n");
+  // Exercise the unchanged download owner in the PowerShell host already used
+  // by Foundry's Windows qualification, before any final F1 asset is published.
+  const result = spawnSync("pwsh", ["-NoProfile", "-NonInteractive", "-File", probe], {
+    cwd: root, encoding: "utf8", shell: false, stdio: ["ignore", "pipe", "pipe"],
+    timeout: 60_000, maxBuffer: 1024 * 1024,
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(fs.readFileSync(output), expectedBytes);
+});
