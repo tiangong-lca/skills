@@ -18,10 +18,10 @@ Never ask an AI user for a username, password, authorization code, access token,
 ## Commands
 
 ```bash
-pnpm dlx --package=@tiangong-lca/cli@0.1.11 tiangong-lca auth status --json
+pnpm dlx --package=@tiangong-lca/cli@0.1.12 tiangong-lca auth status --json
 
 # Only the human user completes browser login when login-required is reported
-pnpm dlx --package=@tiangong-lca/cli@0.1.11 tiangong-lca auth login
+pnpm dlx --package=@tiangong-lca/cli@0.1.12 tiangong-lca auth login
 
 node scripts/run-lifecyclemodel-hybrid-search.mjs --dry-run
 node scripts/run-lifecyclemodel-hybrid-search.mjs --input ./assets/example-request.json

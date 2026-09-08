@@ -8,12 +8,12 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const scripts = fileURLToPath(new URL("../foundry-tidas-import/scripts/", import.meta.url));
-// Immutable cli-v0.1.11 source: 1f9f75fcae3c386e601b49a7da95df0d6a526f6f.
+// Immutable cli-v0.1.12 source: 6df087b0dda2544a0fd68f2a143559e81d20d60b.
 // These original CLI scripts are distributed unchanged; F1 supplies the adjacent lock.
 const expected = {
   "../assets/licenses/tiangong-cli-LICENSE": "5ca31e8840557caad889b275beef7c9d56e67efede031e71228c5ff8f0d4135e",
   "tiangong-runtime-bootstrap.sh": "a7055855e89d6f0781b1d44ac4d05c71053a14855906fa5e0c7e7e3ebf5867f5",
-  "tiangong-runtime-bootstrap.ps1": "8931fa991eb94cd1f801f71ca729d9c4b851d2039a914712b1ecb7895de38fa0",
+  "tiangong-runtime-bootstrap.ps1": "a797bc5269386a0f45fbc5bebb7d634b37fc8a164500aaaa4905be5e61bf8f65",
 };
 
 test("Foundry bootstrap copies match the immutable C1 public scripts", () => {

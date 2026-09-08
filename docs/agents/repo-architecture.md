@@ -31,8 +31,8 @@ checkPaths:
   - package.json
   - pnpm-lock.yaml
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 5fa2952fccf36d39e33fcb80fa1fbce7e88eaf37
-lastReviewedNote: "Reviewed for Skills #94: the isolated legacy PowerShell startup remains unverified at30 seconds while the established C1 cached Windows test completes in about47 seconds overall. The diagnostic now permits a bounded90-second observation and records actual startup duration; noncompletion still fails with the host control. No interpreter, script, trust guard or final qualification requirement is changed."
+lastReviewedCommit: e2b107378059723331b72c1f2fef958211d2bef5
+lastReviewedNote: "Reviewed for Skills #94: adopt independently verified public CLI0.1.12/tag6df087b and its unchanged original bootstrap scripts. The corrected PowerShell source passed real native HTTP checks; active wrapper pins, paired metadata and three identical launcher bundles are aligned. Final Foundry F1 lock, catalogue recommendation and full public installation qualification remain separate."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -79,7 +79,7 @@ If a Foundry/source-evidence workflow needs an external Tiangong KB research ski
 
 Current-account dataset review is owned here only as a skill package and wrapper contract. Its durable runtime behavior belongs in public `tiangong-lca` CLI commands such as dataset validation, reference rewriting, lifecyclemodel save-draft, and lifecyclemodel graph export.
 
-The shared wrapper launcher defaults to pinned published `@tiangong-lca/cli@0.1.11` and never discovers sibling directories. CI binds immutable release merge `1f9f75fcae3c386e601b49a7da95df0d6a526f6f`. An explicit `--cli-dir` or `TIANGONG_LCA_CLI_DIR` may select an exact matching local checkout; only after package/engine/lock evidence passes may the launcher prepare it with `pnpm install --frozen-lockfile` and `pnpm run build` when source files are newer than `dist/src/main.js`. All execution stays argv-authoritative with `shell: false`, using native `pnpm.exe` on Windows. This is a developer-experience guard for stale local checkouts, not permission for skills to duplicate CLI implementation.
+The shared wrapper launcher defaults to pinned published `@tiangong-lca/cli@0.1.12` and never discovers sibling directories. CI binds immutable release merge `6df087b0dda2544a0fd68f2a143559e81d20d60b`. An explicit `--cli-dir` or `TIANGONG_LCA_CLI_DIR` may select an exact matching local checkout; only after package/engine/lock evidence passes may the launcher prepare it with `pnpm install --frozen-lockfile` and `pnpm run build` when source files are newer than `dist/src/main.js`. All execution stays argv-authoritative with `shell: false`, using native `pnpm.exe` on Windows. This is a developer-experience guard for stale local checkouts, not permission for skills to duplicate CLI implementation.
 
 ## Integration Semantics
 
@@ -93,6 +93,6 @@ The internal `foundry-tidas-authoring` package is data-only guidance over an exi
 
 `foundry-tidas-import` owns ordinary task instructions for both packaged imports and source-evidence development. Its self-contained public workflow reference describes task/semantic selection and current-action consumption; it carries no state machine or database logic. A missing internal authoring skill can be handled from the runtime-generated work item and template without a sibling-directory dependency. Final bootstrap data and marketplace activation remain dependent on actual F1.
 
-The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.11` commit `1f9f75fcae3c386e601b49a7da95df0d6a526f6f`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion. The original scripts select only their adjacent lock; the final F1 lock remains absent until its public release is independently qualified.
+The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.12` commit `6df087b0dda2544a0fd68f2a143559e81d20d60b`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion. The original scripts select only their adjacent lock; the final F1 lock remains absent until its public release is independently qualified.
 
 The independently copied Foundry entry retains the original C1 copyright/license text at `assets/licenses/tiangong-cli-LICENSE` beside its bundled scripts. Its bytes are checked with the script pins; this adds no user-facing license command or confirmation flow.
