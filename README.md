@@ -19,8 +19,8 @@ checkPaths:
   - "*/SKILL.md"
   - "*/scripts/**"
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 29039bcc07a7b246acc3d4009ee641d3a6878d01
-lastReviewedNote: "Reviewed for Skills #94: active wrappers, exact local overrides, three identical hybrid bundles and immutable CI input now use verified CLI 0.1.11 / 1f9f75f. Original 21 skill purposes and CLI-owned authentication remain unchanged; migrated Foundry packages and final F1 lock remain pending."
+lastReviewedCommit: 2a9773fdd562887e8545f4f5932b86163a926100
+lastReviewedNote: "Reviewed for Skills #94: the internal on-demand Foundry authoring package returns data-only decisions/patches from current task evidence, with self-contained semantic guidance and no runtime or credential logic. Existing 21 purposes and CLI0.1.11 wrappers remain; import/bootstrap/F1 qualification is pending."
 ---
 
 # Tiangong LCA Skills
@@ -162,3 +162,7 @@ Current rules:
 - skill wrappers should not bundle business-specific Python runtimes, shell shims, MCP transports, or private env parsers
 - remote skill instructions must use CLI OAuth status/login/doctor handoff and must not add API-key flags or bearer examples
 - if a capability is missing, add a native `tiangong-lca <noun> <verb>` command first, then update the skill to call it
+
+## Foundry semantic work
+
+`foundry-tidas-authoring` is an internal on-demand role for a concrete Foundry work item. It reads the supplied full context and returns evidence-backed decisions or patch files to the invoking workflow. It does not install a runtime, manage authentication, apply rows or perform database operations.

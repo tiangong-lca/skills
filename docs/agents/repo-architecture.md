@@ -30,8 +30,8 @@ checkPaths:
   - package.json
   - pnpm-lock.yaml
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 29039bcc07a7b246acc3d4009ee641d3a6878d01
-lastReviewedNote: "Reviewed for Skills #94: active wrappers, exact local overrides, three identical hybrid bundles and immutable CI input now use verified CLI 0.1.11 / 1f9f75f. Original 21 skill purposes and CLI-owned authentication remain unchanged; migrated Foundry packages and final F1 lock remain pending."
+lastReviewedCommit: 2a9773fdd562887e8545f4f5932b86163a926100
+lastReviewedNote: "Reviewed for Skills #94: the internal on-demand Foundry authoring package returns data-only decisions/patches from current task evidence, with self-contained semantic guidance and no runtime or credential logic. Existing 21 purposes and CLI0.1.11 wrappers remain; import/bootstrap/F1 qualification is pending."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -87,3 +87,5 @@ A merged PR in this repository is repo-complete only. If the updated skill set m
 ## Local Docpact Push Gate
 
 This repository has a versioned local `pre-push` hook under `.githooks/pre-push` that delegates to `scripts/docpact-gate.sh`, resolves the docpact CLI through `scripts/docpact`, installs Skills through its frozen pnpm lockfile, and defaults validation to the published CLI. It installs/builds a local CLI only when explicitly selected and only after launcher-owned package evidence validation. The hook then runs `pnpm prepush:gate`; it is the local guard for docpact config validation, enforced doc-governance linting, toolchain tests, and skill validation. The GitHub `validate-skills` workflow is manual-dispatch only.
+
+The internal `foundry-tidas-authoring` package is data-only guidance over an existing Foundry work item. Its local semantic reference is self-contained; execution, artifact registration, current authorization and readback remain Foundry/CLI responsibilities. The original workflow skill purposes remain separate.

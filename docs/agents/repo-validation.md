@@ -30,8 +30,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 29039bcc07a7b246acc3d4009ee641d3a6878d01
-lastReviewedNote: "Reviewed for Skills #94: active wrappers, exact local overrides, three identical hybrid bundles and immutable CI input now use verified CLI 0.1.11 / 1f9f75f. Original 21 skill purposes and CLI-owned authentication remain unchanged; migrated Foundry packages and final F1 lock remain pending."
+lastReviewedCommit: 2a9773fdd562887e8545f4f5932b86163a926100
+lastReviewedNote: "Reviewed for Skills #94: the internal on-demand Foundry authoring package returns data-only decisions/patches from current task evidence, with self-contained semantic guidance and no runtime or credential logic. Existing 21 purposes and CLI0.1.11 wrappers remain; import/bootstrap/F1 qualification is pending."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -87,3 +87,5 @@ Install the versioned local hook once per checkout:
 ```
 
 The `pre-push` hook runs `scripts/docpact-gate.sh`, which delegates CLI lookup to `scripts/docpact` and performs strict config validation plus enforced lint before the push leaves the machine. It then runs `pnpm check:toolchain`, installs Skills with `pnpm install --frozen-lockfile`, and defaults to the exact published CLI. If `TIANGONG_LCA_CLI_DIR` is explicitly set, `scripts/check-toolchain.mjs --cli-dir` verifies package/name/version/engine/lock evidence before the hook permits frozen install/build. It finishes with `pnpm prepush:gate`. The wrapper checks `DOCPACT_BIN`, Cargo install locations, Homebrew install locations, and then `PATH`, so local agent shells should not fail only because bare `docpact` is unavailable. The default comparison base is `origin/main`. Override it for unusual stacks with `DOCPACT_BASE_REF=<ref>` or `scripts/docpact-gate.sh --base <ref>`. The gate writes its detailed report to a temporary file so normal pushes do not create `.docpact/runs/` artifacts.
+
+The semantic-only Foundry authoring package is included in default validation. Validate a copied isolated package for its entry metadata and local reference closure; it intentionally has no wrapper script or bootstrap runtime. Runtime/F1 and ordinary entry bootstrap qualification remain separate requirements of the full migration.

@@ -19,8 +19,8 @@ checkPaths:
   - "*/SKILL.md"
   - "*/scripts/**"
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 29039bcc07a7b246acc3d4009ee641d3a6878d01
-lastReviewedNote: "Reviewed for Skills #94: active wrappers, exact local overrides, three identical hybrid bundles and immutable CI input now use verified CLI 0.1.11 / 1f9f75f. Original 21 skill purposes and CLI-owned authentication remain unchanged; migrated Foundry packages and final F1 lock remain pending."
+lastReviewedCommit: 2a9773fdd562887e8545f4f5932b86163a926100
+lastReviewedNote: "Reviewed for Skills #94: the internal on-demand Foundry authoring package returns data-only decisions/patches from current task evidence, with self-contained semantic guidance and no runtime or credential logic. Existing 21 purposes and CLI0.1.11 wrappers remain; import/bootstrap/F1 qualification is pending."
 ---
 
 # 天工 LCA Skills
@@ -162,3 +162,7 @@ pnpm dlx --package=@tiangong-lca/cli@0.1.11 tiangong-lca auth status --json
 - skill wrapper 不应再打包业务 Python、MCP transport、私有 env parsing 或 shell shim
 - 远程 skill 必须使用 CLI OAuth status/login/doctor handoff，不得新增 API-key flag 或 bearer 示例
 - 若能力缺失，先在 `tiangong-lca-cli` 中新增原生 `tiangong-lca <noun> <verb>` 命令，再让 skill 调用它
+
+## Foundry 语义工作
+
+`foundry-tidas-authoring` 是面向具体 Foundry 工作项的内部按需角色。它读取已提供的完整上下文，将有证据的决定或 patch 文件交回调用流程；不安装运行时、不管理认证、不直接应用行数据或操作数据库。
