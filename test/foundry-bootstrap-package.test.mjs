@@ -54,9 +54,10 @@ test("an isolated bootstrap without its adjacent lock refuses before installing 
     PATH: "/usr/bin:/bin:/usr/sbin:/sbin",
   };
   if (windows) {
+    const started = Date.now();
     const startup = spawnSync(shell, [
       "-NoProfile", "-NonInteractive", "-Command", "Write-Output 'bootstrap-host-ready'",
-    ], { cwd: copy, env, encoding: "utf8", shell: false, stdio: ["ignore", "pipe", "pipe"], timeout: 30_000 });
+    ], { cwd: copy, env, encoding: "utf8", shell: false, stdio: ["ignore", "pipe", "pipe"], timeout: 90_000 });
     if (startup.error) {
       const control = spawnSync(shell, [
         "-NoProfile", "-NonInteractive", "-Command", "Write-Output 'bootstrap-host-ready'",
@@ -65,11 +66,12 @@ test("an isolated bootstrap without its adjacent lock refuses before installing 
     }
     assert.equal(startup.status, 0, startup.stderr);
     assert.equal(startup.stdout.trim(), "bootstrap-host-ready");
+    t.diagnostic(`Private Windows PowerShell startup completed in ${Date.now() - started} ms.`);
   }
   const result = spawnSync(
     shell,
     windows ? ["-NoProfile", "-NonInteractive", "-File", script, "doctor", "--json"] : [script, "doctor", "--json"],
-    { cwd: copy, env, encoding: "utf8", shell: false, stdio: ["ignore", "pipe", "pipe"], timeout: 30_000 },
+    { cwd: copy, env, encoding: "utf8", shell: false, stdio: ["ignore", "pipe", "pipe"], timeout: windows ? 90_000 : 30_000 },
   );
   assert.ifError(result.error);
   assert.notEqual(result.status, 0);

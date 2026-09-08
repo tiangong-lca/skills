@@ -38,8 +38,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 21a7ecb652fc180d77f19ca46942092d41c81696
-lastReviewedNote: "Reviewed for Skills #94: actual Windows control proved the system shell starts under its host environment but stalls under the test-built environment. The isolated test now uses the established C1 Windows fixture environment (SystemRoot, USERPROFILE, LOCALAPPDATA, system PATH), retains exact executable and closed stdin, and keeps the runtime namespace isolated. Interpreter and original vendor scripts are unchanged; native confirmation remains required."
+lastReviewedCommit: 5fa2952fccf36d39e33fcb80fa1fbce7e88eaf37
+lastReviewedNote: "Reviewed for Skills #94: the isolated legacy PowerShell startup remains unverified at30 seconds while the established C1 cached Windows test completes in about47 seconds overall. The diagnostic now permits a bounded90-second observation and records actual startup duration; noncompletion still fails with the host control. No interpreter, script, trust guard or final qualification requirement is changed."
 related:
   - .docpact/config.yaml
   - docs/agents/repo-architecture.md
