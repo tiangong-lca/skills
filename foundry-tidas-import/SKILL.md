@@ -11,6 +11,8 @@ Use this as the ordinary Foundry entry for both packaged imports and source-evid
 
 Use the qualified managed Foundry runtime selected by the distributed release lock. Keep the writable user workspace separate from the installed skill/runtime. Do not discover a sibling checkout, build a runtime from source, select a floating package or derive a trust anchor from workspace files.
 
+Launch with the skill's unchanged `scripts/tiangong-runtime-bootstrap.sh` on POSIX or `scripts/tiangong-runtime-bootstrap.ps1` on Windows, passing the public Foundry arguments from the reference. The script reads its adjacent trusted `bootstrap-lock.json` and manages the selected user-cache runtime without global Node, pnpm or Git. If the lock is missing or invalid, obtain the complete qualified skill distribution; do not download or invent a substitute lock or override Windows execution policy.
+
 Read [the public task workflow](references/task-workflow.md) to initialize a workspace, start a task or resume one. Keep the user's original request, actor, intended account and input selection. For an existing task, inspect its status before taking another action; do not start a replacement task to escape a blocker or an uncertain write.
 
 - **Packaged import:** select the original supported archive or dataset directory. Let Foundry invoke its qualified native converter and retain conversion reports and dependency evidence.

@@ -15,6 +15,7 @@ whenToUpdate:
   - when repo ownership or CLI boundary rules change
   - when repo-local docpact governance or source docs change
 checkPaths:
+  - .gitattributes
   - AGENTS.md
   - README.md
   - README.zh-CN.md
@@ -37,8 +38,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: d0190f1b6557fd1be44d7a5528659c2ecc09fd6d
-lastReviewedNote: "Reviewed for Skills #94: the ordinary TianGong Foundry entry follows current public task actions and data-only semantic submissions, preserves exact account authorization and no-replay recovery, and is included in source validation. Final bootstrap lock, marketplace recommendation and public four-platform qualification remain pending F1."
+lastReviewedCommit: f4361da4b6093ad0fe6714afccc778c6dea592ad
+lastReviewedNote: "Reviewed for Skills #94: package unchanged C1 POSIX/PowerShell scripts with byte-preserving checkout attributes, immutable source digest checks and isolated missing-lock refusal. The adjacent actual F1 lock and four-platform positive public qualification remain pending; no substitute trust anchor is shipped."
 related:
   - .docpact/config.yaml
   - docs/agents/repo-architecture.md

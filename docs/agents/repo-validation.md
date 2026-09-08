@@ -14,6 +14,7 @@ whenToUpdate:
   - when wrapper or packaging proof expectations change
   - when docpact governance rules or CI behavior change
 checkPaths:
+  - .gitattributes
   - AGENTS.md
   - .docpact/config.yaml
   - .github/workflows/ai-doc-lint.yml
@@ -30,8 +31,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: d0190f1b6557fd1be44d7a5528659c2ecc09fd6d
-lastReviewedNote: "Reviewed for Skills #94: the ordinary TianGong Foundry entry follows current public task actions and data-only semantic submissions, preserves exact account authorization and no-replay recovery, and is included in source validation. Final bootstrap lock, marketplace recommendation and public four-platform qualification remain pending F1."
+lastReviewedCommit: f4361da4b6093ad0fe6714afccc778c6dea592ad
+lastReviewedNote: "Reviewed for Skills #94: package unchanged C1 POSIX/PowerShell scripts with byte-preserving checkout attributes, immutable source digest checks and isolated missing-lock refusal. The adjacent actual F1 lock and four-platform positive public qualification remain pending; no substitute trust anchor is shipped."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -91,3 +92,5 @@ The `pre-push` hook runs `scripts/docpact-gate.sh`, which delegates CLI lookup t
 The semantic-only Foundry authoring package is included in default validation. Validate a copied isolated package for its entry metadata and local reference closure; it intentionally has no wrapper script or bootstrap runtime. Runtime/F1 and ordinary entry bootstrap qualification remain separate requirements of the full migration.
 
 Default validation now includes all 23 source skill directories: the original 21 plus the ordinary Foundry entry and internal authoring package. Validate the entry after an isolated copy and check its task/semantic field contracts against the selected Foundry source. This source check does not replace the pending original-script equality, final F1 lock binding or four-platform public cold/warm/bootstrap qualification.
+
+`test/foundry-bootstrap-package.test.mjs` checks both script SHA-256 values against the immutable C1 source and executes an isolated host bootstrap without its lock to prove refusal before installation or application launch. POSIX syntax is checked with `sh -n`; Run the PowerShell execution case on Windows without execution-policy bypass. These negative/source checks do not count as final public bootstrap qualification.
