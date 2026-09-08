@@ -31,8 +31,8 @@ checkPaths:
   - package.json
   - pnpm-lock.yaml
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: aab4957cc8f89ede79a60990c1eb88edbc27ea87
-lastReviewedNote: "Reviewed for Skills #94: resolve system Windows PowerShell by its exact SystemRoot path, matching the established C1 native test instead of ambient executable lookup. A failed private startup now records a bounded host-environment control without exposing environment values. The known C1 HTTP bug remains separately blocked on CLI287/290; original copied scripts are unchanged."
+lastReviewedCommit: 21a7ecb652fc180d77f19ca46942092d41c81696
+lastReviewedNote: "Reviewed for Skills #94: actual Windows control proved the system shell starts under its host environment but stalls under the test-built environment. The isolated test now uses the established C1 Windows fixture environment (SystemRoot, USERPROFILE, LOCALAPPDATA, system PATH), retains exact executable and closed stdin, and keeps the runtime namespace isolated. Interpreter and original vendor scripts are unchanged; native confirmation remains required."
 related:
   - AGENTS.md
   - .docpact/config.yaml

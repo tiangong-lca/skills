@@ -42,15 +42,17 @@ test("an isolated bootstrap without its adjacent lock refuses before installing 
     : "/bin/sh";
   const script = path.join(copy, `tiangong-runtime-bootstrap.${windows ? "ps1" : "sh"}`);
   fs.copyFileSync(path.join(scripts, path.basename(script)), script);
-  const env = {
+  const env = windows ? {
+    SystemRoot: systemRoot, USERPROFILE: user, LOCALAPPDATA: localAppData,
+    PATH: path.join(systemRoot, "System32"),
+  } : {
     HOME: user, USERPROFILE: user,
     XDG_CACHE_HOME: path.join(user, ".cache"),
     XDG_CONFIG_HOME: path.join(user, ".config"),
     LOCALAPPDATA: localAppData, APPDATA: appData,
     TEMP: temporary, TMP: temporary, TMPDIR: temporary,
+    PATH: "/usr/bin:/bin:/usr/sbin:/sbin",
   };
-  for (const name of ["PATH", "PATHEXT", "SystemRoot", "SYSTEMROOT", "WINDIR", "ComSpec", "COMSPEC"])
-    if (process.env[name]) env[name] = process.env[name];
   if (windows) {
     const startup = spawnSync(shell, [
       "-NoProfile", "-NonInteractive", "-Command", "Write-Output 'bootstrap-host-ready'",
@@ -74,7 +76,7 @@ test("an isolated bootstrap without its adjacent lock refuses before installing 
   assert.match(result.stdout + result.stderr, /bootstrap_error:missing_adjacent_lock/u);
   // The shell may initialize its own cache, but the rejected bootstrap must not
   // create the CLI-owned runtime namespace or alter the copied skill.
-  for (const base of [localAppData, env.XDG_CACHE_HOME, path.join(user, "Library", "Caches")])
+  for (const base of windows ? [localAppData] : [env.XDG_CACHE_HOME, path.join(user, "Library", "Caches")])
     assert.equal(fs.existsSync(path.join(base, "tiangong-lca", "runtimes")), false);
   assert.deepEqual(fs.readdirSync(copy), [path.basename(script)]);
 });
