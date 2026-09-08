@@ -31,7 +31,7 @@ checkPaths:
   - package.json
   - pnpm-lock.yaml
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: f4361da4b6093ad0fe6714afccc778c6dea592ad
+lastReviewedCommit: ab51851990463984890135569f22a69aa9f43862
 lastReviewedNote: "Reviewed for Skills #94: package unchanged C1 POSIX/PowerShell scripts with byte-preserving checkout attributes, immutable source digest checks and isolated missing-lock refusal. The adjacent actual F1 lock and four-platform positive public qualification remain pending; no substitute trust anchor is shipped."
 related:
   - AGENTS.md
@@ -94,3 +94,5 @@ The internal `foundry-tidas-authoring` package is data-only guidance over an exi
 `foundry-tidas-import` owns ordinary task instructions for both packaged imports and source-evidence development. Its self-contained public workflow reference describes task/semantic selection and current-action consumption; it carries no state machine or database logic. A missing internal authoring skill can be handled from the runtime-generated work item and template without a sibling-directory dependency. Final bootstrap data and marketplace activation remain dependent on actual F1.
 
 The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.11` commit `1f9f75fcae3c386e601b49a7da95df0d6a526f6f`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion. The original scripts select only their adjacent lock; the final F1 lock remains absent until its public release is independently qualified.
+
+The independently copied Foundry entry retains the original C1 copyright/license text at `assets/licenses/tiangong-cli-LICENSE` beside its bundled scripts. Its bytes are checked with the script pins; this adds no user-facing license command or confirmation flow.

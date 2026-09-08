@@ -1,3 +1,4 @@
 # Preserve the immutable upstream bootstrap bytes on every checkout platform.
 foundry-tidas-import/scripts/tiangong-runtime-bootstrap.sh -text
 foundry-tidas-import/scripts/tiangong-runtime-bootstrap.ps1 -text
+foundry-tidas-import/assets/licenses/tiangong-cli-LICENSE -text

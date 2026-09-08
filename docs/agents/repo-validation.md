@@ -31,7 +31,7 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: f4361da4b6093ad0fe6714afccc778c6dea592ad
+lastReviewedCommit: ab51851990463984890135569f22a69aa9f43862
 lastReviewedNote: "Reviewed for Skills #94: package unchanged C1 POSIX/PowerShell scripts with byte-preserving checkout attributes, immutable source digest checks and isolated missing-lock refusal. The adjacent actual F1 lock and four-platform positive public qualification remain pending; no substitute trust anchor is shipped."
 related:
   - AGENTS.md
