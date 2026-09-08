@@ -31,8 +31,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: c583bf0b6eda35e90f8ebb485400a16447cd7f07
-lastReviewedNote: "Reviewed for Skills #94 Windows CI: the isolated bootstrap test supplies private TEMP/TMP/APPDATA/LOCALAPPDATA locations and checks PowerShell startup separately before testing missing-lock refusal. The assertion protects the CLI runtime namespace and copied skill while allowing shell-owned cache initialization. Original C1 script bytes and interpreter choice are unchanged; Windows verification is pending."
+lastReviewedCommit: 6cca45d7ca13fe2ef125610b0a54fa4ea5c19cbb
+lastReviewedNote: "Reviewed for Skills #94: actual Windows CI isolated the timeout to plain PowerShell startup before any bootstrap code. The non-interactive test now closes child stdin explicitly while retaining stdout/stderr capture, private system directories and the original script/interpreter. No runtime or trust guard is changed; actual Windows confirmation remains required."
 related:
   - AGENTS.md
   - .docpact/config.yaml
