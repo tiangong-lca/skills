@@ -31,8 +31,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: ab51851990463984890135569f22a69aa9f43862
-lastReviewedNote: "Reviewed for Skills #94: package unchanged C1 POSIX/PowerShell scripts with byte-preserving checkout attributes, immutable source digest checks and isolated missing-lock refusal. The adjacent actual F1 lock and four-platform positive public qualification remain pending; no substitute trust anchor is shipped."
+lastReviewedCommit: c583bf0b6eda35e90f8ebb485400a16447cd7f07
+lastReviewedNote: "Reviewed for Skills #94 Windows CI: the isolated bootstrap test supplies private TEMP/TMP/APPDATA/LOCALAPPDATA locations and checks PowerShell startup separately before testing missing-lock refusal. The assertion protects the CLI runtime namespace and copied skill while allowing shell-owned cache initialization. Original C1 script bytes and interpreter choice are unchanged; Windows verification is pending."
 related:
   - AGENTS.md
   - .docpact/config.yaml
