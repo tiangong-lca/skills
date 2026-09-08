@@ -35,6 +35,11 @@ test("an isolated bootstrap without its adjacent lock refuses before installing 
   for (const directory of [temporary, localAppData, appData])
     fs.mkdirSync(directory, { recursive: true });
   const windows = process.platform === "win32";
+  const systemRoot = process.env.SystemRoot ?? process.env.SYSTEMROOT;
+  if (windows) assert.ok(systemRoot);
+  const shell = windows
+    ? path.join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+    : "/bin/sh";
   const script = path.join(copy, `tiangong-runtime-bootstrap.${windows ? "ps1" : "sh"}`);
   fs.copyFileSync(path.join(scripts, path.basename(script)), script);
   const env = {
@@ -47,15 +52,20 @@ test("an isolated bootstrap without its adjacent lock refuses before installing 
   for (const name of ["PATH", "PATHEXT", "SystemRoot", "SYSTEMROOT", "WINDIR", "ComSpec", "COMSPEC"])
     if (process.env[name]) env[name] = process.env[name];
   if (windows) {
-    const startup = spawnSync("powershell.exe", [
+    const startup = spawnSync(shell, [
       "-NoProfile", "-NonInteractive", "-Command", "Write-Output 'bootstrap-host-ready'",
     ], { cwd: copy, env, encoding: "utf8", shell: false, stdio: ["ignore", "pipe", "pipe"], timeout: 30_000 });
-    assert.ifError(startup.error);
+    if (startup.error) {
+      const control = spawnSync(shell, [
+        "-NoProfile", "-NonInteractive", "-Command", "Write-Output 'bootstrap-host-ready'",
+      ], { cwd: copy, encoding: "utf8", shell: false, stdio: ["ignore", "pipe", "pipe"], timeout: 30_000 });
+      assert.fail(JSON.stringify({ private: { status: startup.status, error: startup.error.code }, hostControl: { status: control.status, error: control.error?.code, ready: control.stdout?.trim() === "bootstrap-host-ready" } }));
+    }
     assert.equal(startup.status, 0, startup.stderr);
     assert.equal(startup.stdout.trim(), "bootstrap-host-ready");
   }
   const result = spawnSync(
-    windows ? "powershell.exe" : "/bin/sh",
+    shell,
     windows ? ["-NoProfile", "-NonInteractive", "-File", script, "doctor", "--json"] : [script, "doctor", "--json"],
     { cwd: copy, env, encoding: "utf8", shell: false, stdio: ["ignore", "pipe", "pipe"], timeout: 30_000 },
   );

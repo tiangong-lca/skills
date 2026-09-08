@@ -31,8 +31,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-08
-lastReviewedCommit: 444bc9ca948361bb7e8a7b5da90be38a70663321
-lastReviewedNote: "Reviewed for Skills #94: add a Windows-only early public-download probe that executes unchanged C1 PowerShell function bodies against the official Node24.19.0 checksum file and compares bytes with an independent fetch. This tests the real HTTP response before final F1 publication, not credentials or business data; local non-Windows skips are explicitly distinguished from required Windows proof."
+lastReviewedCommit: aab4957cc8f89ede79a60990c1eb88edbc27ea87
+lastReviewedNote: "Reviewed for Skills #94: resolve system Windows PowerShell by its exact SystemRoot path, matching the established C1 native test instead of ambient executable lookup. A failed private startup now records a bounded host-environment control without exposing environment values. The known C1 HTTP bug remains separately blocked on CLI287/290; original copied scripts are unchanged."
 related:
   - AGENTS.md
   - .docpact/config.yaml
