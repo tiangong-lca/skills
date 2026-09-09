@@ -32,7 +32,7 @@ checkPaths:
   - package.json
   - pnpm-lock.yaml
 lastReviewedAt: 2026-09-09
-lastReviewedCommit: cd187adfc2cbe84e176ee685a6807873f7136f8a
+lastReviewedCommit: b1f8edfb0dc18cf66e6b1ac4cdb4776faf2a4ed6
 lastReviewedNote: "Reviewed for Skills #94: complete copied Foundry 0.1.6 entry binds independently verified final lock and original CLI 0.1.13 scripts; both README languages and native proof workflow agree. macOS arm64 public cold/warm/local-task and tamper checks pass. Four-platform CI and live RC acceptance remain required for delivery. Existing 21 purposes and internal authoring policy are preserved."
 related:
   - AGENTS.md
@@ -95,7 +95,7 @@ The internal `foundry-tidas-authoring` package is data-only guidance over an exi
 
 `foundry-tidas-import` owns ordinary task instructions for both packaged imports and source-evidence development. Its self-contained public workflow reference describes task/semantic selection and current-action consumption; it carries no state machine or database logic. A missing internal authoring skill can be handled from the runtime-generated work item and template without a sibling-directory dependency. The distributed final lock selects the independently qualified Foundry 0.1.6 release, and the marketplace lists this complete entry first.
 
-The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.13` commit `b5e209259d3bb06205b9af131b1c0edc3fba6da2`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion. The original scripts select only their adjacent lock; the adjacent final lock is copied byte-for-byte from independently qualified `foundry-runtime-v0.1.6`. Its manifest SHA-256 is `b0213c8614d225c04ebec6b843de1e79f543a7fb268aaf1d591658ec9f3c4697`, binding Foundry source `66fa756cac351ad9cff282141ef7fafe63dfb6e2`, Node 24.19.0, CLI 0.1.13 and TIDAS 0.3.0. The independently copied package test verifies the public installed runtime against this source and content identity.
+The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.13` commit `b5e209259d3bb06205b9af131b1c0edc3fba6da2`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion for both scripts, the retained license and the adjacent final lock. The original scripts select only their adjacent lock; the adjacent final lock is copied byte-for-byte from independently qualified `foundry-runtime-v0.1.6`. Its manifest SHA-256 is `b0213c8614d225c04ebec6b843de1e79f543a7fb268aaf1d591658ec9f3c4697`, binding Foundry source `66fa756cac351ad9cff282141ef7fafe63dfb6e2`, Node 24.19.0, CLI 0.1.13 and TIDAS 0.3.0. The independently copied package test verifies the public installed runtime against this source and content identity.
 
 The independently copied Foundry entry retains the original C1 copyright/license text at `assets/licenses/tiangong-cli-LICENSE` beside its bundled scripts. Its bytes are checked with the script pins; this adds no user-facing license command or confirmation flow.
 
