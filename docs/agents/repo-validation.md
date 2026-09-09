@@ -31,9 +31,9 @@ checkPaths:
   - scripts/docpact
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-09-09
-lastReviewedCommit: b1f8edfb0dc18cf66e6b1ac4cdb4776faf2a4ed6
-lastReviewedNote: "Reviewed for Skills #94: complete copied Foundry 0.1.6 entry binds independently verified final lock and original CLI 0.1.13 scripts; both README languages and native proof workflow agree. macOS arm64 public cold/warm/local-task and tamper checks pass. Four-platform CI and live RC acceptance remain required for delivery. Existing 21 purposes and internal authoring policy are preserved."
+lastReviewedAt: 2026-09-10
+lastReviewedCommit: 7d50ac4323b8ac3262995f040dae1f8f60988026
+lastReviewedNote: "Reviewed for Skills #94: complete final Foundry0.1.7 entry binds independently verified sourceD0/manifest/lock and original CLI0.1.13 scripts. Actual copied macOS arm64 cold/warm/task/returned-action and both manifest tamper paths pass. Four-platform Skills CI and final live RC acceptance remain required. Existing21purposes and internal authoring policy are preserved."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -92,7 +92,7 @@ The `pre-push` hook runs `scripts/docpact-gate.sh`, which delegates CLI lookup t
 
 The semantic-only Foundry authoring package is included in default validation. Validate a copied isolated package for its entry metadata and local reference closure; it intentionally has no wrapper script or bootstrap runtime. Runtime/F1 and ordinary entry bootstrap qualification remain separate requirements of the full migration.
 
-Default validation now includes all 23 source skill directories: the original 21 plus the ordinary Foundry entry and internal authoring package. Validate the entry after an isolated copy and check its task/semantic field contracts against the selected Foundry source. Source validation is supplemented by original-script equality, the independently verified final Foundry 0.1.6 lock and the four-platform copied public cold/warm/bootstrap test.
+Default validation now includes all 23 source skill directories: the original 21 plus the ordinary Foundry entry and internal authoring package. Validate the entry after an isolated copy and check its task/semantic field contracts against the selected Foundry source. Source validation is supplemented by original-script equality, the independently verified final Foundry 0.1.7 lock and the four-platform copied public cold/warm/bootstrap test.
 
 `test/foundry-bootstrap-package.test.mjs` checks both script SHA-256 values against the immutable C1 source and executes an isolated host bootstrap without its lock to prove refusal before installation or application launch. POSIX syntax is checked with `sh -n`; Run the PowerShell execution case on Windows without execution-policy bypass. These negative/source checks do not count as final public bootstrap qualification.
 
@@ -103,3 +103,5 @@ For retained import/source-evidence helpers, review both invocation contexts: an
 `test/foundry-public-install.test.mjs` executes an isolated copy of the shipped Foundry entry against its adjacent final release lock. It begins with an empty private home/cache and a system-only PATH, verifies the downloaded manifest and actual Foundry/CLI/Node/TIDAS identities, performs a local cleanup task through start/status/resume, and rejects developer commands, changed scripts, a missing lock, changed cached manifests and changed base inventories. It restores the isolated altered bytes and verifies the runtime again. This credential-free installation proof is separate from the final live account RC01–RC06 evidence.
 
 The relevant pull-request/manual matrix runs the same test on all four supported native platforms and retains one `tiangong-skills.foundry-public-install.v1` report per platform. `FOUNDRY_INSTALL_PROOF_DIR` optionally selects an absolute output directory for these test reports; it is not forwarded to the installed runtime and cannot select its manifest or credentials. The report binds the independently qualified release expectation, shipped lock digest, observed runtime identity and individual check outcomes.
+
+The copied entry must execute an exact returned command action in a new process and retain ready runtime qualification. Its independent manifest digest must also reject a changed action-cache snapshot. These checks protect the managed-context correction from Foundry #151; running every continuation through the bootstrap alone cannot prove the returned-action contract. The relevant PR matrix also covers `.gitattributes` changes, because newline conversion must not alter the original final lock bytes.

@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 
 const entry = fileURLToPath(new URL("../foundry-tidas-import/", import.meta.url));
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
-const version = "0.1.6";
-const source = "66fa756cac351ad9cff282141ef7fafe63dfb6e2";
+const version = "0.1.7";
+const source = "d0d2e7819e5ff573fb427063d13f83a2cb47ba70";
 
 test("copied Foundry skill runs the public locked runtime and rejects changed installation inputs", {
   timeout: 1_200_000,
@@ -64,10 +64,10 @@ test("copied Foundry skill runs the public locked runtime and rejects changed in
     ? path.join(userRoot, "Library", "Caches") : env.XDG_CACHE_HOME, "tiangong-lca", "runtimes", "v1");
   assert.equal(fs.existsSync(cache), false);
   const checks = [];
-  const run = (phase, args, expectedExit = 0) => {
+  const run = (phase, args, expectedExit = 0, action = null) => {
     const started = Date.now();
-    const result = spawnSync(shell, [...prefix, ...args], {
-      cwd: workspace, env, shell: false, encoding: "utf8", timeout: 900_000,
+    const result = spawnSync(action?.executable ?? shell, action?.argv ?? [...prefix, ...args], {
+      cwd: action?.cwd ?? workspace, env, shell: false, encoding: "utf8", timeout: 900_000,
       stdio: ["ignore", "pipe", "pipe"], maxBuffer: 8 * 1024 * 1024,
     });
     assert.ifError(result.error);
@@ -137,10 +137,33 @@ test("copied Foundry skill runs the public locked runtime and rejects changed in
   assert.equal(task.status, "ready");
   assert.ok(task.task_id);
   const taskArgs = ["--workspace", workspace, "--task", task.task_id, "--actor", "skill-qualifier", "--json"];
-  assert.equal(operation("task-status", ["task", "status", ...taskArgs]).task_id, task.task_id);
-  const resumed = operation("task-resume", ["task", "resume", ...taskArgs]);
+  const status = operation("task-status", ["task", "status", ...taskArgs]);
+  assert.equal(status.task_id, task.task_id);
+  const action = status.next_actions.find((item) => item.kind === "command");
+  assert.ok(action);
+  assert.equal(action.code, "resume_local_preparation");
+  assert.equal(fs.realpathSync(action.cwd), fs.realpathSync(workspace));
+  const resumed = JSON.parse(run("returned-task-resume", [], 0, action).stdout);
+  assert.equal(resumed.schema, "tiangong-foundry.operation-result.v1");
   assert.equal(resumed.task_id, task.task_id);
   assert.ok(["ready", "completed"].includes(resumed.status));
+  assert.equal(resumed.runtime_identity.qualification.status, "ready");
+  const manifestIndex = action.argv.indexOf("--manifest");
+  assert.ok(manifestIndex > 0);
+  const actionManifest = action.argv[manifestIndex + 1];
+  assert.ok(path.isAbsolute(actionManifest));
+  const manifestRelative = path.relative(fs.realpathSync(root), fs.realpathSync(actionManifest));
+  assert.ok(manifestRelative && manifestRelative !== ".."
+    && !manifestRelative.startsWith(`..${path.sep}`) && !path.isAbsolute(manifestRelative));
+  assert.equal(fs.lstatSync(actionManifest).isSymbolicLink(), false);
+  const actionManifestBytes = fs.readFileSync(actionManifest);
+  assert.equal(hash(actionManifestBytes), lock.manifest_sha256);
+  fs.appendFileSync(actionManifest, "\n");
+  try {
+    // The public CLI runtime-error contract returns EX_UNAVAILABLE (69).
+    assert.match(run("returned-manifest-tamper-refused", [], 69, action).stderr,
+      /RUNTIME_MANIFEST_INTEGRITY/u);
+  } finally { fs.writeFileSync(actionManifest, actionManifestBytes); }
   assert.equal(operation("developer-command-refused", ["profiles-list", "--workspace", workspace, "--json"], 2).status, "needs_input");
 
   const mustNotExist = path.join(root, "must-not-exist");

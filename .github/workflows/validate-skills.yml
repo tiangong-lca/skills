@@ -3,6 +3,7 @@ name: validate-skills
 on:
   pull_request:
     paths:
+      - ".gitattributes"
       - "foundry-tidas-import/**"
       - "foundry-tidas-authoring/**"
       - "test/foundry-*.test.mjs"

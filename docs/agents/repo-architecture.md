@@ -31,9 +31,9 @@ checkPaths:
   - scripts/lib/cli-launcher.mjs
   - package.json
   - pnpm-lock.yaml
-lastReviewedAt: 2026-09-09
-lastReviewedCommit: b1f8edfb0dc18cf66e6b1ac4cdb4776faf2a4ed6
-lastReviewedNote: "Reviewed for Skills #94: complete copied Foundry 0.1.6 entry binds independently verified final lock and original CLI 0.1.13 scripts; both README languages and native proof workflow agree. macOS arm64 public cold/warm/local-task and tamper checks pass. Four-platform CI and live RC acceptance remain required for delivery. Existing 21 purposes and internal authoring policy are preserved."
+lastReviewedAt: 2026-09-10
+lastReviewedCommit: 7d50ac4323b8ac3262995f040dae1f8f60988026
+lastReviewedNote: "Reviewed for Skills #94: complete final Foundry0.1.7 entry binds independently verified sourceD0/manifest/lock and original CLI0.1.13 scripts. Actual copied macOS arm64 cold/warm/task/returned-action and both manifest tamper paths pass. Four-platform Skills CI and final live RC acceptance remain required. Existing21purposes and internal authoring policy are preserved."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -93,9 +93,9 @@ This repository has a versioned local `pre-push` hook under `.githooks/pre-push`
 
 The internal `foundry-tidas-authoring` package is data-only guidance over an existing Foundry work item. Its local semantic reference is self-contained; execution, artifact registration, current authorization and readback remain Foundry/CLI responsibilities. The original workflow skill purposes remain separate.
 
-`foundry-tidas-import` owns ordinary task instructions for both packaged imports and source-evidence development. Its self-contained public workflow reference describes task/semantic selection and current-action consumption; it carries no state machine or database logic. A missing internal authoring skill can be handled from the runtime-generated work item and template without a sibling-directory dependency. The distributed final lock selects the independently qualified Foundry 0.1.6 release, and the marketplace lists this complete entry first.
+`foundry-tidas-import` owns ordinary task instructions for both packaged imports and source-evidence development. Its self-contained public workflow reference describes task/semantic selection and current-action consumption; it carries no state machine or database logic. A missing internal authoring skill can be handled from the runtime-generated work item and template without a sibling-directory dependency. The distributed final lock selects the independently qualified Foundry 0.1.7 release, and the marketplace lists this complete entry first.
 
-The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.13` commit `b5e209259d3bb06205b9af131b1c0edc3fba6da2`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion for both scripts, the retained license and the adjacent final lock. The original scripts select only their adjacent lock; the adjacent final lock is copied byte-for-byte from independently qualified `foundry-runtime-v0.1.6`. Its manifest SHA-256 is `b0213c8614d225c04ebec6b843de1e79f543a7fb268aaf1d591658ec9f3c4697`, binding Foundry source `66fa756cac351ad9cff282141ef7fafe63dfb6e2`, Node 24.19.0, CLI 0.1.13 and TIDAS 0.3.0. The independently copied package test verifies the public installed runtime against this source and content identity.
+The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.13` commit `b5e209259d3bb06205b9af131b1c0edc3fba6da2`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion for both scripts, the retained license and the adjacent final lock. The original scripts select only their adjacent lock; the adjacent final lock is copied byte-for-byte from independently qualified `foundry-runtime-v0.1.7`. Its manifest SHA-256 is `0edc024cb6471addeff91cce64547e67c6220d707555cc60433f2aca79189687`, binding Foundry source `d0d2e7819e5ff573fb427063d13f83a2cb47ba70`, Node 24.19.0, CLI 0.1.13 and TIDAS 0.3.0. The independently copied package test verifies the public installed runtime against this source and content identity.
 
 The independently copied Foundry entry retains the original C1 copyright/license text at `assets/licenses/tiangong-cli-LICENSE` beside its bundled scripts. Its bytes are checked with the script pins; this adds no user-facing license command or confirmation flow.
 

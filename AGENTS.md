@@ -38,9 +38,9 @@ checkPaths:
   - scripts/docpact
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-09-09
-lastReviewedCommit: b1f8edfb0dc18cf66e6b1ac4cdb4776faf2a4ed6
-lastReviewedNote: "Reviewed for Skills #94: complete copied Foundry 0.1.6 entry binds independently verified final lock and original CLI 0.1.13 scripts; both README languages and native proof workflow agree. macOS arm64 public cold/warm/local-task and tamper checks pass. Four-platform CI and live RC acceptance remain required for delivery. Existing 21 purposes and internal authoring policy are preserved."
+lastReviewedAt: 2026-09-10
+lastReviewedCommit: 7d50ac4323b8ac3262995f040dae1f8f60988026
+lastReviewedNote: "Reviewed for Skills #94: complete final Foundry0.1.7 entry binds independently verified sourceD0/manifest/lock and original CLI0.1.13 scripts. Actual copied macOS arm64 cold/warm/task/returned-action and both manifest tamper paths pass. Four-platform Skills CI and final live RC acceptance remain required. Existing21purposes and internal authoring policy are preserved."
 related:
   - .docpact/config.yaml
   - docs/agents/repo-architecture.md
@@ -149,6 +149,6 @@ The `pre-push` hook runs `scripts/docpact-gate.sh`, which delegates CLI lookup t
 
 `foundry-tidas-authoring` is an internal on-demand semantic package. It reads supplied current task/context evidence and returns decision/patch files; it owns no runtime, credential parsing, deterministic apply or database operation. Its explicit-only policy is part of the approved Foundry entry migration.
 
-`foundry-tidas-import` is the ordinary TianGong Foundry entry. Its instructions consume the public task protocol and current structured actions; the internal authoring role stays on demand. Its bundled original CLI 0.1.13 bootstrap and adjacent final lock select independently qualified Foundry 0.1.6. The four-platform copied-entry test must prove actual installation and task operation before delivery; source validation alone does not establish installability.
+`foundry-tidas-import` is the ordinary TianGong Foundry entry. Its instructions consume the public task protocol and current structured actions; the internal authoring role stays on demand. Its bundled original CLI 0.1.13 bootstrap and adjacent final lock select independently qualified Foundry 0.1.7. The four-platform copied-entry test must prove actual installation and task operation before delivery; source validation alone does not establish installability.
 
 The retained `external-dataset-curated-import` and `source-evidence-dataset-development` skills support independent CLI workflows. Within a registered public Foundry task they act as domain helpers over current work items and supplied actions; they return selected input files and cannot manually advance queues, checkpoints, registered artifacts or attempts. Their paired agent prompts preserve this boundary.

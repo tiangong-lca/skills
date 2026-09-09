@@ -19,9 +19,9 @@ checkPaths:
   - scripts/validate-skills.mjs
   - "*/SKILL.md"
   - "*/scripts/**"
-lastReviewedAt: 2026-09-09
-lastReviewedCommit: cd187adfc2cbe84e176ee685a6807873f7136f8a
-lastReviewedNote: "Reviewed for Skills #94: complete copied Foundry 0.1.6 entry binds independently verified final lock and original CLI 0.1.13 scripts; both README languages and native proof workflow agree. macOS arm64 public cold/warm/local-task and tamper checks pass. Four-platform CI and live RC acceptance remain required for delivery. Existing 21 purposes and internal authoring policy are preserved."
+lastReviewedAt: 2026-09-10
+lastReviewedCommit: 7d50ac4323b8ac3262995f040dae1f8f60988026
+lastReviewedNote: "Reviewed for Skills #94: complete final Foundry0.1.7 entry binds independently verified sourceD0/manifest/lock and original CLI0.1.13 scripts. Actual copied macOS arm64 cold/warm/task/returned-action and both manifest tamper paths pass. Four-platform Skills CI and final live RC acceptance remain required. Existing21purposes and internal authoring policy are preserved."
 ---
 
 # Tiangong LCA Skills
@@ -115,7 +115,7 @@ npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-impo
 
 The `lca-foundry-workflows` marketplace package lists this entry first. `foundry-tidas-authoring` is an internal role loaded only for a current semantic work item; it is not a second task entry. The ordinary entry can use the runtime's work-item instructions when that internal role is not installed.
 
-The complete entry bundles the final release lock for [Foundry 0.1.6](https://github.com/tiangong-lca/data-foundry/releases/tag/foundry-runtime-v0.1.6), with CLI 0.1.13, Node 24.19.0 and TIDAS 0.3.0. Its public runtime is qualified for macOS arm64, Linux x64/arm64 and Windows x64. Keep the bundled scripts and adjacent lock together when installing or copying the entry. Installation and login do not grant permission to write data; continue the task's current authorization and recovery actions.
+The complete entry bundles the final release lock for [Foundry 0.1.7](https://github.com/tiangong-lca/data-foundry/releases/tag/foundry-runtime-v0.1.7), with CLI 0.1.13, Node 24.19.0 and TIDAS 0.3.0. Its public runtime is qualified for macOS arm64, Linux x64/arm64 and Windows x64. Keep the bundled scripts and adjacent lock together when installing or copying the entry. Installation and login do not grant permission to write data; continue the task's current authorization and recovery actions.
 
 ### Specialized workflows
 

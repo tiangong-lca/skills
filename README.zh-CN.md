@@ -19,9 +19,9 @@ checkPaths:
   - scripts/validate-skills.mjs
   - "*/SKILL.md"
   - "*/scripts/**"
-lastReviewedAt: 2026-09-09
-lastReviewedCommit: cd187adfc2cbe84e176ee685a6807873f7136f8a
-lastReviewedNote: "Reviewed for Skills #94: complete copied Foundry 0.1.6 entry binds independently verified final lock and original CLI 0.1.13 scripts; both README languages and native proof workflow agree. macOS arm64 public cold/warm/local-task and tamper checks pass. Four-platform CI and live RC acceptance remain required for delivery. Existing 21 purposes and internal authoring policy are preserved."
+lastReviewedAt: 2026-09-10
+lastReviewedCommit: 7d50ac4323b8ac3262995f040dae1f8f60988026
+lastReviewedNote: "Reviewed for Skills #94: complete final Foundry0.1.7 entry binds independently verified sourceD0/manifest/lock and original CLI0.1.13 scripts. Actual copied macOS arm64 cold/warm/task/returned-action and both manifest tamper paths pass. Four-platform Skills CI and final live RC acceptance remain required. Existing21purposes and internal authoring policy are preserved."
 ---
 
 # 天工 LCA Skills
@@ -115,7 +115,7 @@ npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-impo
 
 `lca-foundry-workflows` marketplace 包首先列出此入口。`foundry-tidas-authoring` 仅在当前语义工作项需要时加载，是内部角色；日常入口也能直接使用运行时提供的工作项说明，无须依赖另一个已安装技能目录。
 
-完整入口随包提供 [Foundry 0.1.6](https://github.com/tiangong-lca/data-foundry/releases/tag/foundry-runtime-v0.1.6) 的最终发行锁，固定 CLI 0.1.13、Node 24.19.0 和 TIDAS 0.3.0。公开运行时已通过 macOS arm64、Linux x64/arm64 和 Windows x64 验证。安装或复制入口时，保持随包脚本与相邻 lock 完整。安装、登录不授予数据写入权限；继续执行任务当前的授权与恢复动作。
+完整入口随包提供 [Foundry 0.1.7](https://github.com/tiangong-lca/data-foundry/releases/tag/foundry-runtime-v0.1.7) 的最终发行锁，固定 CLI 0.1.13、Node 24.19.0 和 TIDAS 0.3.0。公开运行时已通过 macOS arm64、Linux x64/arm64 和 Windows x64 验证。安装或复制入口时，保持随包脚本与相邻 lock 完整。安装、登录不授予数据写入权限；继续执行任务当前的授权与恢复动作。
 
 ### 专项工作流
 
