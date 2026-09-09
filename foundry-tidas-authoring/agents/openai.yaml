@@ -1,0 +1,6 @@
+interface:
+  display_name: "Foundry TIDAS Authoring"
+  short_description: "Author evidence-backed Foundry decisions and patches"
+  default_prompt: "Use $foundry-tidas-authoring for the supplied current Foundry work item: read its complete package and context, fill the requested decision or patch template with evidence, and return the files and blockers to the invoking workflow."
+policy:
+  allow_implicit_invocation: false

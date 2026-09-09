@@ -1,0 +1,4 @@
+interface:
+  display_name: "TianGong Foundry"
+  short_description: "Import LCA packages and develop TIDAS data from evidence"
+  default_prompt: "Use $foundry-tidas-import with its bundled C1 bootstrap and adjacent trusted release lock to continue the requested TianGong Foundry workflow through current public task actions, evidence-backed semantic work and authorized verified completion."

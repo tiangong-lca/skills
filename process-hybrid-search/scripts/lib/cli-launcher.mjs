@@ -5,11 +5,11 @@ import process from 'node:process';
 
 export const expectedNodeVersion = '24.19.0';
 export const expectedPnpmVersion = '11.24.0';
-export const publishedCliPackageSpec = '@tiangong-lca/cli@0.1.8';
+export const publishedCliPackageSpec = '@tiangong-lca/cli@0.1.13';
 export const publishedCliCommand = `pnpm dlx --package=${publishedCliPackageSpec} tiangong-lca`;
 
 const expectedCliPackageName = '@tiangong-lca/cli';
-const expectedCliPackageVersion = '0.1.8';
+const expectedCliPackageVersion = '0.1.13';
 const expectedCliPackageManager = `pnpm@${expectedPnpmVersion}`;
 const expectedCliNodeEngine = '>=24.19.0 <25';
 const verifiedToolchainsBySpawn = new WeakMap();

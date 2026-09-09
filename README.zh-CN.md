@@ -12,15 +12,16 @@ whenToUpdate:
   - when skill installation guidance changes
   - when the unified CLI wrapper contract changes
 checkPaths:
+  - .claude-plugin/marketplace.json
   - README.md
   - README.zh-CN.md
   - scripts/lib/cli-launcher.mjs
   - scripts/validate-skills.mjs
   - "*/SKILL.md"
   - "*/scripts/**"
-lastReviewedAt: 2026-09-02
-lastReviewedCommit: 3206f8705485a0979d999ccfb320f68ec8a6df97
-lastReviewedNote: "Reviewed for Skills #91: verified published CLI 0.1.8 / b470198 is pinned across wrappers, CI and docs; independently installed hybrid packages retain a byte-identical launcher and CLI-owned Production auth."
+lastReviewedAt: 2026-09-10
+lastReviewedCommit: 7d50ac4323b8ac3262995f040dae1f8f60988026
+lastReviewedNote: "Reviewed for Skills #94: complete final Foundry0.1.7 entry binds independently verified sourceD0/manifest/lock and original CLI0.1.13 scripts. Actual copied macOS arm64 cold/warm/task/returned-action and both manifest tamper paths pass. Four-platform Skills CI and final live RC acceptance remain required. Existing21purposes and internal authoring policy are preserved."
 ---
 
 # 天工 LCA Skills
@@ -104,7 +105,21 @@ npx skills update --project --yes
 
 消费项目应在任务 artifact 中记录解析到的 upstream ref 和命令。除非所有权边界被明确调整，不要把 `tiangong-kb-*` skill 目录复制到本仓库。
 
-## Foundry top-level workflows
+## TianGong Foundry
+
+外部数据包导入、源证据数据开发和继续已有 Foundry 任务，统一使用 `$foundry-tidas-import` 作为日常入口。它通过随包 bootstrap 选择合格运行时，将任务输出放在独立可写工作区。
+
+```bash
+npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-import
+```
+
+`lca-foundry-workflows` marketplace 包首先列出此入口。`foundry-tidas-authoring` 仅在当前语义工作项需要时加载，是内部角色；日常入口也能直接使用运行时提供的工作项说明，无须依赖另一个已安装技能目录。
+
+完整入口随包提供 [Foundry 0.1.7](https://github.com/tiangong-lca/data-foundry/releases/tag/foundry-runtime-v0.1.7) 的最终发行锁，固定 CLI 0.1.13、Node 24.19.0 和 TIDAS 0.3.0。公开运行时已通过 macOS arm64、Linux x64/arm64 和 Windows x64 验证。安装或复制入口时，保持随包脚本与相邻 lock 完整。安装、登录不授予数据写入权限；继续执行任务当前的授权与恢复动作。
+
+### 专项工作流
+
+原有技能保留各自用途：
 
 - `$external-dataset-curated-import`：BAFU、USLCI 等结构化 LCA 数据包导入，走 CLI 转换、curation queue `next`/`verify`、子 skill 和发布 handoff gates。
 - `$source-evidence-dataset-development`：从 PDF、Word、URL、API、报告、数据库引用或科学文献进行 evidence-driven 数据新增或更新。
@@ -115,7 +130,7 @@ npx skills update --project --yes
 远程 skill 统一使用 CLI 管理的 Supabase OAuth session。官方 Production 不需要 public 环境变量、Dashboard 或额外索取 client ID；公开 URL/key/client/callback profile 由 CLI 唯一维护，Skills 不复制。先运行：
 
 ```bash
-pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca auth status --json
+pnpm dlx --package=@tiangong-lca/cli@0.1.13 tiangong-lca auth status --json
 ```
 
 若结果是 `login-required`，停止 agent workflow，把可信终端交给人类运行 `tiangong-lca auth login`。skill/agent 不得索取用户名、密码、authorization code、access token、refresh token 或旧编码 API key。账号敏感读取和 commit 前运行 `tiangong-lca auth doctor-auth --json`。
@@ -143,7 +158,7 @@ pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca auth status --json
   ```bash
   pnpm validate lifecycleinventory-qa process-hybrid-search
   ```
-- CI 会在 `.github/workflows/validate-skills.yml` 中 checkout CLI `0.1.8` 的不可变 merge/tag commit `b4701984b4a86fe4680fa5995d0a0b6753dbdfd6`，用 frozen pnpm lockfile 安装两个仓库并构建 CLI，然后运行同一套校验。
+- CI 会在 `.github/workflows/validate-skills.yml` 中 checkout CLI `0.1.13` 的不可变 merge/tag commit `b5e209259d3bb06205b9af131b1c0edc3fba6da2`，用 frozen pnpm lockfile 安装两个仓库并构建 CLI，然后运行同一套校验。
 
 ## 执行说明
 
@@ -151,10 +166,10 @@ pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca auth status --json
 
 当前约定：
 
-- skill wrapper 默认使用精确版本的已发布 CLI：`pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca`；不会自动发现任何 sibling 目录
+- skill wrapper 默认使用精确版本的已发布 CLI：`pnpm dlx --package=@tiangong-lca/cli@0.1.13 tiangong-lca`；不会自动发现任何 sibling 目录
 - 本地执行只能通过 `--cli-dir` / `TIANGONG_LCA_CLI_DIR` 显式启用
 - 使用 `--published-cli` 可覆盖本地 CLI 环境并显式执行 published-package case；嵌套 wrapper 会继续传播该选择
-- 本地 CLI override 必须是带精确 Node/pnpm engines 和 v9 `pnpm-lock.yaml` 的 `@tiangong-lca/cli@0.1.8`；本地 build 过期时先执行 `pnpm install --frozen-lockfile`，再执行 `pnpm run build`
+- 本地 CLI override 必须是带精确 Node/pnpm engines 和 v9 `pnpm-lock.yaml` 的 `@tiangong-lca/cli@0.1.13`；本地 build 过期时先执行 `pnpm install --frozen-lockfile`，再执行 `pnpm run build`
 - 本地 pre-push hook 会先验证显式 local checkout 的 package/lock evidence，再允许 install 或 build
 - launcher 只用 argv 数组并固定 `shell: false`，因此带空格路径保持为单个参数，并原样保留子进程 exit/stdout/stderr
 - 对远端 process QA snapshot，优先使用 `tiangong-lca process list --json` 再配合 `qa process --rows-file ...`，不再鼓励临时 bridge 脚本
@@ -162,3 +177,7 @@ pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca auth status --json
 - skill wrapper 不应再打包业务 Python、MCP transport、私有 env parsing 或 shell shim
 - 远程 skill 必须使用 CLI OAuth status/login/doctor handoff，不得新增 API-key flag 或 bearer 示例
 - 若能力缺失，先在 `tiangong-lca-cli` 中新增原生 `tiangong-lca <noun> <verb>` 命令，再让 skill 调用它
+
+## Foundry 语义工作
+
+`foundry-tidas-authoring` 是面向具体 Foundry 工作项的内部按需角色。它读取已提供的完整上下文，将有证据的决定或 patch 文件交回调用流程；不安装运行时、不管理认证、不直接应用行数据或操作数据库。

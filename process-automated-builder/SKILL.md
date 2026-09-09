@@ -176,7 +176,7 @@ node scripts/run-process-automated-builder.mjs evidence-search plan --query "中
 
 ## Runtime Requirements
 
-- The wrapper runs the exact published CLI by default through `pnpm dlx --package=@tiangong-lca/cli@0.1.8 tiangong-lca`.
+- The wrapper runs the exact published CLI by default through `pnpm dlx --package=@tiangong-lca/cli@0.1.13 tiangong-lca`.
 - Set `TIANGONG_LCA_CLI_DIR` or pass `--cli-dir` only when you need a local CLI working tree for dev/CI.
 - The wrapper requires explicit output paths instead of relying on `cwd/artifacts/...` defaults.
 - For repeatable runs, use an explicit output root such as `/abs/path/artifacts/<case_slug>/...`.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Lifecycle Model Resulting Process Builder"
   short_description: "Build resulting processes via the unified CLI"
-  default_prompt: "Use $lifecyclemodel-resulting-process-builder through the repository-pinned OAuth CLI. Keep the default flow local; explicit Production lookup uses the CLI profile, custom projects need complete settings, and any required browser login belongs to the human without credential, code, or token handoff."
+  default_prompt: "Use $lifecyclemodel-resulting-process-builder through the repository-pinned OAuth CLI 0.1.13. Keep the default flow local; explicit Production lookup uses the CLI profile, custom projects need complete settings, and any required browser login belongs to the human without credential, code, or token handoff."

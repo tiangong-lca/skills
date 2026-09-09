@@ -1,7 +1,17 @@
 name: validate-skills
 
 on:
+  pull_request:
+    paths:
+      - ".gitattributes"
+      - "foundry-tidas-import/**"
+      - "foundry-tidas-authoring/**"
+      - "test/foundry-*.test.mjs"
+      - ".github/workflows/validate-skills.yml"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   validate:
@@ -27,7 +37,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: tiangong-lca/tiangong-cli
-          ref: b4701984b4a86fe4680fa5995d0a0b6753dbdfd6
+          ref: b5e209259d3bb06205b9af131b1c0edc3fba6da2
           path: .ci/tiangong-lca-cli
 
       - name: Set up pnpm 11.24.0 and Node 24.19.0
@@ -48,7 +58,17 @@ jobs:
           pnpm run build
 
       - name: Test Skills repository contracts
+        env:
+          FOUNDRY_INSTALL_PROOF_DIR: ${{ runner.temp }}/foundry-skill-install
         run: pnpm test
+
+      - name: Preserve copied public Foundry install evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: foundry-skill-install-${{ matrix.os }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/foundry-skill-install/*.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Validate exact published CLI fallback
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'

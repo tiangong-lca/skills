@@ -15,6 +15,8 @@ whenToUpdate:
   - when repo ownership or CLI boundary rules change
   - when repo-local docpact governance or source docs change
 checkPaths:
+  - .claude-plugin/marketplace.json
+  - .gitattributes
   - AGENTS.md
   - README.md
   - README.zh-CN.md
@@ -36,9 +38,9 @@ checkPaths:
   - scripts/docpact
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
-lastReviewedAt: 2026-09-02
-lastReviewedCommit: 3206f8705485a0979d999ccfb320f68ec8a6df97
-lastReviewedNote: "Reviewed for Skills #91: verified published CLI 0.1.8 / b470198 is pinned across wrappers, CI and docs; independently installed hybrid packages retain a byte-identical launcher and CLI-owned Production auth."
+lastReviewedAt: 2026-09-10
+lastReviewedCommit: 7d50ac4323b8ac3262995f040dae1f8f60988026
+lastReviewedNote: "Reviewed for Skills #94: complete final Foundry0.1.7 entry binds independently verified sourceD0/manifest/lock and original CLI0.1.13 scripts. Actual copied macOS arm64 cold/warm/task/returned-action and both manifest tamper paths pass. Four-platform Skills CI and final live RC acceptance remain required. Existing21purposes and internal authoring policy are preserved."
 related:
   - .docpact/config.yaml
   - docs/agents/repo-architecture.md
@@ -80,6 +82,7 @@ This repo owns:
 - `scripts/validate-skills.mjs` and repo validation tests
 - `package.json`, `pnpm-lock.yaml`, and the shared CLI launcher/toolchain checks used by repo validation
 - `README.md` and `README.zh-CN.md` for install and usage guidance
+- `.claude-plugin/marketplace.json` for grouped discovery, with one ordinary Foundry entry, an internal semantic role and retained specialized workflows
 
 This repo does not own:
 
@@ -98,7 +101,7 @@ Route those tasks to:
 ## Runtime Facts
 
 - Repo-local documentation governance is encoded in `.docpact/config.yaml` and enforced locally by the pre-push docpact gate; `.github/workflows/ai-doc-lint.yml` is manual-dispatch fallback.
-- This repo is distribution-oriented; each skill should stay a thin wrapper over the unified `tiangong-lca` CLI
+- This repo is distribution-oriented; each skill should stay a thin wrapper over the unified CLI or a data-only semantic role over current Foundry work items
 - If a capability is missing, add it to `tiangong-lca-cli` first, then update the skill wrapper here
 - Current-account dataset review skills may orchestrate frozen local inputs through public CLI commands, but must not own direct database access, credential parsing, or private account runtime logic.
 - Active remote skills must check `tiangong-lca auth status --json`, hand `auth login` to a human-controlled trusted terminal when required, and use `auth doctor-auth` before account-sensitive commits. They never collect or emit usernames, passwords, authorization codes, tokens, or legacy API keys.
@@ -108,7 +111,7 @@ Route those tasks to:
 - Source-evidence import skills may instruct agents to resolve external research skills with `npx skills`, but this repository should not mirror or pin those external skill packages.
 - `external-dataset-curated-import`, `source-evidence-dataset-development`, and `dataset-rls-maintenance` are top-level workflow skills only; executable conversion, queue state, validation, QA, write/delete/redo, and verify behavior stays in CLI/Foundry-owned commands.
 - Dataset maintenance under user RLS must use CLI-owned maintenance plans and readback verification. Skills must not add direct Supabase CRUD, service-role paths, or broad delete filters.
-- Node package execution is pinned to Node `24.19.0` and pnpm `11.24.0`; the default runtime is the exact published `@tiangong-lca/cli@0.1.8` and must never float through `@latest`.
+- Node package execution is pinned to Node `24.19.0` and pnpm `11.24.0`; the default runtime is the exact published `@tiangong-lca/cli@0.1.13` and must never float through `@latest`.
 - Never auto-discover or execute a sibling CLI checkout. Local execution is opt-in only through `--cli-dir` or `TIANGONG_LCA_CLI_DIR`; `--published-cli` explicitly overrides a local CLI environment.
 - Local CLI checkouts selected by wrappers must match the pinned CLI package/engine/lockfile evidence. When their source is newer than `dist/src/main.js`, wrappers install with `pnpm install --frozen-lockfile` before `pnpm run build`; wrappers should still keep the CLI command surface in `tiangong-lca-cli`.
 - CLI child processes use authoritative argv arrays with `shell: false` and preserve child exit/stdout/stderr.
@@ -142,4 +145,10 @@ Install the versioned local hook once per checkout:
 ./scripts/install-git-hooks.sh
 ```
 
-The `pre-push` hook runs `scripts/docpact-gate.sh`, which delegates CLI lookup to `scripts/docpact` and performs strict config validation plus enforced lint before the push leaves the machine. It validates Node `24.19.0` / pnpm `11.24.0` and installs Skills from its frozen lockfile. The hook defaults to exact published CLI `0.1.8`; when `TIANGONG_LCA_CLI_DIR` is explicitly set, it validates that checkout's package/name/version/engine/lock evidence before any local install or build. It then runs `pnpm prepush:gate`. The wrapper checks `DOCPACT_BIN`, Cargo install locations, Homebrew install locations, and then `PATH`, so local agent shells should not fail only because bare `docpact` is unavailable. The default comparison base is `origin/main`. Override it for unusual stacks with `DOCPACT_BASE_REF=<ref>` or `scripts/docpact-gate.sh --base <ref>`. The gate writes its detailed report to a temporary file so normal pushes do not create `.docpact/runs/` artifacts. The GitHub `validate-skills` workflow is manual-dispatch only.
+The `pre-push` hook runs `scripts/docpact-gate.sh`, which delegates CLI lookup to `scripts/docpact` and performs strict config validation plus enforced lint before the push leaves the machine. It validates Node `24.19.0` / pnpm `11.24.0` and installs Skills from its frozen lockfile. The hook defaults to exact published CLI `0.1.13`; when `TIANGONG_LCA_CLI_DIR` is explicitly set, it validates that checkout's package/name/version/engine/lock evidence before any local install or build. It then runs `pnpm prepush:gate`. The wrapper checks `DOCPACT_BIN`, Cargo install locations, Homebrew install locations, and then `PATH`, so local agent shells should not fail only because bare `docpact` is unavailable. The default comparison base is `origin/main`. Override it for unusual stacks with `DOCPACT_BASE_REF=<ref>` or `scripts/docpact-gate.sh --base <ref>`. The gate writes its detailed report to a temporary file so normal pushes do not create `.docpact/runs/` artifacts. The GitHub `validate-skills` workflow runs for Foundry package/test pull requests and manual dispatch.
+
+`foundry-tidas-authoring` is an internal on-demand semantic package. It reads supplied current task/context evidence and returns decision/patch files; it owns no runtime, credential parsing, deterministic apply or database operation. Its explicit-only policy is part of the approved Foundry entry migration.
+
+`foundry-tidas-import` is the ordinary TianGong Foundry entry. Its instructions consume the public task protocol and current structured actions; the internal authoring role stays on demand. Its bundled original CLI 0.1.13 bootstrap and adjacent final lock select independently qualified Foundry 0.1.7. The four-platform copied-entry test must prove actual installation and task operation before delivery; source validation alone does not establish installability.
+
+The retained `external-dataset-curated-import` and `source-evidence-dataset-development` skills support independent CLI workflows. Within a registered public Foundry task they act as domain helpers over current work items and supplied actions; they return selected input files and cannot manually advance queues, checkpoints, registered artifacts or attempts. Their paired agent prompts preserve this boundary.
