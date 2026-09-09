@@ -8,7 +8,7 @@ This skill is a thin wrapper around the supported CLI-backed governance commands
 
 - Entry point: `node scripts/run-flow-governance-review.mjs <command> ...`
 - Wrapper role:
-  - launch `pnpm dlx --package=@tiangong-lca/cli@0.1.12 tiangong-lca` by default
+  - launch `pnpm dlx --package=@tiangong-lca/cli@0.1.13 tiangong-lca` by default
   - honor `TIANGONG_LCA_CLI_DIR` / `--cli-dir` only as a local dev/CI override
   - forward arguments to `tiangong-lca`
   - expose no Python fallback path

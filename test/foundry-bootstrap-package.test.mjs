@@ -8,15 +8,17 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const scripts = fileURLToPath(new URL("../foundry-tidas-import/scripts/", import.meta.url));
-// Immutable cli-v0.1.12 source: 6df087b0dda2544a0fd68f2a143559e81d20d60b.
+// Immutable cli-v0.1.13 source: b5e209259d3bb06205b9af131b1c0edc3fba6da2.
 // These original CLI scripts are distributed unchanged; F1 supplies the adjacent lock.
 const expected = {
+  // Independently verified final foundry-runtime-v0.1.6 public asset.
+  "bootstrap-lock.json": "9919d9ce2c40256c2e80aeeec87cfb2812b70ae4bbc8a94b79ba9b65c73d7ac1",
   "../assets/licenses/tiangong-cli-LICENSE": "5ca31e8840557caad889b275beef7c9d56e67efede031e71228c5ff8f0d4135e",
-  "tiangong-runtime-bootstrap.sh": "a7055855e89d6f0781b1d44ac4d05c71053a14855906fa5e0c7e7e3ebf5867f5",
+  "tiangong-runtime-bootstrap.sh": "7aa826448f7b0e1d25f59a19a6f8c906621a82f0ee956124d9f93484885b9fac",
   "tiangong-runtime-bootstrap.ps1": "a797bc5269386a0f45fbc5bebb7d634b37fc8a164500aaaa4905be5e61bf8f65",
 };
 
-test("Foundry bootstrap copies match the immutable C1 public scripts", () => {
+test("Foundry bootstrap copies and final lock match independently verified public assets", () => {
   for (const [name, digest] of Object.entries(expected)) {
     const file = path.join(scripts, name);
     assert.ok(fs.lstatSync(file).isFile());

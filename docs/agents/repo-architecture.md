@@ -31,9 +31,9 @@ checkPaths:
   - scripts/lib/cli-launcher.mjs
   - package.json
   - pnpm-lock.yaml
-lastReviewedAt: 2026-09-08
-lastReviewedCommit: a8dba08a67a3c775f89f528b5131f062bda37a87
-lastReviewedNote: "Reviewed for Skills #94: preserve both retained CLI workflow purposes while limiting their use inside registered public Foundry tasks to current work items, selected input files and supplied actions. Paired prompts agree; helpers cannot rewrite registered checkpoints, rows or attempts. Runtime code, scripts and final F1 requirements are unchanged."
+lastReviewedAt: 2026-09-09
+lastReviewedCommit: cd187adfc2cbe84e176ee685a6807873f7136f8a
+lastReviewedNote: "Reviewed for Skills #94: complete copied Foundry 0.1.6 entry binds independently verified final lock and original CLI 0.1.13 scripts; both README languages and native proof workflow agree. macOS arm64 public cold/warm/local-task and tamper checks pass. Four-platform CI and live RC acceptance remain required for delivery. Existing 21 purposes and internal authoring policy are preserved."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -81,7 +81,7 @@ If a Foundry/source-evidence workflow needs an external Tiangong KB research ski
 
 Current-account dataset review is owned here only as a skill package and wrapper contract. Its durable runtime behavior belongs in public `tiangong-lca` CLI commands such as dataset validation, reference rewriting, lifecyclemodel save-draft, and lifecyclemodel graph export.
 
-The shared wrapper launcher defaults to pinned published `@tiangong-lca/cli@0.1.12` and never discovers sibling directories. CI binds immutable release merge `6df087b0dda2544a0fd68f2a143559e81d20d60b`. An explicit `--cli-dir` or `TIANGONG_LCA_CLI_DIR` may select an exact matching local checkout; only after package/engine/lock evidence passes may the launcher prepare it with `pnpm install --frozen-lockfile` and `pnpm run build` when source files are newer than `dist/src/main.js`. All execution stays argv-authoritative with `shell: false`, using native `pnpm.exe` on Windows. This is a developer-experience guard for stale local checkouts, not permission for skills to duplicate CLI implementation.
+The shared wrapper launcher defaults to pinned published `@tiangong-lca/cli@0.1.13` and never discovers sibling directories. CI binds immutable release merge `b5e209259d3bb06205b9af131b1c0edc3fba6da2`. An explicit `--cli-dir` or `TIANGONG_LCA_CLI_DIR` may select an exact matching local checkout; only after package/engine/lock evidence passes may the launcher prepare it with `pnpm install --frozen-lockfile` and `pnpm run build` when source files are newer than `dist/src/main.js`. All execution stays argv-authoritative with `shell: false`, using native `pnpm.exe` on Windows. This is a developer-experience guard for stale local checkouts, not permission for skills to duplicate CLI implementation.
 
 ## Integration Semantics
 
@@ -89,13 +89,13 @@ A merged PR in this repository is repo-complete only. If the updated skill set m
 
 ## Local Docpact Push Gate
 
-This repository has a versioned local `pre-push` hook under `.githooks/pre-push` that delegates to `scripts/docpact-gate.sh`, resolves the docpact CLI through `scripts/docpact`, installs Skills through its frozen pnpm lockfile, and defaults validation to the published CLI. It installs/builds a local CLI only when explicitly selected and only after launcher-owned package evidence validation. The hook then runs `pnpm prepush:gate`; it is the local guard for docpact config validation, enforced doc-governance linting, toolchain tests, and skill validation. The GitHub `validate-skills` workflow is manual-dispatch only.
+This repository has a versioned local `pre-push` hook under `.githooks/pre-push` that delegates to `scripts/docpact-gate.sh`, resolves the docpact CLI through `scripts/docpact`, installs Skills through its frozen pnpm lockfile, and defaults validation to the published CLI. It installs/builds a local CLI only when explicitly selected and only after launcher-owned package evidence validation. The hook then runs `pnpm prepush:gate`; it is the local guard for docpact config validation, enforced doc-governance linting, toolchain tests, and skill validation. The GitHub `validate-skills` workflow runs for Foundry package/test pull requests and manual dispatch.
 
 The internal `foundry-tidas-authoring` package is data-only guidance over an existing Foundry work item. Its local semantic reference is self-contained; execution, artifact registration, current authorization and readback remain Foundry/CLI responsibilities. The original workflow skill purposes remain separate.
 
-`foundry-tidas-import` owns ordinary task instructions for both packaged imports and source-evidence development. Its self-contained public workflow reference describes task/semantic selection and current-action consumption; it carries no state machine or database logic. A missing internal authoring skill can be handled from the runtime-generated work item and template without a sibling-directory dependency. Final bootstrap data and marketplace activation remain dependent on actual F1.
+`foundry-tidas-import` owns ordinary task instructions for both packaged imports and source-evidence development. Its self-contained public workflow reference describes task/semantic selection and current-action consumption; it carries no state machine or database logic. A missing internal authoring skill can be handled from the runtime-generated work item and template without a sibling-directory dependency. The distributed final lock selects the independently qualified Foundry 0.1.6 release, and the marketplace lists this complete entry first.
 
-The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.12` commit `6df087b0dda2544a0fd68f2a143559e81d20d60b`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion. The original scripts select only their adjacent lock; the final F1 lock remains absent until its public release is independently qualified.
+The Foundry entry distributes byte-identical POSIX/PowerShell bootstrap scripts from CLI `cli-v0.1.13` commit `b5e209259d3bb06205b9af131b1c0edc3fba6da2`. Skills owns their packaging, not their implementation. Path-specific Git attributes prevent checkout newline conversion. The original scripts select only their adjacent lock; the adjacent final lock is copied byte-for-byte from independently qualified `foundry-runtime-v0.1.6`. Its manifest SHA-256 is `b0213c8614d225c04ebec6b843de1e79f543a7fb268aaf1d591658ec9f3c4697`, binding Foundry source `66fa756cac351ad9cff282141ef7fafe63dfb6e2`, Node 24.19.0, CLI 0.1.13 and TIDAS 0.3.0. The independently copied package test verifies the public installed runtime against this source and content identity.
 
 The independently copied Foundry entry retains the original C1 copyright/license text at `assets/licenses/tiangong-cli-LICENSE` beside its bundled scripts. Its bytes are checked with the script pins; this adds no user-facing license command or confirmation flow.
 

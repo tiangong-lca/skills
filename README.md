@@ -19,9 +19,9 @@ checkPaths:
   - scripts/validate-skills.mjs
   - "*/SKILL.md"
   - "*/scripts/**"
-lastReviewedAt: 2026-09-08
-lastReviewedCommit: 123dacb4c1167c8cff6c64fbf438969f77685669
-lastReviewedNote: "Reviewed for Skills #94: list the ordinary Foundry entry first in the existing marketplace group, retain every previous membership, and keep semantic authoring internal/on-demand. Both README languages agree. Catalogue source validation passes; actual F1 lock and four-platform public installation remain pending."
+lastReviewedAt: 2026-09-09
+lastReviewedCommit: cd187adfc2cbe84e176ee685a6807873f7136f8a
+lastReviewedNote: "Reviewed for Skills #94: complete copied Foundry 0.1.6 entry binds independently verified final lock and original CLI 0.1.13 scripts; both README languages and native proof workflow agree. macOS arm64 public cold/warm/local-task and tamper checks pass. Four-platform CI and live RC acceptance remain required for delivery. Existing 21 purposes and internal authoring policy are preserved."
 ---
 
 # Tiangong LCA Skills
@@ -115,7 +115,7 @@ npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-impo
 
 The `lca-foundry-workflows` marketplace package lists this entry first. `foundry-tidas-authoring` is an internal role loaded only for a current semantic work item; it is not a second task entry. The ordinary entry can use the runtime's work-item instructions when that internal role is not installed.
 
-Release preparation: this branch still awaits the final public F1 lock and four-platform installed qualification. Do not use an incomplete copied entry or obtain an alternate lock. Installation and login do not grant permission to write data; continue the task's current authorization and recovery actions.
+The complete entry bundles the final release lock for [Foundry 0.1.6](https://github.com/tiangong-lca/data-foundry/releases/tag/foundry-runtime-v0.1.6), with CLI 0.1.13, Node 24.19.0 and TIDAS 0.3.0. Its public runtime is qualified for macOS arm64, Linux x64/arm64 and Windows x64. Keep the bundled scripts and adjacent lock together when installing or copying the entry. Installation and login do not grant permission to write data; continue the task's current authorization and recovery actions.
 
 ### Specialized workflows
 
@@ -130,7 +130,7 @@ The existing skills retain their independent uses:
 Remote skills use the CLI-owned Supabase OAuth session. Official Production requires no public environment setup or dashboard/client-ID handoff. The published CLI owns its public URL/key/client/callback profile; Skills do not copy it. Start with:
 
 ```bash
-pnpm dlx --package=@tiangong-lca/cli@0.1.12 tiangong-lca auth status --json
+pnpm dlx --package=@tiangong-lca/cli@0.1.13 tiangong-lca auth status --json
 ```
 
 If the result is `login-required`, stop the agent workflow and let the human user run `tiangong-lca auth login` in a trusted terminal. Skills and agents must never request a username, password, authorization code, access token, refresh token, or the deprecated encoded API key. Use `tiangong-lca auth doctor-auth --json` before account-sensitive reads or commits.
@@ -158,7 +158,7 @@ The three hybrid-search skill folders are independently installable: each includ
   ```bash
   pnpm validate lifecycleinventory-qa process-hybrid-search
   ```
-- CI runs the same validation in `.github/workflows/validate-skills.yml` after checking out immutable CLI `0.1.12` merge/tag commit `6df087b0dda2544a0fd68f2a143559e81d20d60b`, installing both repositories with frozen pnpm lockfiles, and building the CLI.
+- CI runs the same validation in `.github/workflows/validate-skills.yml` after checking out immutable CLI `0.1.13` merge/tag commit `b5e209259d3bb06205b9af131b1c0edc3fba6da2`, installing both repositories with frozen pnpm lockfiles, and building the CLI.
 
 ## Execution note
 
@@ -166,10 +166,10 @@ Skills in this repository are expected to be thin wrappers over the unified `tia
 
 Current rules:
 
-- wrappers default to the exact published CLI through `pnpm dlx --package=@tiangong-lca/cli@0.1.12 tiangong-lca`; sibling directories are never auto-discovered
+- wrappers default to the exact published CLI through `pnpm dlx --package=@tiangong-lca/cli@0.1.13 tiangong-lca`; sibling directories are never auto-discovered
 - local execution is opt-in only through `--cli-dir` or `TIANGONG_LCA_CLI_DIR`
 - use `--published-cli` to override a local CLI environment for an explicit published-package case; nested wrappers propagate that selection
-- local CLI overrides must identify `@tiangong-lca/cli@0.1.12` with its exact Node/pnpm engines and a v9 `pnpm-lock.yaml`; stale local builds are installed with `pnpm install --frozen-lockfile` before `pnpm run build`
+- local CLI overrides must identify `@tiangong-lca/cli@0.1.13` with its exact Node/pnpm engines and a v9 `pnpm-lock.yaml`; stale local builds are installed with `pnpm install --frozen-lockfile` before `pnpm run build`
 - the local pre-push hook validates CLI package and lock evidence before it installs or builds an explicitly selected local checkout
 - launcher execution uses argv arrays with `shell: false`, so paths containing spaces remain one argument and child exit/stdout/stderr are preserved
 - for remote process QA snapshots, prefer `tiangong-lca process list --json` followed by `qa process --rows-file ...` instead of ad hoc bridge scripts

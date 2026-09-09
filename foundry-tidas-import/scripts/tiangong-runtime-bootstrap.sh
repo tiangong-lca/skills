@@ -172,7 +172,7 @@ else
   tar -xOzf "$temp/component.tar.gz" "$integrity_relative" > "$checksum_source" || fail integrity_extract_failed
   [ "$(hash_file "$checksum_source")" = "$integrity_sha" ] || fail integrity_file_changed
   validate_archive "$temp/component.tar.gz" "$integrity_relative" "$file_count" "$temp/list" "$temp/verbose" "$temp/expected"
-  rm -rf "$temp/root"; mkdir "$temp/root"; tar -xzf "$temp/component.tar.gz" -C "$temp/root" || fail archive_extract_failed
+  rm -rf "$temp/root"; mkdir "$temp/root"; tar -xpzf "$temp/component.tar.gz" -C "$temp/root" || fail archive_extract_failed
   verify_component_root "$temp/root" "$integrity_relative" "$integrity_sha" "$file_count"
   publish="$temp/component"; mkdir "$publish"; mv "$temp/root" "$publish/root"; mv "$publish" "$target"
 fi
