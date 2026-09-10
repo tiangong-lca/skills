@@ -31,9 +31,9 @@ checkPaths:
   - scripts/lib/cli-launcher.mjs
   - package.json
   - pnpm-lock.yaml
-lastReviewedAt: 2026-09-10
-lastReviewedCommit: 7d50ac4323b8ac3262995f040dae1f8f60988026
-lastReviewedNote: "Reviewed for Skills #94: complete final Foundry0.1.7 entry binds independently verified sourceD0/manifest/lock and original CLI0.1.13 scripts. Actual copied macOS arm64 cold/warm/task/returned-action and both manifest tamper paths pass. Four-platform Skills CI and final live RC acceptance remain required. Existing21purposes and internal authoring policy are preserved."
+lastReviewedAt: 2026-09-11
+lastReviewedCommit: 0a33db1df81f9bd3ce52d356178fa35adc40b67c
+lastReviewedNote: "Reviewed for Skills #98: active shared/copied launchers and CI adopt qualified CLI 0.1.14. The separate Foundry 0.1.7 release lock and actual copied-entry expectations are retained pending its independently qualified successor; permissions, OAuth and no-replay boundaries are unchanged."
 related:
   - AGENTS.md
   - .docpact/config.yaml
@@ -81,7 +81,7 @@ If a Foundry/source-evidence workflow needs an external Tiangong KB research ski
 
 Current-account dataset review is owned here only as a skill package and wrapper contract. Its durable runtime behavior belongs in public `tiangong-lca` CLI commands such as dataset validation, reference rewriting, lifecyclemodel save-draft, and lifecyclemodel graph export.
 
-The shared wrapper launcher defaults to pinned published `@tiangong-lca/cli@0.1.13` and never discovers sibling directories. CI binds immutable release merge `b5e209259d3bb06205b9af131b1c0edc3fba6da2`. An explicit `--cli-dir` or `TIANGONG_LCA_CLI_DIR` may select an exact matching local checkout; only after package/engine/lock evidence passes may the launcher prepare it with `pnpm install --frozen-lockfile` and `pnpm run build` when source files are newer than `dist/src/main.js`. All execution stays argv-authoritative with `shell: false`, using native `pnpm.exe` on Windows. This is a developer-experience guard for stale local checkouts, not permission for skills to duplicate CLI implementation.
+The shared wrapper launcher defaults to pinned published `@tiangong-lca/cli@0.1.14` and never discovers sibling directories. CI binds immutable release merge `bcc5dbee5b909dbb912e09d99ca07e858d3d7cec`. An explicit `--cli-dir` or `TIANGONG_LCA_CLI_DIR` may select an exact matching local checkout; only after package/engine/lock evidence passes may the launcher prepare it with `pnpm install --frozen-lockfile` and `pnpm run build` when source files are newer than `dist/src/main.js`. All execution stays argv-authoritative with `shell: false`, using native `pnpm.exe` on Windows. This is a developer-experience guard for stale local checkouts, not permission for skills to duplicate CLI implementation.
 
 ## Integration Semantics
 
