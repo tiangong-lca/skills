@@ -64,6 +64,8 @@ Top-level Foundry scenario skills are allowed in this repository when they only 
 - `external-dataset-curated-import`
 - `source-evidence-dataset-development`
 
+`lca-topic-overview` is a separate read-only workflow skill for industry, product and dataset-type introductions. It records topic membership, orchestrates the public `dataset overview capture|catalog|analyze` protocol, and reviews CLI-produced Markdown/HTML/CSV/JSON. Database access, normalization, statistics and relation/rendering algorithms stay in CLI. It needs neither Foundry nor a previous report and performs no governance or outlook. Its capability-checked installed executable or explicitly supplied companion checkout is recorded per run; it has no private launcher and does not change the shared 0.1.8 pin. See [the runtime contract](../../lca-topic-overview/references/runtime.md) for the feature/release boundary.
+
 ## Non-Owner Boundaries
 
 - `tiangong-lca-cli` owns the native public command surface, low-level command semantics, REST clients, and auth behavior.

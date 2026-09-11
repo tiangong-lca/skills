@@ -123,6 +123,7 @@ npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-impo
 
 - `$external-dataset-curated-import`：BAFU、USLCI 等结构化 LCA 数据包导入，走 CLI 转换、curation queue `next`/`verify`、子 skill 和发布 handoff gates。
 - `$source-evidence-dataset-development`：从 PDF、Word、URL、API、报告、数据库引用或科学文献进行 evidence-driven 数据新增或更新。
+- [`$lca-topic-overview`](lca-topic-overview/SKILL.md)：从行业、产品或数据类型主题出发，梳理公开数据现状，生成统计、上下游关联及交互式 HTML；无需既有报告，不做数据治理或展望。依赖 [CLI overview 能力](lca-topic-overview/references/runtime.md)（配套 CLI #284），现有共享 0.1.8 版本尚不提供此能力。
 - `$dataset-rls-maintenance`：在当前用户 RLS 可见范围内，对历史错误导入数据做清理、删除/退役、引用修复和 redo 计划；只编排 CLI maintenance plan 与 readback verification，不实现私有数据库访问。
 
 ## 远程认证

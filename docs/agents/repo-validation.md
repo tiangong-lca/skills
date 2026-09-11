@@ -58,6 +58,8 @@ You may pass one or more skill directories to validate only the touched skill pa
 
 ## Required Validation Shape
 
+- Topic overview is registered in the default validator. `test/topic-overview.test.mjs` checks a copied standalone skill's metadata/references and, when `TIANGONG_OVERVIEW_TEST_CLI_DIR` explicitly selects the built companion CLI, exercises the public bin's capability and two-topic capture-fixture/catalog/analysis contract. Run that explicit integration qualification before submitting a protocol change; ordinary Skills gates retain the existing published pin and require no live database credentials. Review the rendered HTML's chart drilldown, relation selector, record search and shown/total counts as part of behavioral qualification.
+
 - Skill instruction changes require validating the touched skill package.
 - Wrapper contract changes require checking the paired `agents/openai.yaml` and `SKILL.md` together.
 - Validation-script or test changes require running the full `pnpm prepush:gate` command when feasible.

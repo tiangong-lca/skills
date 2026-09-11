@@ -1,0 +1,6 @@
+interface:
+  display_name: "天工主题数据梳理"
+  short_description: "按行业、产品或数据类型梳理天工公开数据，生成现状统计、上下游关联和交互展示"
+  default_prompt: "用 $lca-topic-overview 梳理天工数据库里面的电力行业公开数据现状，展示统计分布和上下游关联。"
+policy:
+  allow_implicit_invocation: true

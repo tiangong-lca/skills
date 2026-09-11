@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const remoteSkillFiles = [
+  'lca-topic-overview/SKILL.md',
   'current-account-dataset-review/SKILL.md',
   'dataset-rls-maintenance/SKILL.md',
   'embedding-ft/SKILL.md',

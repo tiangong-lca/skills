@@ -123,6 +123,7 @@ The existing skills retain their independent uses:
 
 - `$external-dataset-curated-import`: BAFU, USLCI, and other structured LCA package imports through CLI conversion, curation queue `next`/`verify`, child skills, and publish handoff gates.
 - `$source-evidence-dataset-development`: evidence-driven data creation or update from PDFs, Word files, URLs, APIs, reports, database references, or scientific literature.
+- [`$lca-topic-overview`](lca-topic-overview/SKILL.md): describe the current public catalog for an industry, product or dataset type, with statistics, upstream/downstream relations and interactive HTML. Starts from a topic, without a previous report; no governance or outlook. Requires the [CLI overview capability](lca-topic-overview/references/runtime.md), introduced by companion CLI #284 rather than the shared 0.1.8 release.
 - `$dataset-rls-maintenance`: current-user RLS-scoped cleanup, delete/retire, reference repair, and redo planning for previously imported rows; orchestrates CLI maintenance plans and readback verification without private database access.
 
 ## Remote authentication

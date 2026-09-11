@@ -1,4 +1,5 @@
 version: 1
+# Skills #95: lca-topic-overview is a workflow-only package under existing skill/validation routes; the companion CLI capability check does not alter shared launcher ownership or the published pin.
 layout: repo
 # Review note, 2026-09-11: Skills #98 adopts the exact final Foundry 0.1.8 lock (a1383982) and manifest (7119c909), independently verified against release abac241 and successful upstream run34553822939. Original CLI0.1.14 bootstrap bytes remain unchanged. Existing routes and ownership remain enforced.
 # Review note, 2026-09-11: Skills #98 describes supported public reference-input snapshots and final-row native execution-contract selection. The qualified runtime schema gates availability; reviews/contracts grant no permission and consumed attempts retain original readback. No ownership or routing rule changes.
