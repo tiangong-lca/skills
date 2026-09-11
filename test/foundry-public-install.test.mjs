@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 
 const entry = fileURLToPath(new URL("../foundry-tidas-import/", import.meta.url));
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
-const version = "0.1.7";
-const source = "d0d2e7819e5ff573fb427063d13f83a2cb47ba70";
+const version = "0.1.8";
+const source = "abac241b9dd9a302c4dc9a985f798d0eb77f62f3";
 
 test("copied Foundry skill runs the public locked runtime and rejects changed installation inputs", {
   timeout: 1_200_000,
@@ -96,7 +96,7 @@ test("copied Foundry skill runs the public locked runtime and rejects changed in
   assert.equal(doctor.runtime_identity.foundry.package_version, version);
   const qualification = doctor.runtime_identity.qualification;
   assert.equal(qualification.status, "ready");
-  assert.equal(qualification.identity.cli.package_version, "0.1.13");
+  assert.equal(qualification.identity.cli.package_version, "0.1.14");
   assert.equal(qualification.identity.cli.node_version, "24.19.0");
   assert.equal(qualification.identity.tidas.binary_version, "0.3.0");
   assert.deepEqual(fs.readdirSync(path.join(cache, "components")).sort(), componentKeys);
@@ -120,7 +120,7 @@ test("copied Foundry skill runs the public locked runtime and rejects changed in
   assert.equal(provenance.source.commit, source);
   assert.equal(provenance.package.version, version);
   assert.equal(provenance.published_package.source.gitCommit, source);
-  assert.equal(provenance.cli.source.gitCommit, "b5e209259d3bb06205b9af131b1c0edc3fba6da2");
+  assert.equal(provenance.cli.source.gitCommit, "bcc5dbee5b909dbb912e09d99ca07e858d3d7cec");
 
   // This is a credential-free local cleanup task, not the live RC01–RC06 account case.
   const selected = path.join(workspace, "source.jsonl");

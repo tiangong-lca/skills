@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: tiangong-lca/tiangong-cli
-          ref: b5e209259d3bb06205b9af131b1c0edc3fba6da2
+          ref: bcc5dbee5b909dbb912e09d99ca07e858d3d7cec
           path: .ci/tiangong-lca-cli
 
       - name: Set up pnpm 11.24.0 and Node 24.19.0
