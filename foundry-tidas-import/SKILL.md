@@ -26,9 +26,17 @@ When a concrete semantic work item is current, load `$foundry-tidas-authoring` i
 
 Submit decision or patch files through the current `--semantic-input` contract described in the reference. Foundry validates their evidence, context and hashes, applies them deterministically, and reassesses the resulting rows. Do not edit registered source/final rows, reports or task indexes to make a gate pass.
 
+## Select reference evidence
+
+When the current task needs explicit Process QA references or a reviewed exact-reference choice, use the public `--reference-input` descriptor in the workflow reference. Select the actual task/actor/current row manifest and every file digest; keep reference reviews separate from write approval. Use the qualified runtime's supplied schema and owner-produced consumer payload facts. Do not infer an exception, discover sibling files or replace a missing reference with a guessed version.
+
+Foundry retains selected snapshots and carries their binding through QA, verification and readback. A new selection invalidates the prior finalization/approval projection; let the runtime revalidate an existing grant within its unchanged scope. Prepared or consumed scopes cannot replace their evidence. Missing or changed proof stays blocking. If the selected runtime does not support the descriptor, obtain the qualified successor distribution rather than using an internal command or editing its lock.
+
 ## Authorization, recovery and completion
 
 Runtime installation, login and semantic acceptance do not authorize a database write. Reuse an existing valid approval within its exact scope. When the runtime reports missing authority, present the concrete current task, destination, dataset scope and requested actions for approval; select only the corresponding current authorization artifact. Never fabricate a grant or broaden one through a new request or revision.
+
+For an explicitly selected native insert-only Flow, Process or Source scope, the final-row authorization descriptor may also bind the CLI execution-contract file and its raw SHA-256. Use the exact current final rows, project/account and draft-state intent; the contract does not grant permission. Follow the runtime's sealed action and original-attempt recovery instead of running the writer directly or constructing a replacement contract after an uncertain write.
 
 If authentication is required, follow the trusted CLI/host's browser-login action and verify the intended account through its redacted status/doctor evidence. Do not read session contents, collect credentials or change the registered destination implicitly.
 

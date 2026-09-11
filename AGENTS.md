@@ -39,8 +39,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-11
-lastReviewedCommit: 0a33db1df81f9bd3ce52d356178fa35adc40b67c
-lastReviewedNote: "Reviewed for Skills #98: active shared/copied launchers and CI adopt qualified CLI 0.1.14. The separate Foundry 0.1.7 release lock and actual copied-entry expectations are retained pending its independently qualified successor; permissions, OAuth and no-replay boundaries are unchanged."
+lastReviewedCommit: f816c9fd6e5a748936936808e4f9b2013e55332b
+lastReviewedNote: "Reviewed for Skills #98: qualified CLI 0.1.14 wrappers and schema-gated public reference/native-contract guidance preserve current task/account/evidence, separate grants and no-replay. Final Foundry successor lock and consumer qualification remain pending."
 related:
   - .docpact/config.yaml
   - docs/agents/repo-architecture.md

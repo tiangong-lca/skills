@@ -52,7 +52,39 @@ Use each owner's generated template and required full-context evidence. Select o
 tiangong-foundry task resume --workspace <absolute-workspace> --task <task-id> --actor <actor-id> --semantic-input <descriptor-file> --json
 ```
 
-Authorization is a separate selection through `--authorization-input`; it cannot be combined with `--semantic-input`. Use the runtime's current approval action and artifact contract, including its task/account/input/action/expiry bindings. A prior profile waiver or copied historical approval does not grant the current operation.
+Authorization is a separate selection through `--authorization-input`; it cannot be combined with `--semantic-input` or `--reference-input`. Use the runtime's current approval action and artifact contract, including its task/account/input/action/expiry bindings. A prior profile waiver or copied historical approval does not grant the current operation.
+
+## Select explicit reference evidence
+
+Use this selection only when supported by the verified descriptor schema shipped with the qualified runtime. It is a separate input stage, not an approval or a way to bypass a blocked dependency. An unsupported runtime needs the qualified successor distribution; do not invent a new lock or invoke a developer command.
+
+The `tiangong-foundry.reference-input.v1` descriptor contains exactly:
+
+| Field | Selection |
+| --- | --- |
+| `schema` | `tiangong-foundry.reference-input.v1` |
+| `task_id`, `actor_id` | The current registered task and independently selected actor. |
+| `rows_manifest_sha256` | Digest of the current indexed `foundry-rows.json` artifact. |
+| `dataset_type` | The selected concrete row type: `process`, `flow`, `source`, `contact`, `lifecyclemodel`, `unitgroup` or `flowproperty`. |
+| `qa_reference_rows` | Explicit `{ "file": "...", "sha256": "..." }` selections for Process QA, or `[]`. Other types cannot select QA reference rows. |
+| `intent` | One selected `{ "file": "...", "sha256": "..." }` exact-reference intent, or `null`. |
+| `review_files` | Every review file used by that intent, independently selected as file/SHA-256 pairs, or `[]` when no intent is selected. |
+
+Select QA evidence and/or an intent. Each list allows at most 128 files; files must be regular, readable and at most 8 MiB each, within a 64 MiB aggregate selection. Descriptor file paths resolve against the explicit workspace; review locators inside the CLI intent follow that protocol and must resolve to the independently selected reviews. File digests refer to actual bytes, while consumer/selected-reference payload digests follow the qualified CLI's canonical protocol; do not substitute one for the other or hash a seed wrapper as a final consumer payload.
+
+An exact-reference intent and its reviews use the CLI-owned `dataset-exact-reference-intent.v1` and `dataset-exact-reference-review.v1` contracts. Use the actual finalizer-selected consumer rows and reviewed reference observations for the intended account/project. Foundry verifies selection and transport; CLI decides reference eligibility. An unavailable, unrelated or foreign private reference cannot become usable merely by writing a review file.
+
+```text
+tiangong-foundry task resume --workspace <absolute-workspace> --task <task-id> --actor <actor-id> --reference-input <descriptor-file> --json
+```
+
+Do not combine this option with semantic input, authorization input or an explicit cleanup preparation. Empty paths are invalid, including through the JavaScript facade. Foundry snapshots selected QA/review bytes, retains the original intent, and derives only its review-file locators toward those snapshots. A changed selection invalidates prior finalization; changed rows require current evidence. Prepared, consumed and completed scopes retain their original selection. Let Foundry re-finalize and verify; do not modify indexed snapshots or proof reports.
+
+## Select native execution intent with approval
+
+For `input_kind=final_rows` and a Flow, Process or Source scope, the current `tiangong-foundry.authorization-input.v1` descriptor may include `execution_contract: { "file": "...", "sha256": "..." }`. The selected file must be the qualified CLI's `dataset-save-draft-execution-contract.v1` insert-only contract for the exact ordered final rows, desired payload digests, intended project/account and owner draft state `0`. Other types and prepared-row approval cannot use this field. Keep the raw file hash distinct from the CLI's canonical contract digest.
+
+The contract accompanies a separately valid grant and its current evidence; it does not authorize a write itself. Foundry binds a task snapshot and returns a sealed execution action. Invalid selection cannot fall back to a different writer. After dispatch, use only the original task's readback/recovery action. A missing response or missing native receipt cannot justify another contract, task revision or mutation. Completion still requires the matching execution evidence and independent root/owner/state/payload verification, plus the same reference intent/reviews when selected.
 
 ## Interpret the result
 
