@@ -20,8 +20,8 @@ checkPaths:
   - "*/SKILL.md"
   - "*/scripts/**"
 lastReviewedAt: 2026-09-11
-lastReviewedCommit: 0a33db1df81f9bd3ce52d356178fa35adc40b67c
-lastReviewedNote: "Reviewed for Skills #98: active shared/copied launchers and CI adopt qualified CLI 0.1.14. The separate Foundry 0.1.7 release lock and actual copied-entry expectations are retained pending its independently qualified successor; permissions, OAuth and no-replay boundaries are unchanged."
+lastReviewedCommit: ee3a4fd16160adfafa8e89cf9ddd8f1f9af1de05
+lastReviewedNote: "Reviewed for Skills #98: exact official Foundry 0.1.8 manifest/lock bind release abac241 and qualified CLI 0.1.14. Original bootstrap bytes and current task/reference/native-contract/no-replay boundaries are preserved; actual copied consumer qualification is required on all four platforms."
 ---
 
 # Tiangong LCA Skills
@@ -115,7 +115,7 @@ npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-impo
 
 The `lca-foundry-workflows` marketplace package lists this entry first. `foundry-tidas-authoring` is an internal role loaded only for a current semantic work item; it is not a second task entry. The ordinary entry can use the runtime's work-item instructions when that internal role is not installed.
 
-The complete entry bundles the final release lock for [Foundry 0.1.7](https://github.com/tiangong-lca/data-foundry/releases/tag/foundry-runtime-v0.1.7), with CLI 0.1.13, Node 24.19.0 and TIDAS 0.3.0. Its public runtime is qualified for macOS arm64, Linux x64/arm64 and Windows x64. Keep the bundled scripts and adjacent lock together when installing or copying the entry. Installation and login do not grant permission to write data; continue the task's current authorization and recovery actions.
+The complete entry bundles the final release lock for [Foundry 0.1.8](https://github.com/tiangong-lca/data-foundry/releases/tag/foundry-runtime-v0.1.8), with CLI 0.1.14, Node 24.19.0 and TIDAS 0.3.0. Its public runtime is qualified for macOS arm64, Linux x64/arm64 and Windows x64. Keep the bundled scripts and adjacent lock together when installing or copying the entry. Installation and login do not grant permission to write data; continue the task's current authorization and recovery actions.
 
 ### Specialized workflows
 

@@ -39,8 +39,8 @@ checkPaths:
   - scripts/docpact-gate.sh
   - scripts/install-git-hooks.sh
 lastReviewedAt: 2026-09-11
-lastReviewedCommit: f816c9fd6e5a748936936808e4f9b2013e55332b
-lastReviewedNote: "Reviewed for Skills #98: qualified CLI 0.1.14 wrappers and schema-gated public reference/native-contract guidance preserve current task/account/evidence, separate grants and no-replay. Final Foundry successor lock and consumer qualification remain pending."
+lastReviewedCommit: ee3a4fd16160adfafa8e89cf9ddd8f1f9af1de05
+lastReviewedNote: "Reviewed for Skills #98: exact official Foundry 0.1.8 manifest/lock bind release abac241 and qualified CLI 0.1.14. Original bootstrap bytes and current task/reference/native-contract/no-replay boundaries are preserved; actual copied consumer qualification is required on all four platforms."
 related:
   - .docpact/config.yaml
   - docs/agents/repo-architecture.md
@@ -149,6 +149,6 @@ The `pre-push` hook runs `scripts/docpact-gate.sh`, which delegates CLI lookup t
 
 `foundry-tidas-authoring` is an internal on-demand semantic package. It reads supplied current task/context evidence and returns decision/patch files; it owns no runtime, credential parsing, deterministic apply or database operation. Its explicit-only policy is part of the approved Foundry entry migration.
 
-`foundry-tidas-import` is the ordinary TianGong Foundry entry. Its instructions consume the public task protocol and current structured actions; the internal authoring role stays on demand. Its bundled original CLI 0.1.13 bootstrap and adjacent final lock select independently qualified Foundry 0.1.7. The four-platform copied-entry test must prove actual installation and task operation before delivery; source validation alone does not establish installability.
+`foundry-tidas-import` is the ordinary TianGong Foundry entry. Its instructions consume the public task protocol and current structured actions; the internal authoring role stays on demand. Its bundled original CLI 0.1.14 bootstrap and adjacent final lock select independently qualified Foundry 0.1.8. The four-platform copied-entry test must prove actual installation and task operation before delivery; source validation alone does not establish installability.
 
 The retained `external-dataset-curated-import` and `source-evidence-dataset-development` skills support independent CLI workflows. Within a registered public Foundry task they act as domain helpers over current work items and supplied actions; they return selected input files and cannot manually advance queues, checkpoints, registered artifacts or attempts. Their paired agent prompts preserve this boundary.
