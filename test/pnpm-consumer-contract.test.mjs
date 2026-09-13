@@ -178,7 +178,8 @@ test('repository package contract pins the workspace Node and pnpm versions', ()
 test('validation CI installs the exact CLI checkout through frozen pnpm only', () => {
   const workflow = read('.github/workflows/validate-skills.yml');
 
-  assert.match(workflow, /ref: bcc5dbee5b909dbb912e09d99ca07e858d3d7cec/u);
+  assert.match(workflow, /repository: tiangong-lca\/cli/u);
+  assert.match(workflow, /ref: a6c5815b06903b2b424c5ab892e4e9f3c99b3001/u);
   assert.match(
     workflow,
     /uses: pnpm\/setup@84cb39b217b10273981911c288cd62326dc7c6d2/u,
@@ -231,8 +232,8 @@ test('checked-in docs pin the TianGong CLI while preserving external skills npx 
     );
   }
 
-  assert.match(read('README.md'), /npx skills add https:\/\/github\.com\/tiangong-lca\/skills/u);
-  assert.match(read('README.zh-CN.md'), /npx skills add https:\/\/github\.com\/tiangong-lca\/skills/u);
+  assert.match(read('README.md'), /npx skills add https:\/\/github\.com\/tiangong-lca\/agent-skills/u);
+  assert.match(read('README.zh-CN.md'), /npx skills add https:\/\/github\.com\/tiangong-lca\/agent-skills/u);
   assert.match(read('AGENTS.md'), /consumed through `npx skills`/u);
   assert.match(
     read('scripts/validate-skills.mjs'),
