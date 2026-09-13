@@ -19,14 +19,14 @@ checkPaths:
   - scripts/validate-skills.mjs
   - "*/SKILL.md"
   - "*/scripts/**"
-lastReviewedAt: 2026-09-11
-lastReviewedCommit: ee3a4fd16160adfafa8e89cf9ddd8f1f9af1de05
+lastReviewedAt: 2026-09-13
+lastReviewedCommit: 2f8c863015afcf0d2302af2a6c609feb6ebeca22
 lastReviewedNote: "Reviewed for Skills #98: exact official Foundry 0.1.8 manifest/lock bind release abac241 and qualified CLI 0.1.14. Original bootstrap bytes and current task/reference/native-contract/no-replay boundaries are preserved; actual copied consumer qualification is required on all four platforms."
 ---
 
 # 天工 LCA Skills
 
-仓库地址: https://github.com/tiangong-lca/skills
+仓库地址: https://github.com/tiangong-lca/agent-skills
 
 请使用 https://github.com/vercel-labs/skills 提供的 `skills` CLI 来安装、更新和管理这些 skills。
 
@@ -40,26 +40,26 @@ npm i skills@latest -g
 
 - 仅列出可用技能（不安装）:
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills --list
+  npx skills add https://github.com/tiangong-lca/agent-skills --list
   ```
 - 安装全部技能（默认项目级）:
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills
+  npx skills add https://github.com/tiangong-lca/agent-skills
   ```
 - 安装指定技能:
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills --skill flow-hybrid-search --skill process-hybrid-search
+  npx skills add https://github.com/tiangong-lca/agent-skills --skill flow-hybrid-search --skill process-hybrid-search
   ```
 
 ## 目标 agent 与作用域
 
 - 指定 agent:
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills -a codex -a claude-code
+  npx skills add https://github.com/tiangong-lca/agent-skills -a codex -a claude-code
   ```
 - 全局安装（用户级）:
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills -g
+  npx skills add https://github.com/tiangong-lca/agent-skills -g
   ```
 - 作用域说明:
   - 项目级安装到 `./<agent>/skills/`.
@@ -110,7 +110,7 @@ npx skills update --project --yes
 外部数据包导入、源证据数据开发和继续已有 Foundry 任务，统一使用 `$foundry-tidas-import` 作为日常入口。它通过随包 bootstrap 选择合格运行时，将任务输出放在独立可写工作区。
 
 ```bash
-npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-import
+npx skills add https://github.com/tiangong-lca/agent-skills --skill foundry-tidas-import
 ```
 
 `lca-foundry-workflows` marketplace 包首先列出此入口。`foundry-tidas-authoring` 仅在当前语义工作项需要时加载，是内部角色；日常入口也能直接使用运行时提供的工作项说明，无须依赖另一个已安装技能目录。

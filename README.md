@@ -19,14 +19,14 @@ checkPaths:
   - scripts/validate-skills.mjs
   - "*/SKILL.md"
   - "*/scripts/**"
-lastReviewedAt: 2026-09-11
-lastReviewedCommit: ee3a4fd16160adfafa8e89cf9ddd8f1f9af1de05
+lastReviewedAt: 2026-09-13
+lastReviewedCommit: 2f8c863015afcf0d2302af2a6c609feb6ebeca22
 lastReviewedNote: "Reviewed for Skills #98: exact official Foundry 0.1.8 manifest/lock bind release abac241 and qualified CLI 0.1.14. Original bootstrap bytes and current task/reference/native-contract/no-replay boundaries are preserved; actual copied consumer qualification is required on all four platforms."
 ---
 
 # Tiangong LCA Skills
 
-Repository: https://github.com/tiangong-lca/skills
+Repository: https://github.com/tiangong-lca/agent-skills
 
 Use the `skills` CLI from https://github.com/vercel-labs/skills to install, update, and manage these skills.
 
@@ -40,26 +40,26 @@ npm i skills@latest -g
 
 - List available skills (no install):
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills --list
+  npx skills add https://github.com/tiangong-lca/agent-skills --list
   ```
 - Install all skills (project scope by default):
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills
+  npx skills add https://github.com/tiangong-lca/agent-skills
   ```
 - Install specific skills:
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills --skill flow-hybrid-search --skill process-hybrid-search
+  npx skills add https://github.com/tiangong-lca/agent-skills --skill flow-hybrid-search --skill process-hybrid-search
   ```
 
 ## Target agents and scope
 
 - Target specific agents:
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills -a codex -a claude-code
+  npx skills add https://github.com/tiangong-lca/agent-skills -a codex -a claude-code
   ```
 - Install globally (user scope):
   ```bash
-  npx skills add https://github.com/tiangong-lca/skills -g
+  npx skills add https://github.com/tiangong-lca/agent-skills -g
   ```
 - Scope notes:
   - Project scope installs into `./<agent>/skills/`.
@@ -110,7 +110,7 @@ Consuming projects should record the resolved upstream ref and command in task a
 Use `$foundry-tidas-import` as the ordinary entry for external dataset packages, source-evidence development and continuing an existing Foundry task. It selects the qualified runtime through its bundled bootstrap and keeps task outputs in a separate writable workspace.
 
 ```bash
-npx skills add https://github.com/tiangong-lca/skills --skill foundry-tidas-import
+npx skills add https://github.com/tiangong-lca/agent-skills --skill foundry-tidas-import
 ```
 
 The `lca-foundry-workflows` marketplace package lists this entry first. `foundry-tidas-authoring` is an internal role loaded only for a current semantic work item; it is not a second task entry. The ordinary entry can use the runtime's work-item instructions when that internal role is not installed.

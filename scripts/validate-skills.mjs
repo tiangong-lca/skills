@@ -309,7 +309,6 @@ Examples:
   pnpm validate
   pnpm validate lifecycleinventory-qa process-hybrid-search
   pnpm validate --cli-dir ../tiangong-lca-cli lifecycleinventory-review
-  pnpm validate --cli-dir ../tiangong-cli lifecycleinventory-review
 
 What this validates:
   - SKILL.md frontmatter presence
